@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ChantGPT tests</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 16px; }
+  #summary { font-weight: 600; }
+  li.fail { color: #a8261b; }
+  iframe { width: 1000px; height: 700px; border: 1px solid #ccc; margin-top: 12px; }
+</style>
+</head>
+<body>
+<h1>ChantGPT tests</h1>
+<p id="summary">Running …</p>
+<ol id="report"></ol>
+<iframe id="frame" title="The app under test"></iframe>
+<script src="../js/chant.js"></script>
+<script src="cases.js"></script>
+<script src="run.js"></script>
+</body>
+</html>
