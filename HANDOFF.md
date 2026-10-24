@@ -208,7 +208,7 @@ and dragging, and as the record of where the model looked), but what the user se
 
 ## Done
 
-- **Step 1, first part: staves** (version 0.2.0, branch `step-1-staves`):
+- **Step 1, first part: staves** (version 0.2.0, merged):
   - `js/editor.js`: the editing layer. Drag a box round a staff to add it; its lines are found in the ink, or spread
     evenly over the box if they can't be. Select a staff (click, or Tab) to move it (drag, or arrow keys), drag one
     line's end up or down (the dots), drag an end bar to lengthen, shorten or tilt it; F finds its lines again, E
@@ -223,7 +223,30 @@ and dragging, and as the record of where the model looked), but what the user se
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 1, bent staves** (version 0.3.0, branch `step-1-warped`): pages that couldn't be scanned flat (the user
+- **Step 1, the notation drawn** (version 0.4.0, branch `step-1-notation`):
+  - The font is **greciliae** (the user's choice): built unchanged from Gregorio 6.2.0's sources by
+    `tools/build-greciliae.sh` (FontForge), in `fonts/` with its licence (OFL 1.1, Reserved Font Names "Caeciliae"
+    and "Greciliae": not to be subset or converted without renaming). `js/greciliae.js`: its glyph table (name ->
+    character, width), made by the same script; remake it with the font.
+  - `js/neumes.js`: GABC neume material read into notes; notes gathered into glyphs as Gregorio does
+    (`gabc-glyphs-determination.c`: pes, flexus, torculus, porrectus, scandicus, torculus resupinus, porrectus flexus;
+    virga, inclinata, strophae, oriscus, quilisma alone or beginning a glyph; a liquescent or unison ends one); each
+    named as Gregorio names it (`gregoriotex-write.c`: shape, queue length by where the note lies, intervals One–Five,
+    liquescence), falling back to single notes where the font has no such glyph. Clefs (with cb3's flat), bars,
+    custos, accidentals, moras. Not yet: fusion (@), hollow notes, episemata, ictus, the other signs.
+  - Measurements: one pitch step is 157.5 font units, half the line spacing; a note's middle lies 72 units above
+    its glyph's baseline (measured: C clef's line, divisio maior's middle, punctum's middle agree). So Gregorio's
+    notes are about half a space high, smaller than in many printed books: over a scan the drawn note sits inside the
+    printed one.
+  - Placing: the Chant panel takes GABC and puts it on the selected staff and those below, one line per staff by its
+    (z) breaks; each staff's items get boxes, spaced along the staff and stretched to fill it (as a printed line is
+    justified). Drawn in red, see-through (adjustable), each glyph tilted with the staff where it sits; words under it.
+    The chant is listed in the document's chants; saved as GABC with the page's line breaks.
+  - **Licence to settle:** neumes.js follows Gregorio's GPLv3 code closely (a port of its rules, not just the glyph
+    names), so ChantGPT should be GPLv3 (compatible with the OFL font and pdf.js's Apache 2.0) unless those rules are
+    rewritten independently. The repo has no licence yet: the user's decision.
+  - Next: dragging neumes (up and down by step, rewriting their GABC; sideways along the staff) and syllables.
+- **Step 1, bent staves** (version 0.3.0, merged): pages that couldn't be scanned flat (the user
   sees these often in bound books).
   - The format: a staff line is a list of points `[x0, y0, x1, y1, …]`, straight between them; two for a straight
     staff, as before, so older documents still open.
@@ -248,7 +271,8 @@ and dragging, and as the record of where the model looked), but what the user se
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
 - The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
-- The bent staves (version 0.3.0) are on the branch `step-1-warped`, not yet merged into `main`.
+- The notation (version 0.4.0) is on the branch `step-1-notation`, not yet merged into `main`.
+- The repo's licence (see above: GPLv3 suggested, because of the port of Gregorio's rules).
 - GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
   folder `/ (root)`.
 

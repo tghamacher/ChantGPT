@@ -89,7 +89,9 @@ is how training data and tests will be made.
   - **accidental**, standing alone: a letter and `x` (flat), `y` (natural) or `#` (sharp);
   - **break**: `z`, `z+`, `z-`, `z0`, `Z` (only in GABC read in; a staff ends instead);
   - **neume**: anything else: notes with their signs, kept exactly as written (`fgh`, `f/gh`, `ivHG`, `gwh_`, `ixhi`).
-- `box`: around the item on the page (optional).
+- `box`: around the item on the page (optional). Its left edge is where the item is drawn; its top and bottom
+  follow the item's notes, and the app sets them. An item without a box isn't drawn: placing GABC on a staff gives
+  every item a box, spaced along the staff.
 - `conf`: the recognizer's confidence, from 0 to 1 (optional; absent for what a person entered). The app marks items
   under 0.8.
 

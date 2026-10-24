@@ -157,6 +157,52 @@
       return [].concat(same('blank', S().fit(new Uint8Array(w * h).fill(240), w, h, [0, 0, w, h]), null), same('one line', S().fit(g, w, h, [0, 50, w, 100]), null));
     } },
 
+    // ---- square notation: glyphs as Gregorio gathers and names them, placed along a staff
+    { name: 'neumes: notes gathered into glyphs and named as in Gregorio', unit: () => {
+      const N = global.CGNeumes, want = {
+        f: 'Punctum', fg: 'PesOneNothing', gf: 'FlexusOneNothing', hf: 'FlexusLongqueueTwoNothing', fgf: 'TorculusOneOneNothing',
+        gfg: 'PorrectusOneOneNothing', fgh: 'ScandicusOneOneNothing', fgfg: 'TorculusResupinusOneOneOneNothing', hjg: 'TorculusTwoThreeNothing',
+        'f/gh': 'Punctum PesOneNothing', 'hgf': 'FlexusLongqueueOneNothing Punctum', ivHG: 'Virga DescendensPunctumInclinatum DescendensPunctumInclinatum',
+        gwh: 'QuilismaPesOneNothing', 'gwhi': 'QuilismaPesOneNothing Punctum', 'h~': 'PunctumDeminutus', 'fg~': 'PesOneDeminutus', '-fg': 'PesOneInitioDebilis',
+        hv: 'VirgaLongqueue', gv: 'Virga', hV: 'VirgaReversaLongqueue', gss: 'Stropha Stropha', 'fgf.': 'TorculusOneOneNothing AuctumMora', ixhi: 'Flat PesOneNothing',
+        'f!gh': 'Punctum PesOneNothing', ff: 'Punctum Punctum'
+      };
+      return Object.entries(want).flatMap(([g, w]) => same(g, N.shapes(g).list.map(v => v.name).join(' '), w))
+        .concat(Object.keys(want).flatMap(g => N.shapes(g).list.filter(v => !global.CGGreciliae.glyphs[v.name]).map(v => `${g}: ${v.name} is not in the font`)));
+    } },
+    { name: 'neumes: clefs, bars, custos set at their pitches', unit: () => {
+      const N = global.CGNeumes, at = g => N.itemShapes(g, true).list.map(v => v.name + '@' + v.p).join(' ');
+      return [].concat(same('c4', at('c4'), 'CClef@8'), same('c3', at('c3'), 'CClef@6'), same('f3', at('f3'), 'FClef@6'), same('cb3', at('cb3'), 'CClef@6 Flat@6'),
+        same('a clef later on', N.itemShapes('c3', false).list[0].name, 'CClefChange'),
+        same('bars', [',', ';', ':', '::', '`'].map(at), ['DivisioMinimaFour@6', 'DivisioMinorFour@6', 'DivisioMaiorFour@6', 'DivisioMaiorFour@6 DivisioMaiorFour@6', 'VirgulaFour@6']),
+        same('custos', [at('d+'), at('j+')], ['CustosUpShort@3', 'CustosDownShort@9']));
+    } },
+    { name: 'neumes: a staff\'s chant laid along it, each note at its pitch', unit: () => {
+      const N = global.CGNeumes, st = { lines: S().even([100, 200, 800, 48]), syllables: C().fromGabc(GLORIA).staves[0].syllables };
+      const placed = N.place(st), L = N.layout(st), bad = [];
+      if (placed.length !== 20) bad.push(`${placed.length} items placed, expected 20`);
+      const xs = st.syllables.flatMap(s => s.items.map(i => i.box[0]));
+      if (xs.some((x, k) => k && x <= xs[k - 1])) bad.push('items out of order');
+      if (xs[0] < 100 || xs[xs.length - 1] > 900 || xs[xs.length - 1] < 800) bad.push(`items run ${xs[0]}–${xs[xs.length - 1]}, not across the staff`);
+      // a note's middle is MIDDLE font units above the baseline: the punctum of Gló (f, the second line) is at 232
+      const f = L.glyphs.find(v => v.name === 'Punctum'), sc = N.scaleOf(st.lines);
+      bad.push(...same('Gló on the second line', Math.round((f.y - N.MIDDLE * sc) * 100) / 100, 232));
+      bad.push(...same('font size: a step is half a space', Math.round(L.size * N.STEP / 1000 * 100) / 100, 8));
+      bad.push(...same('words', L.texts.map(t => t.text).join(' '), 'Gló ri a Pa tri, et Fí li o, et Spi rí tu i San cto.'));
+      if (L.texts.some(t => t.y < 248)) bad.push('words above the bottom line');
+      return bad;
+    } },
+    { name: 'neumes: on a bent staff the notes follow the bend', unit: () => {
+      const N = global.CGNeumes, lines = [0, 1, 2, 3].map(i => [100, 200 + 16 * i, 500, 230 + 16 * i, 900, 200 + 16 * i]);
+      const st = { lines, syllables: C().fromGabc('(c4) A(f)a(f)a(f)a(f)a(f)').staves[0].syllables };
+      N.place(st);
+      const sc = N.scaleOf(lines);
+      return N.layout(st).glyphs.filter(v => v.name === 'Punctum').flatMap(v => {
+        const want = N.yOf(lines, v.x + 83 * sc, 5), got = v.y - N.MIDDLE * sc;
+        return Math.abs(got - want) < 0.5 ? [] : [`a note at x ${v.x.toFixed(0)} is at ${got.toFixed(1)}, its line at ${want.toFixed(1)}`];
+      });
+    } },
+
     // ---- the app, in the browser: each loads index.html with test scans in the frame (run.js gives app())
     { name: 'app: opens a PDF and turns its pages', browser: true, unit: async app => {
       const { w, shown } = await app('test/pages/two-pages.pdf');
@@ -186,8 +232,8 @@
       return [].concat(
         same('viewBox', svg.getAttribute('viewBox'), '0 0 420 595'),
         same('lines', svg.querySelectorAll('polyline').length, 4),
-        same('boxes', svg.querySelectorAll('rect.item').length, 2),
-        same('doubtful', svg.querySelectorAll('rect.doubt').length, 1),
+        same('glyphs (the clef and a punctum)', svg.querySelectorAll('.glyph').length, 2),
+        same('doubtful', svg.querySelectorAll('.glyph.doubt').length, 1),
         same('overlay covers the page', [svg.getBoundingClientRect().width, svg.getBoundingClientRect().height].map(Math.round), [page.clientWidth, page.clientHeight]));
     } },
     { name: 'app: dragging a box round a staff finds its lines', browser: true, unit: async app => {
@@ -319,6 +365,40 @@
       bad.push(...same('undo brings the bend back', S.count(st().lines[0]), 3));
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
       return bad;
+    } },
+    { name: 'app: GABC placed on the staves, drawn, saved as GABC, undone', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      const truth = await (await w.fetch('test/pages/engraved-lines.json')).json(), bad = [];
+      for (const t of truth.slice(0, 2)) { const ys = t.flatMap(l => l.filter((v, i) => i & 1)); await w.CGEditor.addStaff([70, Math.min(...ys) - 20, 1060, Math.max(...ys) - Math.min(...ys) + 40]); }
+      const staves = w.CGApp.state.doc.pages[0].staves;
+      w.CGEditor.selected = staves[0].id;
+      const src = 'name: Two lines;\n%%\n(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (z) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)';
+      if (!w.CGEditor.placeChant(src)) return ['Not placed: ' + w.document.getElementById('status').textContent];
+      bad.push(...same('on both staves', staves.map(s => s.syllables.length > 0), [true, true]));
+      bad.push(...same('one chant, over both', w.CGApp.state.doc.chants.map(c => [c.headers.name, c.staves.length]), [['Two lines', 2]]));
+      await new Promise(r => setTimeout(r, 50));
+      const glyphs = w.document.querySelectorAll('#overlay .glyph');
+      if (glyphs.length < 20) bad.push(`${glyphs.length} glyphs drawn`);
+      if (!(await w.document.fonts.check('20px greciliae'))) bad.push('The chant font did not load.');
+      bad.push(...same('words drawn (the * too)', w.document.querySelectorAll('#overlay .syl').length, 13));
+      bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
+      const out = w.CGEditor.gabc();
+      bad.push(...same('GABC out', out && out.text.slice(out.text.indexOf('%%') + 2).trim(), '(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (z) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)'));
+      // the staff moved: its chant goes with it
+      const x = staves[0].syllables[1].items[0].box[0];
+      w.CGEditor.selected = staves[0].id;
+      w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true, cancelable: true }));
+      if (!(staves[0].syllables[1].items[0].box[0] > x)) bad.push('The chant did not move with its staff.');
+      w.CGEditor.undo(); w.CGEditor.undo();
+      bad.push(...same('undone', w.CGApp.state.doc.pages[0].staves.map(s => s.syllables.length), [0, 0]));
+      return bad;
+    } },
+    { name: 'app: GABC with more lines than staves says so', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page2.png');
+      await drag(w, [20, 265], [400, 330]);
+      await until(() => w.CGApp.state.doc.pages[0].staves.length === 1);
+      w.CGEditor.placeChant('(c4) a(f) (z) b(g) (z) c(h)');
+      return /2 had no staff below/.test(w.document.getElementById('status').textContent) ? [] : ['No word of the lines left over: ' + w.document.getElementById('status').textContent];
     } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {
       const { w } = await app('test/pages/two-pages.pdf');

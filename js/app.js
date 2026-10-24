@@ -41,7 +41,7 @@
       say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
       $('pageCount').textContent = src.count;
       $('pageNo').max = src.count;
-      for (const id of ['pageGroup', 'staffGroup', 'docGroup']) $(id).hidden = false;
+      for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'docGroup']) $(id).hidden = false;
       $('empty').hidden = true;
       $('page').hidden = false;
     }
@@ -77,16 +77,20 @@
   // ---------------------------------------------------------------- saving
   function save() {
     if (!state.doc) return;
-    const blob = new Blob([JSON.stringify(state.doc, null, 1) + '\n'], { type: 'application/json' });
+    const name = (state.src.name.replace(/\.[^.]+$/, '').replace(/ \(.*$/, '') || 'chant') + '.chantgpt.json';
+    download(new Blob([JSON.stringify(state.doc, null, 1) + '\n'], { type: 'application/json' }), name);
+    state.dirty = false;
+    say(`Saved as ${name}. To go on later, open the scan and this file together.`);
+  }
+  // a file handed to the browser to save
+  function download(blob, name) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = (state.src.name.replace(/\.[^.]+$/, '').replace(/ \(.*$/, '') || 'chant') + '.chantgpt.json';
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    state.dirty = false;
-    say(`Saved as ${a.download}. To go on later, open the scan and this file together.`);
   }
   window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
@@ -152,6 +156,18 @@
   $('undo').addEventListener('click', () => E.undo());
   $('redo').addEventListener('click', () => E.redo());
   $('save').addEventListener('click', save);
+  $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
+  $('clearChant').addEventListener('click', () => E.clearChant());
+  $('downloadGabc').addEventListener('click', () => {
+    const g = E.gabc();
+    if (!g) return;
+    download(new Blob([g.text], { type: 'text/plain' }), (g.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'chant') + '.gabc');
+  });
+  // how see-through the notation is (kept for next time)
+  const opacity = v => { $('overlay').style.setProperty('--notation', v); try { localStorage.setItem('cg-notation', v); } catch (e) { } };
+  try { const v = localStorage.getItem('cg-notation'); if (v) $('opacity').value = v; } catch (e) { }
+  opacity($('opacity').value);
+  $('opacity').addEventListener('input', e => opacity(e.target.value));
   $('openDoc').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });
 
   $('file').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });

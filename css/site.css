@@ -1,4 +1,6 @@
 [hidden] { display: none !important; }
+/* Greciliae, the chant font of Gregorio (Matthew Spencer, the Gregorio Project), SIL OFL 1.1: see fonts/OFL-greciliae.txt */
+@font-face { font-family: "greciliae"; src: url("../fonts/greciliae.ttf") format("truetype"); font-display: block; }
 
 :root {
   color-scheme: light;
@@ -6,7 +8,7 @@
   --panel: #fffdf8; --field: #fff; --accent: #8a2a1b; --accent-ink: #fff; --focus: #b5542f;
   --err-bg: #fbe4df; --err-rule: #e6a99c;
   --staff: rgba(31, 94, 168, .9); --staff-fill: rgba(31, 94, 168, .07); --doubt: #c2410c;
-  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1);
+  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1); --notation-ink: #c0261b;
   --page-shadow: 0 2px 12px rgba(0,0,0,.22);
   --textfont: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --ui: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -19,7 +21,7 @@
     --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
     --err-bg: #34201b; --err-rule: #6e3529;
     --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14);
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d;
     --page-shadow: 0 2px 16px rgba(0,0,0,.7);
   }
 }
@@ -29,7 +31,7 @@
   --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
   --err-bg: #34201b; --err-rule: #6e3529;
   --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14);
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d;
   --page-shadow: 0 2px 16px rgba(0,0,0,.7);
 }
 * { box-sizing: border-box; }
@@ -87,9 +89,17 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .hit { stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; cursor: move; }
 .cg-overlay .handle { fill: var(--panel); stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; cursor: ns-resize; }
 .cg-overlay .band { fill: var(--staff-fill); stroke: var(--staff); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.cg-overlay .chant { opacity: var(--notation, .7); pointer-events: none; }
+.cg-overlay .glyph { font-family: "greciliae"; fill: var(--notation-ink); }
+.cg-overlay .glyph.doubt { fill: var(--doubt); }
+.cg-overlay .syl { font-family: var(--textfont); fill: var(--notation-ink); text-anchor: middle; }
 .cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .cg-overlay .item.doubt { stroke: var(--doubt); stroke-width: 2; }
 .cg-keys { margin: 0 0 10px; padding-left: 18px; }
+.cg-group textarea { width: 100%; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 6px; margin-bottom: 8px; resize: vertical; }
+.cg-slider { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cg-slider input { flex: 1; }
+.cg-slider span { color: var(--muted); font-size: 12px; }
 .cg-button { background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
 .cg-button:hover { border-color: var(--accent); }
 .cg-row button:disabled { opacity: .45; cursor: default; border-color: var(--rule); }

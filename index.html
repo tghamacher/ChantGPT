@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.3.0">
+<link rel="stylesheet" href="css/site.css?v=0.4.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.3.0">version 0.3.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.4.0">version 0.4.0</span>
   <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
   <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
 </header>
@@ -66,7 +66,21 @@
       <p class="cg-hint">With a staff selected: arrow keys nudge it (Shift for more), Tab goes to the next staff, F finds its lines again, E spaces them evenly, Delete removes it, Esc lets go of it.</p>
     </section>
 
-    <section class="cg-group" id="docGroup" hidden><h2>4 · Document</h2>
+    <section class="cg-group" id="chantGroup" hidden><h2>4 · Chant</h2>
+      <p>Paste the chant in GABC (from GregoBase, say), select the staff it begins on, and place it. ChantGPT draws it on the staff in square notation, over the page, so you can see where it differs. A GABC line break, <code>(z)</code>, moves on to the next staff.</p>
+      <textarea id="gabcText" rows="6" spellcheck="false" placeholder="name: Gloria Patri;&#10;%%&#10;(c4) Gló(f)ri(gh)a(h) Pa(h)tri.(h.) (::)"></textarea>
+      <div class="cg-row">
+        <button type="button" id="placeChant" title="Place the GABC on the selected staff and the ones below it">Place on this staff</button>
+        <button type="button" id="clearChant" title="Take the chant off the selected staff">Take it off</button>
+      </div>
+      <p class="cg-hint" id="chantInfo"></p>
+      <label class="cg-slider">Notation <input type="range" id="opacity" min="0.15" max="1" step="0.05" value="0.7"> <span>see-through</span></label>
+      <div class="cg-row">
+        <button type="button" id="downloadGabc" title="Save the chant as a .gabc file, with the page's line breaks">Save as GABC</button>
+      </div>
+    </section>
+
+    <section class="cg-group" id="docGroup" hidden><h2>5 · Document</h2>
       <p>Save what you've marked as a document. To carry on later, open the scan and the document together.</p>
       <div class="cg-row">
         <button type="button" id="save" title="Save the document (Ctrl+S)">Save document</button>
@@ -93,10 +107,12 @@
   </section>
 </main>
 
-<script src="js/chant.js?v=0.3.0"></script>
-<script src="js/staves.js?v=0.3.0"></script>
-<script src="js/viewer.js?v=0.3.0"></script>
-<script src="js/editor.js?v=0.3.0"></script>
-<script src="js/app.js?v=0.3.0"></script>
+<script src="js/chant.js?v=0.4.0"></script>
+<script src="js/staves.js?v=0.4.0"></script>
+<script src="js/greciliae.js?v=0.4.0"></script>
+<script src="js/neumes.js?v=0.4.0"></script>
+<script src="js/viewer.js?v=0.4.0"></script>
+<script src="js/editor.js?v=0.4.0"></script>
+<script src="js/app.js?v=0.4.0"></script>
 </body>
 </html>

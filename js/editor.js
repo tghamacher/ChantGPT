@@ -6,7 +6,7 @@
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
-  const S = global.CGStaves;
+  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant;
   const SVG = 'http://www.w3.org/2000/svg';
   const HANDLE = 6, MIN_DRAG = 6;   // in screen pixels
 
@@ -66,10 +66,12 @@
   const undo = () => step(history.undo, history.redo, 'before');
   const redo = () => step(history.redo, history.undo, 'after');
 
-  // after any change to a staff's lines: its box, and the staves in reading order
+  // after any change to a staff's lines: its box, its chant's boxes (up and down, to follow its notes), and the
+  // staves in reading order
   function settle(st) {
     st.lines = S.roundLines(st.lines);
     st.box = S.box(st.lines, page().size);
+    for (const syl of st.syllables) for (const it of syl.items) if (it.box) N.fitBox(st, it);
     page().staves.sort((a, b) => S.middle(a.lines) - S.middle(b.lines));
   }
 
@@ -147,11 +149,67 @@
     if (!st) return;
     const before = snapshot();
     st.lines = shift(st.lines, dx, dy);
+    shiftChant(st, boxesOf(st), dx, dy);
     settle(st);
     commit(before);
     draw();
   }
   const shift = (lines, dx, dy) => lines.map(l => l.map((v, i) => v + (i & 1 ? dy : dx)));
+  // a staff's chant goes where the staff goes: its items' boxes, as they were (boxes), moved by dx, dy
+  const boxesOf = st => st.syllables.map(syl => syl.items.map(it => it.box ? it.box.slice() : null));
+  function shiftChant(st, boxes, dx, dy) {
+    st.syllables.forEach((syl, i) => syl.items.forEach((it, j) => {
+      const b = boxes[i] && boxes[i][j];
+      if (b) it.box = [b[0] + dx, b[1] + dy, b[2], b[3]];
+    }));
+  }
+
+  // ---------------------------------------------------------------- the chant on a staff
+  // GABC placed on the selected staff: a line of it on each staff from there down the page, as many as its line
+  // breaks (z) say. Each staff's chant is laid out along it, its gaps stretched to fill the staff; the chant is
+  // listed in the document's chants under its name. Returns false (and says why) if it can't be placed.
+  function placeChant(src) {
+    const st = staffOf(selected);
+    if (!st) { ctx.say('Select the staff the chant begins on first.', true); return false; }
+    let r;
+    try { r = C.fromGabc(src); } catch (e) { ctx.say(e.message, true); return false; }
+    const list = page().staves, from = list.indexOf(st), targets = list.slice(from, from + r.staves.length);
+    const before = snapshot();
+    targets.forEach((t, k) => {
+      t.syllables = JSON.parse(JSON.stringify(r.staves[k].syllables));
+      N.place(t);
+    });
+    const ids = targets.map(t => t.id);
+    for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => !ids.includes(id));
+    ctx.state.doc.chants = ctx.state.doc.chants.filter(c => c.staves.length);
+    ctx.state.doc.chants.push({ headers: r.headers, staves: ids });
+    commit(before);
+    draw();
+    const name = r.headers.name ? `${r.headers.name}: ` : '';
+    if (r.staves.length > targets.length)
+      ctx.say(`${name}placed on ${targets.length} ${targets.length === 1 ? 'staff' : 'staves'}, but it has ${r.staves.length} lines; the last ${r.staves.length - targets.length} had no staff below to go on. Mark more staves and place it again.`, true);
+    else ctx.say(`${name}placed on ${targets.length === 1 ? 'the staff' : `${targets.length} staves`}. Hold H to compare it with the page.`);
+    return true;
+  }
+
+  // the chant taken off the selected staff
+  function clearChant() {
+    const st = staffOf(selected);
+    if (!st || !st.syllables.length) return;
+    const before = snapshot();
+    st.syllables = [];
+    for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => id !== st.id);
+    ctx.state.doc.chants = ctx.state.doc.chants.filter(c => c.staves.length);
+    commit(before);
+    draw();
+  }
+
+  // the chant the selected staff belongs to (or the first), as GABC with the source's line breaks
+  function gabc() {
+    const doc = ctx.state.doc;
+    const chant = doc.chants.find(c => c.staves.includes(selected)) || doc.chants[0];
+    return chant ? { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true }) } : null;
+  }
 
   // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away
   function dbl(e) {
@@ -179,7 +237,7 @@
     const id = t.dataset.staff;
     if (selected !== id) { selected = id; draw(); }
     const st = staffOf(id);
-    drag = { act, from: p, start: JSON.stringify(st.lines), before: snapshot(), knot: +t.dataset.knot, line: +t.dataset.line, moved: false };
+    drag = { act, from: p, start: JSON.stringify(st.lines), boxes: boxesOf(st), before: snapshot(), knot: +t.dataset.knot, line: +t.dataset.line, moved: false };
   }
 
   function move(e) {
@@ -191,7 +249,7 @@
     const st = staffOf(selected), start = JSON.parse(drag.start);
     if (!st) return;
     const xi = 2 * drag.knot, yi = xi + 1;
-    if (drag.act === 'body') st.lines = shift(start, dx, dy);
+    if (drag.act === 'body') { st.lines = shift(start, dx, dy); shiftChant(st, drag.boxes, dx, dy); }
     else if (drag.act === 'knot') st.lines = start.map(l => { const m = l.slice(); m[xi] += dx; m[yi] += dy; return m; });
     else if (drag.act === 'point') st.lines = start.map((l, i) => { const m = l.slice(); if (i === drag.line) m[yi] += dy; return m; });
     // a staff can't be turned inside out, nor its points pass one another
@@ -266,7 +324,18 @@
       // the staff's area: its lines, half a space beyond the outer ones; grabbing it moves the staff
       el('polygon', { points: pts(l[0], -s).concat(pts(l[3], s).reverse()).map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
       for (const ln of l) el('polyline', { points: pts(ln, 0).map(q => q.join(',')).join(' '), class: 'line', 'data-act': 'body', 'data-staff': st.id }, g);
-      for (const syl of st.syllables) for (const it of syl.items) if (it.box) el('rect', { x: it.box[0], y: it.box[1], width: it.box[2], height: it.box[3], class: 'item' + (it.conf !== undefined && it.conf < 0.8 ? ' doubt' : '') }, g);
+      // the chant: its glyphs where they are, along the staff (tilted with it); its words under it
+      if (st.syllables.some(syl => syl.items.some(it => it.box))) {
+        const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
+        for (const v of L.glyphs) {
+          const t = el('text', { x: v.x, y: v.y, 'font-size': L.size, class: 'glyph' + (v.conf !== undefined && v.conf < 0.8 ? ' doubt' : ''), transform: `rotate(${v.angle.toFixed(3)} ${v.x} ${v.y})` }, ch);
+          t.textContent = v.ch;
+        }
+        for (const v of L.texts) {
+          const t = el('text', { x: v.x, y: v.y, 'font-size': L.textSize, class: 'syl' }, ch);
+          t.textContent = v.text.replace(/<[^>]*>/g, '');
+        }
+      }
       if (!sel) continue;
       // the dots no bigger than a third of a space, so the bar between them can still be grabbed
       const rr = Math.max(2.5 * u, Math.min(r, S.spacing(l) / 3));
@@ -300,12 +369,22 @@
     }
     out.textContent = text;
     for (const id of ['refit', 'evenly', 'remove']) document.getElementById(id).disabled = !st;
+    const place = document.getElementById('placeChant');
+    if (place) {
+      place.disabled = !st;
+      document.getElementById('clearChant').disabled = !st || !st.syllables.length;
+      document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length;
+      const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id));
+      document.getElementById('chantInfo').textContent = !st ? 'Select the staff the chant begins on.'
+        : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
+        : 'This staff has no chant yet.';
+    }
     document.getElementById('undo').disabled = !history.undo.length;
     document.getElementById('redo').disabled = !history.redo.length;
   }
 
   global.CGEditor = {
-    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff,
+    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc,
     get selected() { return selected; }, set selected(id) { selected = id; draw(); }
   };
 })(window);
