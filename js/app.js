@@ -1,15 +1,15 @@
-// Wires the controls to the viewer and draws the document over the page.
+// Wires the controls to the viewer and to the editing layer (editor.js), and saves and opens documents.
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const V = window.CGViewer, C = window.CGChant;
-  const SVG = 'http://www.w3.org/2000/svg';
+  const V = window.CGViewer, C = window.CGChant, E = window.CGEditor;
   const MAX_PIXELS = 24e6;   // the largest canvas drawn; a bigger zoom is drawn at this and stretched
 
   // src: the open source (viewer.js); doc: its document (chant.js); page: the page shown, from 0;
-  // zoom: 'width' or 'page' (fitted to the window) or a number (page units to CSS pixels)
-  const state = { src: null, doc: null, page: 0, zoom: 'width' };
-  window.CGApp = { state, open, show };
+  // zoom: 'width' or 'page' (fitted to the window) or a number (page units to CSS pixels);
+  // dirty: changed since it was last saved
+  const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false };
+  window.CGApp = { state, open, show, save };
 
   // ---------------------------------------------------------------- status
   function say(msg, err) {
@@ -19,23 +19,84 @@
   }
 
   // ---------------------------------------------------------------- opening
+  // files: a scan (a PDF or page images), or a saved document (.json), or both together
+  const isDoc = f => /\.json$/i.test(f.name) || f.type === 'application/json';
   async function open(files) {
-    say('Opening …');
-    let src;
-    try { src = await V.open(files, (done, total) => say(`Reading page ${done} of ${total} …`)); }
-    catch (e) { say(e.message || String(e), true); return false; }
-    if (state.src) state.src.close();
-    state.src = src;
-    state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes });
-    state.page = 0;
-    say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
-    $('pageCount').textContent = src.count;
-    $('pageNo').max = src.count;
-    $('pageGroup').hidden = false;
-    $('empty').hidden = true;
-    $('page').hidden = false;
-    await show(0);
+    files = [...files];
+    const docs = files.filter(isDoc), scans = files.filter(f => !isDoc(f));
+    if (docs.length > 1) { say('Open one document at a time.', true); return false; }
+    if (scans.length) {
+      if (state.dirty && !confirm('The staves you have marked on this scan aren\'t saved. Open another anyway?')) return false;
+      say('Opening …');
+      let src;
+      try { src = await V.open(scans, (done, total) => say(`Reading page ${done} of ${total} …`)); }
+      catch (e) { say(e.message || String(e), true); return false; }
+      if (state.src) state.src.close();
+      state.src = src;
+      pixelCache = null;
+      state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes });
+      state.page = 0;
+      state.dirty = false;
+      E.reset();
+      say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
+      $('pageCount').textContent = src.count;
+      $('pageNo').max = src.count;
+      for (const id of ['pageGroup', 'staffGroup', 'docGroup']) $(id).hidden = false;
+      $('empty').hidden = true;
+      $('page').hidden = false;
+    }
+    if (docs.length) {
+      if (!state.src) { say('Open the scan first, then its document (or choose both together).', true); return false; }
+      if (!scans.length && state.dirty && !confirm('Your changes to this document aren\'t saved. Open the other one anyway?')) return false;
+      if (!(await openDoc(docs[0]))) return false;
+    }
+    await show(docs.length ? state.page : 0);
     return true;
+  }
+
+  // a saved document, for the scan that is open: it must have as many pages, of the same sizes
+  async function openDoc(file) {
+    let doc;
+    try { doc = JSON.parse(await file.text()); } catch (e) { say(`${file.name} isn't a ChantGPT document.`, true); return false; }
+    const bad = C.check(doc);
+    if (bad.length) { say(`${file.name} can't be opened: ${bad.slice(0, 3).join(' ')}`, true); return false; }
+    const src = state.src, same = (a, b) => Math.abs(a - b) <= Math.max(1, 0.005 * b);
+    if (doc.pages.length !== src.count || doc.pages.some((p, i) => !same(p.size[0], src.sizes[i][0]) || !same(p.size[1], src.sizes[i][1]))) {
+      say(`${file.name} belongs to ${doc.source.name || 'another scan'} (${doc.pages.length} pages), not to the scan that is open (${src.count} pages).`, true);
+      return false;
+    }
+    state.doc = doc;
+    state.dirty = false;
+    E.reset();
+    const n = C.staves(doc).length;
+    say(`${file.name}: ${n} ${n === 1 ? 'staff' : 'staves'} on ${doc.pages.filter(p => p.staves.length).length} pages.` +
+      (doc.source.name && doc.source.name !== src.name ? ` It was made for ${doc.source.name}; the pages match.` : ''));
+    return true;
+  }
+
+  // ---------------------------------------------------------------- saving
+  function save() {
+    if (!state.doc) return;
+    const blob = new Blob([JSON.stringify(state.doc, null, 1) + '\n'], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.src.name.replace(/\.[^.]+$/, '').replace(/ \(.*$/, '') || 'chant') + '.chantgpt.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    state.dirty = false;
+    say(`Saved as ${a.download}. To go on later, open the scan and this file together.`);
+  }
+  window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  // the page in grey for finding lines, one page kept at a time
+  let pixelCache = null;
+  function pixels(i) {
+    if (!pixelCache || pixelCache.page !== i) pixelCache = { page: i, promise: state.src.pixels(i) };
+    const c = pixelCache;
+    c.promise.catch(() => { if (pixelCache === c) pixelCache = null; });
+    return c.promise;
   }
 
   // ---------------------------------------------------------------- showing a page
@@ -54,7 +115,7 @@
     const box = $('page');
     box.style.width = `${w * scale}px`;
     box.style.height = `${h * scale}px`;
-    drawOverlay(i);
+    E.draw();
     const name = src.names ? ` · ${src.names[i]}` : '';
     $('pageInfo').textContent = `${Math.round(w)} × ${Math.round(h)} ${src.type === 'pdf' ? 'points' : 'pixels'}${name}`;
     const n = ++showing;
@@ -83,24 +144,16 @@
     show(state.page);
   }
 
-  // ---------------------------------------------------------------- the document over the page
-  // Drawn in the page's own units, so it lines up at any zoom: each staff's area and lines, and each item's box,
-  // the doubtful ones (confidence under 0.8) marked.
-  function drawOverlay(i) {
-    const svg = $('overlay'), page = state.doc.pages[i];
-    svg.setAttribute('viewBox', `0 0 ${page.size[0]} ${page.size[1]}`);
-    svg.setAttribute('preserveAspectRatio', 'none');
-    svg.replaceChildren();
-    const el = (name, attrs) => { const e = document.createElementNS(SVG, name); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
-    const rect = (b, cls) => el('rect', { x: b[0], y: b[1], width: b[2], height: b[3], class: cls });
-    for (const st of page.staves) {
-      if (st.box) rect(st.box, 'staff');
-      for (const l of st.lines || []) el('line', { x1: l[0], y1: l[1], x2: l[2], y2: l[3], class: 'line' });
-      for (const syl of st.syllables) for (const it of syl.items) if (it.box) rect(it.box, 'item' + (it.conf !== undefined && it.conf < 0.8 ? ' doubt' : ''));
-    }
-  }
-
   // ---------------------------------------------------------------- controls
+  E.init({ state, svg: $('overlay'), say, pixels, show, changed: () => { state.dirty = true; } });
+  $('refit').addEventListener('click', () => E.refit());
+  $('evenly').addEventListener('click', () => E.evenly());
+  $('remove').addEventListener('click', () => E.remove());
+  $('undo').addEventListener('click', () => E.undo());
+  $('redo').addEventListener('click', () => E.redo());
+  $('save').addEventListener('click', save);
+  $('openDoc').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });
+
   $('file').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });
   $('drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
   // a drop anywhere on the window opens the files
@@ -120,7 +173,11 @@
   $('zoomIn').addEventListener('click', () => zoom('in'));
   $('zoomOut').addEventListener('click', () => zoom('out'));
   document.addEventListener('keydown', e => {
-    if (!state.src || e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (!state.src || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); save(); return; }
+    if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { peek(true); e.preventDefault(); return; }
+    if (E.key(e)) { e.preventDefault(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
     if (k === 'ArrowRight' || k === 'PageDown') show(state.page + 1);
     else if (k === 'ArrowLeft' || k === 'PageUp') show(state.page - 1);
@@ -131,6 +188,11 @@
     else return;
     e.preventDefault();
   });
+  // holding H hides the layer, to see the page under it
+  const peek = on => $('overlay').classList.toggle('peek', on);
+  document.addEventListener('keyup', e => { if (e.key === 'h' || e.key === 'H') peek(false); });
+  window.addEventListener('blur', () => peek(false));
+
   let resizing = 0;
   window.addEventListener('resize', () => {
     if (!state.src || typeof state.zoom === 'number') return;

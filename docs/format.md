@@ -63,9 +63,10 @@ is how training data and tests will be made.
 **Staff**
 
 - `id`: unique in the document. The app writes `p<page>s<staff>`, but any string will do.
-- `box`: `[x, y, width, height]` around the staff and its notes (optional).
+- `box`: `[x, y, width, height]` around the staff and its notes (optional). The app sets it from the lines: from
+  their ends, and a space and a half above the top line and below the bottom one.
 - `lines`: the four staff lines, top to bottom, each `[x0, y0, x1, y1]`. Two points per line allow for a tilted
-  scan (optional, but the recognizer will need them).
+  scan (optional, but the recognizer will need them). The app keeps a page's staves in reading order, top to bottom.
 - `syllables`: in order, left to right.
 
 **Syllable**

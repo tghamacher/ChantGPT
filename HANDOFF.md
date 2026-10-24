@@ -185,8 +185,8 @@ and dragging, and as the record of where the model looked), but what the user se
    - pdf.js page viewer (PDFs and page images);
    - the internal format, its GABC export and import, and tests.
 1. **The editing layer, no AI yet** (see "The editing layer"):
-   - fitting staff lines by hand, and drawing a chant from GABC onto them over the scan: the base everything else
-     needs, so first;
+   - fitting staff lines by hand (done), and drawing a chant from GABC onto them over the scan: the base everything
+     else needs, so first;
    - then dragging and editing neumes, then the text layer (both readings), undo and redo;
    - the format's additions (note positions, the as-written reading, `checked`, corrections);
    - pitch from the clef, the custos check, the other rule-based alerts;
@@ -208,6 +208,21 @@ and dragging, and as the record of where the model looked), but what the user se
 
 ## Done
 
+- **Step 1, first part: staves** (version 0.2.0, branch `step-1-staves`):
+  - `js/editor.js`: the editing layer. Drag a box round a staff to add it; its lines are found in the ink, or spread
+    evenly over the box if they can't be. Select a staff (click, or Tab) to move it (drag, or arrow keys), drag one
+    line's end up or down (the dots), drag an end bar to lengthen, shorten or tilt it; F finds its lines again, E
+    spaces them evenly, Delete removes it. Undo and redo (Ctrl+Z, Ctrl+Y) of everything, page by page. Holding H hides
+    the layer.
+  - `js/staves.js`: staff geometry, and `fit()`, which finds four lines in a region of the page: darkness against the
+    paper summed along rows at each small tilt, the sharpest tilt kept; peaks that stand clear of the paper's noise;
+    the four strongest evenly spaced; their ends where three of the four lines are drawn. Within about a pixel on
+    `test/pages/engraved.jpg` (faint, blurred, tilted 0.7°, noisy).
+  - `js/viewer.js`: `pixels(page)` gives a page in grey for this, at 300 dpi for a PDF.
+  - Saving a document (`.chantgpt.json`) and opening it again with its scan (it must have the same pages).
+  - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
+  - Not yet: finding all the staves on a page at once (step 2 will start from `fit()`), curved lines (a warped page
+    needs more than two points a line), and the touch screen (dragging on the page doesn't scroll it).
 - **Step 0** (version 0.1.0):
   - `index.html`, `css/site.css`, `js/app.js`: open a PDF or page images, page through them, zoom, with an empty
     overlay (`<svg>`) drawn from the document in page coordinates, ready for the editor.
@@ -222,7 +237,7 @@ and dragging, and as the record of where the model looked), but what the user se
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
 - The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
-- Step 0 is on the branch `step-0-setup`, not yet merged into `main`.
+- The staves work (step 1, first part) is on the branch `step-1-staves`, not yet merged into `main`.
 - GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
   folder `/ (root)`.
 

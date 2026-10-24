@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.1.0">
+<link rel="stylesheet" href="css/site.css?v=0.2.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.1.0">version 0.1.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.2.0">version 0.2.0</span>
   <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
   <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
 </header>
@@ -20,8 +20,8 @@
     <section class="cg-group"><h2>1 · Source</h2>
       <label class="cg-drop" id="drop" tabindex="0">
         <strong>Choose a PDF or page images</strong>
-        <small>Click to browse, or drag them here. One PDF, or several images (JPEG, PNG, WebP), one per page.</small>
-        <input type="file" id="file" accept=".pdf,application/pdf,image/*" multiple hidden>
+        <small>Click to browse, or drag them here. One PDF, or several images (JPEG, PNG, WebP), one per page. Add a saved document to carry on where you left off.</small>
+        <input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden>
       </label>
       <p class="cg-status" id="status" role="status" aria-live="polite"></p>
     </section>
@@ -44,9 +44,38 @@
       <p class="cg-hint">Arrow keys or Page Up and Page Down turn the pages; + and − zoom.</p>
     </section>
 
+    <section class="cg-group" id="staffGroup" hidden><h2>3 · Staves</h2>
+      <p>Drag a box around a staff, from its first note to its last, to add it. ChantGPT finds the four lines inside; if they're off, click the staff and drag them into place.</p>
+      <ul class="cg-keys">
+        <li>Drag a staff to move it.</li>
+        <li>Drag the dot at the end of a line to move that end up or down.</li>
+        <li>Drag the bar at either end of the staff to lengthen, shorten or tilt it.</li>
+      </ul>
+      <div class="cg-row">
+        <button type="button" id="refit" title="Find the selected staff's lines in the ink again (F)">Find lines</button>
+        <button type="button" id="evenly" title="Space the middle lines evenly between the outer ones (E)">Space evenly</button>
+        <button type="button" id="remove" title="Delete the selected staff (Delete)">Delete</button>
+      </div>
+      <div class="cg-row">
+        <button type="button" id="undo" title="Undo (Ctrl+Z)">Undo</button>
+        <button type="button" id="redo" title="Redo (Ctrl+Y)">Redo</button>
+      </div>
+      <p class="cg-hint" id="staffInfo"></p>
+      <p class="cg-hint">Hold H to hide the lines and see the page under them.</p>
+      <p class="cg-hint">With a staff selected: arrow keys nudge it (Shift for more), Tab goes to the next staff, F finds its lines again, E spaces them evenly, Delete removes it, Esc lets go of it.</p>
+    </section>
+
+    <section class="cg-group" id="docGroup" hidden><h2>4 · Document</h2>
+      <p>Save what you've marked as a document. To carry on later, open the scan and the document together.</p>
+      <div class="cg-row">
+        <button type="button" id="save" title="Save the document (Ctrl+S)">Save document</button>
+        <label class="cg-button">Open a document<input type="file" id="openDoc" accept=".json,application/json" hidden></label>
+      </div>
+    </section>
+
     <section class="cg-group" id="about"><h2>About</h2>
       <p>ChantGPT will read Gregorian chant from scans of printed books and manuscripts, give you the music in GABC (the format of Gregorio), and point out the places it isn't sure of so you can check them against the page. Later it will read Renaissance mensural notation too.</p>
-      <p><strong>This is an early version.</strong> For now you can open a scan and page through it. Marking staves and neumes comes next, and recognition after that.</p>
+      <p><strong>This is an early version.</strong> For now you can open a scan, mark its staves and save them. Drawing and correcting the chant on them comes next, and recognition after that.</p>
       <p><strong>Private:</strong> your files are read in this browser and never leave your computer.</p>
     </section>
   </aside>
@@ -63,8 +92,10 @@
   </section>
 </main>
 
-<script src="js/chant.js?v=0.1.0"></script>
-<script src="js/viewer.js?v=0.1.0"></script>
-<script src="js/app.js?v=0.1.0"></script>
+<script src="js/chant.js?v=0.2.0"></script>
+<script src="js/staves.js?v=0.2.0"></script>
+<script src="js/viewer.js?v=0.2.0"></script>
+<script src="js/editor.js?v=0.2.0"></script>
+<script src="js/app.js?v=0.2.0"></script>
 </body>
 </html>

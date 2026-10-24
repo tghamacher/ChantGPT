@@ -1,6 +1,7 @@
 // Runs the unit tests in cases.js with Node: node test/node.js [part of a case's name]
 'use strict';
 require('../js/chant.js');
+require('../js/staves.js');
 require('./cases.js');
 const only = process.argv[2];
 let failed = 0, run = 0;

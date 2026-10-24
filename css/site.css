@@ -6,6 +6,7 @@
   --panel: #fffdf8; --field: #fff; --accent: #8a2a1b; --accent-ink: #fff; --focus: #b5542f;
   --err-bg: #fbe4df; --err-rule: #e6a99c;
   --staff: rgba(31, 94, 168, .9); --staff-fill: rgba(31, 94, 168, .07); --doubt: #c2410c;
+  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1);
   --page-shadow: 0 2px 12px rgba(0,0,0,.22);
   --textfont: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --ui: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -18,6 +19,7 @@
     --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
     --err-bg: #34201b; --err-rule: #6e3529;
     --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14);
     --page-shadow: 0 2px 16px rgba(0,0,0,.7);
   }
 }
@@ -27,6 +29,7 @@
   --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
   --err-bg: #34201b; --err-rule: #6e3529;
   --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14);
   --page-shadow: 0 2px 16px rgba(0,0,0,.7);
 }
 * { box-sizing: border-box; }
@@ -72,11 +75,23 @@ button, select, input { font: inherit; color: inherit; }
 .cg-empty { margin: 15vh auto 0; text-align: center; color: var(--muted); font-size: 16px; }
 .cg-page { position: relative; margin: 0 auto; box-shadow: var(--page-shadow); background: #fff; }
 .cg-page canvas { display: block; width: 100%; height: 100%; }
-.cg-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.cg-overlay .staff { fill: var(--staff-fill); stroke: none; }
-.cg-overlay .line { stroke: var(--staff); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
-.cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cg-overlay { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; }
+.cg-overlay.peek { visibility: hidden; }
+.cg-overlay .bg { fill: transparent; cursor: crosshair; }
+.cg-overlay .area { fill: var(--staff-fill); stroke: none; cursor: move; }
+.cg-overlay .line { stroke: var(--staff); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; cursor: move; }
+.cg-overlay .sel .area { fill: var(--sel-fill); }
+.cg-overlay .sel .line { stroke: var(--sel); stroke-width: 1.5; }
+.cg-overlay .end { stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cg-overlay .hit { stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; cursor: ew-resize; }
+.cg-overlay .handle { fill: var(--panel); stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; cursor: ns-resize; }
+.cg-overlay .band { fill: var(--staff-fill); stroke: var(--staff); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .cg-overlay .item.doubt { stroke: var(--doubt); stroke-width: 2; }
+.cg-keys { margin: 0 0 10px; padding-left: 18px; }
+.cg-button { background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
+.cg-button:hover { border-color: var(--accent); }
+.cg-row button:disabled { opacity: .45; cursor: default; border-color: var(--rule); }
 
 @media (max-width: 760px) {
   .cg-main { grid-template-columns: 1fr; height: auto; }

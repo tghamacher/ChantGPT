@@ -1,7 +1,8 @@
 // Opens a source, a PDF or a set of page images, and draws one page at a time on a canvas. Everything stays in the
 // browser: pdf.js (vendored in vendor/pdfjs) reads the PDF here, and nothing is sent anywhere.
-// A source: { name, type: 'pdf' | 'images', count, sizes: [[w, h], ...], render(index, canvas, scale), close() }.
-// Sizes are in the page's own units, which the document's boxes use too: PDF points (1/72 inch) or image pixels.
+// A source: { name, type: 'pdf' | 'images', count, sizes: [[w, h], ...], render(index, canvas, scale), pixels(index),
+// close() }. Sizes are in the page's own units, which the document's boxes use too: PDF points (1/72 inch) or image
+// pixels. pixels() gives a page in grey for finding things in it: { gray, w, h, scale }, scale being pixels per unit.
 (function (global) {
   'use strict';
 
@@ -13,6 +14,15 @@
       pdfjs.GlobalWorkerOptions.workerSrc = base() + 'pdf.worker.min.mjs';
     }
     return pdfjs;
+  }
+
+  const ANALYSIS_PIXELS = 24e6;   // the largest page image pixels() makes
+  // a canvas drawn by draw(ctx, w, h) at w × h, in grey
+  function greyOf(w, h, draw) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    return Promise.resolve(draw(c, ctx)).then(() => ({ gray: global.CGStaves.grey(ctx.getImageData(0, 0, w, h).data), w, h }));
   }
 
   const isPdf = f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf';
@@ -58,6 +68,13 @@
         try { await task.promise; } catch (e) { if (e && e.name === 'RenderingCancelledException') return false; throw e; } finally { task = null; }
         return true;
       },
+      // at 300 dots an inch, or less for a very large page
+      async pixels(i) {
+        const [w, h] = sizes[i], scale = Math.min(300 / 72, Math.sqrt(ANALYSIS_PIXELS / (w * h)));
+        const vp = pages[i].getViewport({ scale });
+        const g = await greyOf(Math.round(vp.width), Math.round(vp.height), canvas => pages[i].render({ canvas, viewport: vp }).promise);
+        return Object.assign(g, { scale: g.w / w });
+      },
       close() { pdf.destroy(); }
     };
   }
@@ -79,6 +96,13 @@
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(b, 0, 0, canvas.width, canvas.height);
         return true;
+      },
+      // the image's own pixels (fewer for a very large one)
+      async pixels(i) {
+        const b = bitmaps[i], scale = Math.min(1, Math.sqrt(ANALYSIS_PIXELS / (b.width * b.height)));
+        const w = Math.round(b.width * scale), h = Math.round(b.height * scale);
+        const g = await greyOf(w, h, (c, ctx) => ctx.drawImage(b, 0, 0, w, h));
+        return Object.assign(g, { scale: w / b.width });
       },
       close() { bitmaps.forEach(b => b.close()); }
     };
