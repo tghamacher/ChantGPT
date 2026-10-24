@@ -1,6 +1,8 @@
 // The editing layer over the page. For now: staves. Drag across a staff to add it (its four lines are found in the
-// ink, or spread evenly if they can't be); select one to move it, drag its lines' ends, or its ends to tilt and
-// stretch it; find its lines again, space them evenly, or delete it. Every change can be undone.
+// ink, bent if the page is, or spread evenly if they can't be found); select one to move it, drag a line's point up
+// or down, or the bar through all four lines at a point (an end, or a bend) to move it; double-click a staff to bend
+// it there, or a bend's bar to straighten it; find its lines again, space them evenly, or delete it. Every change
+// can be undone.
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
@@ -18,6 +20,7 @@
     ctx.svg.addEventListener('pointerdown', down);
     ctx.svg.addEventListener('pointermove', move);
     ctx.svg.addEventListener('pointerup', up);
+    ctx.svg.addEventListener('dblclick', dbl);
     ctx.svg.addEventListener('pointercancel', () => { if (drag && drag.before) restore(drag.before); drag = null; draw(); });
   }
 
@@ -81,7 +84,7 @@
   // region: [x, y, w, h] in page units. The lines found, in page units, or null.
   async function find(region) {
     const px = await ctx.pixels(ctx.state.page);
-    const r = S.fit(px.gray, px.w, px.h, region.map(v => v * px.scale));
+    const r = S.fitStaff(px.gray, px.w, px.h, region.map(v => v * px.scale));
     return r && r.lines.map(l => l.map(v => v / px.scale));
   }
 
@@ -97,14 +100,15 @@
     settle(st);
     selected = st.id;
     commit(before);
-    ctx.say(lines ? 'Staff added. Drag its lines to adjust them if they are off.' : 'Couldn\'t find four lines there, so they are spread evenly over the box. Drag them into place.');
+    ctx.say(!lines ? 'Couldn\'t find four lines there, so they are spread evenly over the box. Drag them into place.'
+      : S.count(lines[0]) > 2 ? 'Staff added. It bends, so it has a point at each bend; drag them if they are off.' : 'Staff added. Drag its lines to adjust them if they are off.');
     draw();
   }
 
   async function refit() {
     const st = staffOf(selected);
     if (!st) return;
-    const s = S.spacing(st.lines), xs = st.lines.flatMap(l => [l[0], l[2]]), ys = st.lines.flatMap(l => [l[1], l[3]]);
+    const s = S.spacing(st.lines), xs = st.lines.flatMap(S.xsOf), ys = st.lines.flatMap(l => l.filter((v, i) => i & 1));
     const x0 = Math.min(...xs) - 2 * s, x1 = Math.max(...xs) + 2 * s, y0 = Math.min(...ys) - 2 * s, y1 = Math.max(...ys) + 2 * s;
     const lines = await find([x0, y0, x1 - x0, y1 - y0]);
     if (!lines) { ctx.say('Couldn\'t find four lines along this staff. Drag them into place.'); return; }
@@ -142,8 +146,24 @@
     const st = staffOf(selected);
     if (!st) return;
     const before = snapshot();
-    st.lines = st.lines.map(l => [l[0] + dx, l[1] + dy, l[2] + dx, l[3] + dy]);
+    st.lines = shift(st.lines, dx, dy);
     settle(st);
+    commit(before);
+    draw();
+  }
+  const shift = (lines, dx, dy) => lines.map(l => l.map((v, i) => v + (i & 1 ? dy : dx)));
+
+  // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away
+  function dbl(e) {
+    const t = e.target.closest('[data-act]');
+    if (!t || !t.dataset.staff) return;
+    const st = staffOf(t.dataset.staff);
+    if (!st) return;
+    const before = snapshot();
+    if (t.dataset.act === 'knot') st.lines = S.removeBend(st.lines, +t.dataset.knot);
+    else st.lines = S.addBend(st.lines, at(e)[0]);
+    settle(st);
+    selected = st.id;
     commit(before);
     draw();
   }
@@ -159,7 +179,7 @@
     const id = t.dataset.staff;
     if (selected !== id) { selected = id; draw(); }
     const st = staffOf(id);
-    drag = { act, from: p, start: JSON.stringify(st.lines), before: snapshot(), side: +t.dataset.side, line: +t.dataset.line, moved: false };
+    drag = { act, from: p, start: JSON.stringify(st.lines), before: snapshot(), knot: +t.dataset.knot, line: +t.dataset.line, moved: false };
   }
 
   function move(e) {
@@ -170,12 +190,13 @@
     if (drag.act === 'new') { drag.to = p; draw(); return; }
     const st = staffOf(selected), start = JSON.parse(drag.start);
     if (!st) return;
-    const xi = drag.side ? 2 : 0, yi = xi + 1;
-    if (drag.act === 'body') st.lines = start.map(l => [l[0] + dx, l[1] + dy, l[2] + dx, l[3] + dy]);
-    else if (drag.act === 'end') st.lines = start.map(l => { const m = l.slice(); m[xi] += dx; m[yi] += dy; return m; });
+    const xi = 2 * drag.knot, yi = xi + 1;
+    if (drag.act === 'body') st.lines = shift(start, dx, dy);
+    else if (drag.act === 'knot') st.lines = start.map(l => { const m = l.slice(); m[xi] += dx; m[yi] += dy; return m; });
     else if (drag.act === 'point') st.lines = start.map((l, i) => { const m = l.slice(); if (i === drag.line) m[yi] += dy; return m; });
-    // a staff can't be turned inside out
-    if (st.lines[0][2] - st.lines[0][0] < 4 * unit() || st.lines[3][1] <= st.lines[0][1] || st.lines[3][3] <= st.lines[0][3]) st.lines = start;
+    // a staff can't be turned inside out, nor its points pass one another
+    const xs = S.xsOf(st.lines[0]), t = st.lines[0], b = st.lines[3];
+    if (xs.some((x, k) => k && x - xs[k - 1] < 4 * unit()) || xs.some((x, k) => b[2 * k + 1] <= t[2 * k + 1])) st.lines = start;
     draw(true);
   }
 
@@ -240,20 +261,22 @@
     el('rect', { x: 0, y: 0, width: pg.size[0], height: pg.size[1], class: 'bg' });
     for (const st of pg.staves) {
       const sel = st.id === selected, g = el('g', { class: 'staff' + (sel ? ' sel' : '') });
-      const l = st.lines, s = S.spacing(l) / 2;
+      const l = st.lines, s = S.spacing(l) / 2, n = S.count(l[0]);
+      const pts = (line, dy) => { const out = []; for (let k = 0; k < n; k++) out.push([line[2 * k], line[2 * k + 1] + dy]); return out; };
       // the staff's area: its lines, half a space beyond the outer ones; grabbing it moves the staff
-      el('polygon', { points: [[l[0][0], l[0][1] - s], [l[0][2], l[0][3] - s], [l[3][2], l[3][3] + s], [l[3][0], l[3][1] + s]].map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
-      for (const ln of l) el('line', { x1: ln[0], y1: ln[1], x2: ln[2], y2: ln[3], class: 'line', 'data-act': 'body', 'data-staff': st.id }, g);
+      el('polygon', { points: pts(l[0], -s).concat(pts(l[3], s).reverse()).map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
+      for (const ln of l) el('polyline', { points: pts(ln, 0).map(q => q.join(',')).join(' '), class: 'line', 'data-act': 'body', 'data-staff': st.id }, g);
       for (const syl of st.syllables) for (const it of syl.items) if (it.box) el('rect', { x: it.box[0], y: it.box[1], width: it.box[2], height: it.box[3], class: 'item' + (it.conf !== undefined && it.conf < 0.8 ? ' doubt' : '') }, g);
       if (!sel) continue;
       // the dots no bigger than a third of a space, so the bar between them can still be grabbed
       const rr = Math.max(2.5 * u, Math.min(r, S.spacing(l) / 3));
-      for (const side of [0, 1]) {
-        const xi = side ? 2 : 0;
+      // at each point (the ends, and any bends): a bar through all four lines, and a dot on each line
+      for (let k = 0; k < n; k++) {
+        const xi = 2 * k;
         const bar = { x1: l[0][xi], y1: l[0][xi + 1] - s, x2: l[3][xi], y2: l[3][xi + 1] + s };
-        el('line', Object.assign({ class: 'end' }, bar), g);
-        el('line', Object.assign({ class: 'hit', 'data-act': 'end', 'data-staff': st.id, 'data-side': side }, bar), g);
-        l.forEach((ln, i) => el('circle', { cx: ln[xi], cy: ln[xi + 1], r: rr, class: 'handle', 'data-act': 'point', 'data-staff': st.id, 'data-side': side, 'data-line': i }, g));
+        el('line', Object.assign({ class: k && k < n - 1 ? 'end bend' : 'end' }, bar), g);
+        el('line', Object.assign({ class: 'hit', 'data-act': 'knot', 'data-staff': st.id, 'data-knot': k }, bar), g);
+        l.forEach((ln, i) => el('circle', { cx: ln[xi], cy: ln[xi + 1], r: rr, class: 'handle', 'data-act': 'point', 'data-staff': st.id, 'data-knot': k, 'data-line': i }, g));
       }
     }
     if (drag && drag.act === 'new' && drag.moved) {
@@ -270,7 +293,11 @@
     const list = page().staves, st = staffOf(selected);
     const n = list.length;
     let text = n ? `${n} ${n === 1 ? 'staff' : 'staves'} on this page.` : 'No staves on this page yet.';
-    if (st) text += ` Staff ${list.indexOf(st) + 1} is selected: lines ${S.spacing(st.lines).toFixed(1)} apart, tilted ${S.tilt(st.lines).toFixed(2)}°.`;
+    if (st) {
+      const bends = S.count(st.lines[0]) - 2;
+      text += ` Staff ${list.indexOf(st) + 1} is selected: lines ${S.spacing(st.lines).toFixed(1)} apart, tilted ${S.tilt(st.lines).toFixed(2)}°` +
+        (bends ? `, bent at ${bends} ${bends === 1 ? 'point' : 'points'} (up to ${S.bend(st.lines).toFixed(1)} spaces off straight).` : '.');
+    }
     out.textContent = text;
     for (const id of ['refit', 'evenly', 'remove']) document.getElementById(id).disabled = !st;
     document.getElementById('undo').disabled = !history.undo.length;

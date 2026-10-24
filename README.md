@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.2.0** · a working title
+**Version 0.3.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -14,8 +14,9 @@ These are the first steps. You can:
 
 - open a PDF of a chant book, or photographs or scans of its pages (JPEG, PNG, WebP);
 - page through it and zoom;
-- mark its staves: drag a box around a staff and ChantGPT finds its four lines in the ink, tilt and all. If a line is
-  off, drag it into place; hold H to see the page without the lines over it;
+- mark its staves: drag a box around a staff and ChantGPT finds its four lines in the ink, tilt and all, and bent
+  where the page couldn't be scanned flat. If a line is off, drag it into place; double-click to bend a staff where
+  it needs it; hold H to see the page without the lines over it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
 Next, the chant itself: GABC drawn as square notation on the staves, over the page, so you can move each neume and
@@ -45,7 +46,8 @@ and open http://localhost:8000.
 - `js/editor.js`: the editing layer over the page (for now, staves), with undo.
 - `js/staves.js`: staff geometry, and finding a staff's four lines in the ink.
 - `tools/make-test-scan.js`: makes `test/pages/engraved.jpg`, chant engraved by exsurge and roughened to look like a
-  scan, with the true position of every line, for testing the line finding.
+  scan, and `warped.jpg`, the same page curling up towards the binding, each with the true position of every line,
+  for testing the line finding.
 - `js/chant.js`: the document format (GABC placed on the page), reading and writing GABC, and checks. See
   [docs/format.md](docs/format.md).
 - `HANDOFF.md`: the plan.

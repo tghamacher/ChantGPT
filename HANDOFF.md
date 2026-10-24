@@ -221,8 +221,19 @@ and dragging, and as the record of where the model looked), but what the user se
   - `js/viewer.js`: `pixels(page)` gives a page in grey for this, at 300 dpi for a PDF.
   - Saving a document (`.chantgpt.json`) and opening it again with its scan (it must have the same pages).
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
-  - Not yet: finding all the staves on a page at once (step 2 will start from `fit()`), curved lines (a warped page
-    needs more than two points a line), and the touch screen (dragging on the page doesn't scroll it).
+  - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
+    (dragging on the page doesn't scroll it).
+- **Step 1, bent staves** (version 0.3.0, branch `step-1-warped`): pages that couldn't be scanned flat (the user
+  sees these often in bound books).
+  - The format: a staff line is a list of points `[x0, y0, x1, y1, …]`, straight between them; two for a straight
+    staff, as before, so older documents still open.
+  - `fitStaff()` in `js/staves.js`: fits the middle of the box first, then follows the staff outwards a strip (about
+    eight spaces) at a time, each strip searched where the last said the lines were heading, the slope's steepening
+    carried on (a curl grows towards the binding); then drops the points that make no difference, and finds the ends
+    again along the bent lines. A straight staff comes out with two points, fitted as a whole. Follows a bow of up to
+    about three spaces; on `test/pages/warped.jpg` (a curl of about 1.3 spaces at the binding) within 2 px.
+  - Editing: every point (ends and bends) has a bar through the four lines (drag to move that point of the staff)
+    and a dot on each line; double-click a staff to add a bend there, double-click a bend's bar to take it away.
 - **Step 0** (version 0.1.0):
   - `index.html`, `css/site.css`, `js/app.js`: open a PDF or page images, page through them, zoom, with an empty
     overlay (`<svg>`) drawn from the document in page coordinates, ready for the editor.
@@ -237,7 +248,7 @@ and dragging, and as the record of where the model looked), but what the user se
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
 - The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
-- The staves work (step 1, first part) is on the branch `step-1-staves`, not yet merged into `main`.
+- The bent staves (version 0.3.0) are on the branch `step-1-warped`, not yet merged into `main`.
 - GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
   folder `/ (root)`.
 

@@ -113,8 +113,16 @@
         same('even', l.map(v => v[1]), [200, 216, 232, 248]),
         same('spacing', S().spacing(l), 16),
         same('tilt', S().tilt([[0, 0, 100, 1], [0, 10, 100, 11], [0, 20, 100, 21], [0, 30, 100, 31]]).toFixed(3), '0.573'),
+        same('height along a bent line, and beyond its ends', [0, 50, 100, 150, 200, 250].map(x => S().yAt([0, 10, 100, 20, 200, 10], x)), [10, 15, 20, 15, 10, 5]),
+        same('spacing of a bent staff', S().spacing([[0, 0, 50, 5, 100, 0], [0, 10, 50, 15, 100, 10], [0, 20, 50, 25, 100, 20], [0, 30, 50, 35, 100, 30]]), 10),
+        same('how far it bends, in spaces', S().bend([[0, 0, 50, 5, 100, 0], [0, 10, 50, 15, 100, 10], [0, 20, 50, 25, 100, 20], [0, 30, 50, 35, 100, 30]]), 0.5),
         same('box: a space and a half above and below, kept on the page', S().box(l, [1000, 1000]), [100, 176, 800, 96]),
         same('box at the top of the page', S().box(S().even([0, 10, 50, 30]), [1000, 1000]), [0, 0, 50, 55]),
+        same('a bend added, then taken away', S().removeBend(S().addBend(l, 300), 1), l),
+        same('a bend added where it is', S().addBend(l, 300).map(v => v.length), [6, 6, 6, 6]),
+        same('no bend beyond the ends', S().addBend(l, 950), l),
+        same('simplified: a straight run loses its middle point', S().simplify([[0, 0, 50, 0.1, 100, 0], [0, 10, 50, 10.1, 100, 10], [0, 20, 50, 20.1, 100, 20], [0, 30, 50, 30.1, 100, 30]], 0.5).map(v => v.length), [4, 4, 4, 4]),
+        same('box of a bent staff', S().box([[0, 0, 50, 5, 100, 0], [0, 10, 50, 15, 100, 10], [0, 20, 50, 25, 100, 20], [0, 30, 50, 35, 100, 30]]), [0, -15, 100, 65]),
         same('space evenly', S().spaceEvenly([[0, 0, 90, 3], [0, 14, 90, 5], [0, 17, 90, 26], [0, 30, 90, 33]]).map(v => [v[1], v[3]]), [[0, 3], [10, 13], [20, 23], [30, 33]]));
     } },
     { name: 'staves: lines found in the ink, level and tilted, among notes and words', unit: () => {
@@ -125,6 +133,21 @@
         const want = [0, 1, 2, 3].map(i => [100, 200.5 + 16 * i + slope * -400, 900, 200.5 + 16 * i + slope * 400]);
         const off = Math.max(...r.lines.flatMap((l, i) => l.map((v, j) => Math.abs(v - want[i][j]))));
         if (off > 1.5) bad.push(`slope ${slope}: ${JSON.stringify(S().roundLines(r.lines))} is ${off.toFixed(1)} px off`);
+      }
+      return bad;
+    } },
+    { name: 'staves: a bent staff followed end to end, a straight one kept straight', unit: () => {
+      const bad = [];
+      // [bow, slope, a line of words]: at a bow of three spaces the staff would run into the words, so none there
+      for (const [bow, slope, words] of [[0, 0, true], [0, -0.045, true], [10, 0, true], [24, 0, true], [-20, 0.01, true], [36, 0, true], [50, 0, false]]) {
+        const { g, w, h } = page(slope, words, bow), r = S().fitStaff(g, w, h, [60, 60, 900, 400]);
+        if (!r) { bad.push(`bow ${bow}: nothing found`); continue; }
+        const l = r.lines, xs = S().xsOf(l[0]), truth = (i, x) => 200.5 + 16 * i + bow * Math.sin(Math.PI * (x - 100) / 800) + slope * (x - 500);
+        let off = 0;
+        for (let x = xs[0]; x <= xs[xs.length - 1]; x += 5) for (let i = 0; i < 4; i++) off = Math.max(off, Math.abs(S().yAt(l[i], x) - truth(i, x)));
+        if (off > 2) bad.push(`bow ${bow}, slope ${slope}: up to ${off.toFixed(1)} px off`);
+        if (Math.abs(xs[0] - 100) > 4 || Math.abs(xs[xs.length - 1] - 900) > 4) bad.push(`bow ${bow}: runs ${xs[0]}–${xs[xs.length - 1]}`);
+        if ((S().count(l[0]) > 2) !== (bow !== 0)) bad.push(`bow ${bow}: ${S().count(l[0])} points`);
       }
       return bad;
     } },
@@ -162,7 +185,7 @@
       const svg = w.document.getElementById('overlay'), page = w.document.getElementById('page');
       return [].concat(
         same('viewBox', svg.getAttribute('viewBox'), '0 0 420 595'),
-        same('lines', svg.querySelectorAll('line').length, 4),
+        same('lines', svg.querySelectorAll('polyline').length, 4),
         same('boxes', svg.querySelectorAll('rect.item').length, 2),
         same('doubtful', svg.querySelectorAll('rect.doubt').length, 1),
         same('overlay covers the page', [svg.getBoundingClientRect().width, svg.getBoundingClientRect().height].map(Math.round), [page.clientWidth, page.clientHeight]));
@@ -251,6 +274,52 @@
       });
       return bad;
     } },
+    { name: 'app: bent lines followed on a page that wasn\'t scanned flat', browser: true, unit: async app => {
+      const { w } = await app('test/pages/warped.jpg');
+      const truth = await (await w.fetch('test/pages/warped-lines.json')).json(), bad = [];
+      const rough = [[-30, 18, 20], [-10, 26, 8], [-40, 12, 30], [0, 22, 14], [-20, 30, 25]];
+      for (const [k, t] of truth.entries()) {
+        const ys = t.flatMap(l => l.filter((v, i) => i & 1)), r = rough[k];
+        await w.CGEditor.addStaff([90 + r[0], Math.min(...ys) - r[1], 1050, Math.max(...ys) - Math.min(...ys) + r[1] + r[2]]);
+      }
+      const staves = w.CGApp.state.doc.pages[0].staves, S = w.CGStaves;
+      if (staves.length !== truth.length) return [`${staves.length} staves, expected ${truth.length}`];
+      truth.forEach((t, k) => {
+        const l = staves[k].lines, g = S.spacing(t), xs = S.xsOf(l[0]), from = xs[0], to = xs[xs.length - 1];
+        let off = 0;
+        for (let x = from; x <= to; x += 4) for (let i = 0; i < 4; i++) off = Math.max(off, Math.abs(S.yAt(l[i], x) - S.yAt(t[i], x)));
+        if (off > 2) bad.push(`staff ${k + 1}: lines up to ${off.toFixed(1)} px off`);
+        const tx = S.xsOf(t[0]);
+        if (Math.abs(from - tx[0]) > g / 2 || Math.abs(to - tx[tx.length - 1]) > g / 2) bad.push(`staff ${k + 1}: runs ${from}–${to}, truly ${tx[0]}–${tx[tx.length - 1]}`);
+        if (S.count(l[0]) < 3) bad.push(`staff ${k + 1}: not bent`);
+      });
+      return bad;
+    } },
+    { name: 'app: bends added, dragged and taken away', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page2.png');
+      await drag(w, [20, 45], [400, 110]);
+      const S = w.CGStaves, st = () => w.CGApp.state.doc.pages[0].staves[0];
+      await until(() => st());
+      const dbl = p => {
+        const svg = w.document.getElementById('overlay'), m = svg.getScreenCTM(), x = m.a * p[0] + m.e, y = m.d * p[1] + m.f;
+        w.document.elementFromPoint(x, y).dispatchEvent(new w.MouseEvent('dblclick', { clientX: x, clientY: y, bubbles: true }));
+      };
+      dbl([200, S.yAt(st().lines[1], 200) + 6]);
+      const bad = same('points after a double-click', S.count(st().lines[0]), 3);
+      if (Math.abs(st().lines[0][2] - 200) > 1) bad.push(`bend at ${st().lines[0][2]}, expected 200`);
+      // the bend's bar dragged down: the middle bows, the ends stay
+      const y0 = st().lines[0][1], ym = st().lines[0][3], mid = (S.yAt(st().lines[0], 200) + S.yAt(st().lines[3], 200)) / 2;
+      await drag(w, [200, mid], [200, mid + 10]);
+      bad.push(...same('ends stay', Math.round(st().lines[0][1]), Math.round(y0)));
+      if (Math.abs(st().lines[0][3] - (ym + 10)) > 1) bad.push(`the bend moved to ${st().lines[0][3]}, expected ${ym + 10}`);
+      if (!/bent at 1 point/.test(w.document.getElementById('staffInfo').textContent)) bad.push('No word of the bend: ' + w.document.getElementById('staffInfo').textContent);
+      dbl([200, (S.yAt(st().lines[0], 200) + S.yAt(st().lines[3], 200)) / 2]);
+      bad.push(...same('points after double-clicking the bend', S.count(st().lines[0]), 2));
+      w.CGEditor.undo();
+      bad.push(...same('undo brings the bend back', S.count(st().lines[0]), 3));
+      bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
+      return bad;
+    } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {
       const { w } = await app('test/pages/two-pages.pdf');
       await w.CGEditor.addStaff([20, 45, 380, 65]);
@@ -305,14 +374,15 @@
     } }
   ];
 
-  // a test page, as for a scan: four lines from x 100 to 900, top at 200, 16 apart, 2 px thick, along a slope;
-  // square notes on them; a line of words below if asked
-  function page(slope, words) {
+  // a test page, as for a scan: four lines from x 100 to 900, top at 200, 16 apart, 2 px thick, along a slope and
+  // bowed by bow pixels in the middle; square notes on them; a line of words below if asked
+  function page(slope, words, bow = 0) {
     const w = 1000, h = 500, g = new Uint8Array(w * h).fill(235);
     const ink = (x, y) => { if (x >= 0 && y >= 0 && x < w && y < h) g[y * w + x] = 20; };
-    for (let i = 0; i < 4; i++) for (let x = 100; x < 900; x++) { const y = Math.round(200 + 16 * i + slope * (x - 500)); ink(x, y); ink(x, y + 1); }
+    const off = x => slope * (x - 500) + bow * Math.sin(Math.PI * (x - 100) / 800);
+    for (let i = 0; i < 4; i++) for (let x = 100; x < 900; x++) { const y = Math.round(200 + 16 * i + off(x)); ink(x, y); ink(x, y + 1); }
     for (let j = 0; j < 20; j++) {
-      const cx = 150 + j * 35, cy = 200 + ((j * 3) % 7) * 8 + slope * (cx - 500) - 6;
+      const cx = 150 + j * 35, cy = 200 + ((j * 3) % 7) * 8 + off(cx) - 6;
       for (let a = 0; a < 12; a++) for (let b = 0; b < 12; b++) ink(cx + a, Math.round(cy + b));
     }
     if (words) for (let x = 120; x < 880; x++) if ((x % 9) < 6) for (let y = 300; y < 312; y++) if ((x + y) % 3) ink(x, y);

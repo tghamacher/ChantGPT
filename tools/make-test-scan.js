@@ -1,6 +1,8 @@
 // Makes test/pages/engraved.jpg, a stand-in for a scan: chant engraved by exsurge (MIT), then turned 0.7 degrees,
 // blurred, on uneven paper, with specks, as a JPEG; and engraved-lines.json, each staff's four lines as they truly lie
-// in it, [x0, y0, x1, y1], in its pixels. Needs playwright and exsurge from npm.
+// in it, [x0, y0, x1, y1], in its pixels. And warped.jpg, the same page as if it couldn't be scanned flat: curling
+// up towards the binding on the left and sagging a little across, with warped-lines.json, each line as points along
+// it every 8 pixels, [x0, y0, x1, y1, …]. Needs playwright and exsurge from npm.
 const { chromium } = require('playwright');
 const fs = require('fs');
 // usage: node tools/make-test-scan.js <folder holding exsurge.js (npm pack exsurge)> <output folder>
@@ -38,8 +40,18 @@ const chants = [
   // degrade in the page: turn by 0.7 degrees about the centre, blur, paper, speckle
   const angle = 0.7 * Math.PI / 180;
   const png = fs.readFileSync(`${OUT}/clean.png`).toString('base64');
-  const jpg = await p.evaluate(async ({ png, angle }) => {
-    const img = new Image(); img.src = 'data:image/png;base64,' + png; await img.decode();
+  const WARP = '40 * Math.max(0, (450 - x) / 450) ** 2 + 6 * Math.sin(Math.PI * x / 1200)';   // pixels down at column x
+  const degrade = ({ png, angle, warp }) => p.evaluate(async ({ png, angle, warp }) => {
+    let img = new Image(); img.src = 'data:image/png;base64,' + png; await img.decode();
+    if (warp) {
+      // each column of the page moved down by the warp, before the blur
+      const off = new Function('x', 'return ' + warp), wc = document.createElement('canvas');
+      wc.width = 1200; wc.height = 1600;
+      const wx = wc.getContext('2d');
+      wx.fillStyle = '#fff'; wx.fillRect(0, 0, 1200, 1600);
+      for (let col = 0; col < 1200; col++) wx.drawImage(img, col, 0, 1, 1600, col, off(col + 0.5), 1, 1600);
+      img = wc;
+    }
     const c = document.createElement('canvas'); c.width = 1200; c.height = 1600;
     const x = c.getContext('2d');
     x.fillStyle = '#efe6d2'; x.fillRect(0, 0, 1200, 1600);
@@ -59,12 +71,23 @@ const chants = [
     }
     x.putImageData(d, 0, 0);
     return c.toDataURL('image/jpeg', 0.8).split(',')[1];
-  }, { png, angle });
+  }, { png, angle, warp });
+  const jpg = await degrade({ png, angle });
   fs.writeFileSync(`${OUT}/engraved.jpg`, Buffer.from(jpg, 'base64'));
   const rot = ([px, py]) => { const dx = px - 600, dy = py - 800; return [600 + dx * Math.cos(angle) - dy * Math.sin(angle), 800 + dx * Math.sin(angle) + dy * Math.cos(angle)]; };
   const truth = lines.map(st => st.map(l => [...rot([l[0], l[1]]), ...rot([l[2], l[1]])].map(v => Math.round(v * 10) / 10)));
   fs.writeFileSync(`${OUT}/engraved-lines.json`, JSON.stringify(truth));
   console.log(truth.length, 'staves', JSON.stringify(truth[0]));
+  // the warped page: not turned, so the warp alone bends the lines
+  fs.writeFileSync(`${OUT}/warped.jpg`, Buffer.from(await degrade({ png, angle: 0, warp: WARP }), 'base64'));
+  const off = new Function('x', 'return ' + WARP);
+  const bent = lines.map(st => st.map(l => {
+    const pts = [];
+    for (let x = l[0]; x < l[2]; x += 8) pts.push(x, l[1] + off(x));
+    pts.push(l[2], l[1] + off(l[2]));
+    return pts.map(v => Math.round(v * 10) / 10);
+  }));
+  fs.writeFileSync(`${OUT}/warped-lines.json`, JSON.stringify(bent));
   fs.unlinkSync(`${OUT}/clean.png`);
   await b.close();
 })();

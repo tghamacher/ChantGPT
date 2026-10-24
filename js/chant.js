@@ -184,8 +184,11 @@
         else if (ids.has(st.id)) bad.push(`${name}: the id ${st.id} is used twice.`);
         else ids.add(st.id);
         if (st.box !== undefined && !(box4(st.box) && inside(st.box))) bad.push(`${name}: its box is not on the page.`);
-        if (st.lines !== undefined && !(Array.isArray(st.lines) && st.lines.length === 4 && st.lines.every(l => Array.isArray(l) && l.length === 4 && l.every(Number.isFinite))))
-          bad.push(`${name}: a staff has four lines, each [x0, y0, x1, y1].`);
+        if (st.lines !== undefined) {
+          const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);
+          if (!(Array.isArray(st.lines) && st.lines.length === 4 && st.lines.every(pointsOk)))
+            bad.push(`${name}: a staff has four lines, each two or more points [x0, y0, x1, y1, …] from left to right.`);
+        }
         (st.syllables || []).forEach((syl, yi) => {
           if (syl.box !== undefined && !(box4(syl.box) && inside(syl.box))) bad.push(`${name}, syllable ${yi + 1}: its box is not on the page.`);
           (syl.items || []).forEach(it => {

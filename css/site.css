@@ -83,7 +83,8 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .sel .area { fill: var(--sel-fill); }
 .cg-overlay .sel .line { stroke: var(--sel); stroke-width: 1.5; }
 .cg-overlay .end { stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; }
-.cg-overlay .hit { stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; cursor: ew-resize; }
+.cg-overlay .end.bend { stroke-dasharray: 3 2; }
+.cg-overlay .hit { stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; cursor: move; }
 .cg-overlay .handle { fill: var(--panel); stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; cursor: ns-resize; }
 .cg-overlay .band { fill: var(--staff-fill); stroke: var(--staff); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
 .cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
