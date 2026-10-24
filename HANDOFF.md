@@ -1,7 +1,7 @@
 # Handoff: ChantGPT (chant OMR in the browser, then mensural partbooks)
 
 Background for a new Claude Code session. First written in the Serenissima Press session (2026-10-23); updated the same
-day when the plan changed to start with Gregorian chant.
+day when the plan changed to start with Gregorian chant, and on 2026-10-24 with the design of the editing layer.
 
 ## The idea
 
@@ -40,7 +40,16 @@ for the reverse:
   - **CANTUS database / Cantus Index**: chant texts and melodies (Volpiano), for matching a recognized chant to known
     versions.
   - **DDMAL / SIMSSA** (McGill): Cantus Ultimus, ground truth in MEI-Neumes for the Salzinnes Antiphonal and Einsiedeln
-    121, the Calvo pixel classifier for page layers, Rodan, Neon (a neume editor in the browser).
+    121, the Calvo pixel classifier for page layers, Rodan.
+  - **Neon** (DDMAL): a neume editor in the browser, over the manuscript image, in MEI. The nearest thing to our editing
+    layer: try it before designing the details, for what works and what doesn't (selecting, grouping, setting pitch).
+- **Text:**
+  - **Kraken** (and eScriptorium, built on it): text recognition for historical documents.
+  - **CATMuS Medieval**: a large shared training set for medieval handwriting, transcribed as written, abbreviations
+    kept. Kraken models trained on it exist.
+  - **MUFI** (Medieval Unicode Font Initiative): the characters for abbreviation marks, as editions of medieval texts use
+    them.
+  - Gregorio's Latin hyphenation patterns: for dividing words into syllables.
   - Serenissima Press's `js/gabc.js` already parses GABC (for setting chant beside polyphony): reuse its tests' cases.
 - **Mensural:**
   - **Mensural OMR** by David Cheong: omr-webapp-1046295414238.us-central1.run.app. One JPG page, a login, staves and
@@ -67,6 +76,13 @@ for the reverse:
 - **The internal format is GABC with positions on the page** (see `docs/format.md`): staves with their four lines,
   syllables with their text and GABC note groups, each with a box and a confidence. It exports to GABC directly and
   later to MEI-Neumes and Volpiano. MusicXML handles chant poorly and is for the mensural stage.
+- **Checking and correcting happen in an editing layer over the scan** (designed with the user, 2026-10-24; see "The
+  editing layer" below). The proposed transcription, notation and text, is drawn on top of the source where the model
+  found it, and the user moves and changes it until it matches. Entering a chant by hand is the same tool with nothing
+  proposed.
+- **Text is read too, as written and expanded.** Each syllable keeps the reading as written (abbreviation marks and
+  all, in MUFI characters) and the expanded one, which goes into the GABC. Expansions come mostly from matching the
+  chant to its known text, not from guessing (see below).
 - **Most of the app is ordinary code, not AI.** For chant:
   - pitch from the clef, clef changes and the flat;
   - the custos check (it should match the first note of the next staff);
@@ -93,26 +109,102 @@ for the reverse:
 - **First source: printed books before manuscripts.** Suggested proof of concept: a few pages of the 1908 *Graduale
   Romanum* (to be confirmed by the user).
 
+## The editing layer
+
+The user's idea: a see-through layer over the source showing the proposed transcription, which the user rearranges and
+tweaks until it matches the page behind it. The step-0 overlay draws plain boxes; those stay underneath (for selecting
+and dragging, and as the record of where the model looked), but what the user sees is the notation and the text.
+
+**What the user sees**
+
+- The proposed neumes drawn in square notation on the scan, sized from the staff lines beneath, in a see-through colour
+  so the source shows through. A note one step off visibly misses the note under it.
+- The syllables drawn under the staff where they were found, in the same colour.
+- Colour by confidence: doubtful items stand out.
+- An opacity slider, and a key held down to hide the layer, to flick between transcription and source (easier for
+  catching small misplacements than reading through a half-transparent layer).
+- Optionally, a clean re-engraved strip under each staff (exsurge), to read the result as music.
+
+**Editing the notation**
+
+- **A neume's height on the staff is its pitch.** Dragging a neume up or down snaps it to a line or space and rewrites
+  its GABC letters to match (`fgh` → `ghi`). Dragging sideways moves it along the staff; past a neighbour, it changes
+  their order.
+- Clicking one note inside a neume moves just that note (the top of a torculus, say).
+- The keyboard, for speed: Tab and Shift+Tab to the next and previous doubtful item; ↑↓ a step; ←→ along the staff;
+  Enter accepts; Delete; keys to split and merge neumes; a small palette (or keys) to change shapes: virga, quilisma,
+  oriscus, liquescent, episema, mora.
+- Undo and redo throughout.
+- Staves first: the user can drag the four lines to fit, tilt included. Every pitch hangs on them, so once they fit
+  most neumes fall into place.
+
+**Editing the text**
+
+- Each syllable has two readings: **as written** (*dñs*, keeping abbreviation marks in MUFI characters) and **expanded**
+  (*Dominus*), which goes into the GABC. The layer shows either, the other on hover, with a switch for the whole page.
+- Click a syllable to type in it; drag it sideways to set it under a different neume; split or merge syllables.
+  Dividing words follows Gregorio's Latin hyphenation.
+- A misread or misplaced syllable shows against the source like a wrong note.
+
+**Why abbreviations are hard, and the way round it**
+
+- Abbreviations are one of the hardest parts of reading medieval text by machine. The marks are ambiguous: a stroke
+  over a vowel for *m* or *n*; barred and looped *p* for *per*, *pro*, *prae*; the 9-shaped sign for *con-* at the
+  start of a word and *-us* at the end. Reading the mark is the easy part; choosing the expansion takes the word and its
+  context. Contractions (*dns*, *xps*, *scs*, *gla*) must be known as words. And a word spread out under a melisma
+  upsets ordinary text recognition.
+- The printed Vatican books have almost none: *Ps.*, ℣ and ℟, and *E u o u a e* (*saeculorum. Amen*). So abbreviations
+  mostly arrive with the manuscripts.
+- **The way round it: chant texts are already known.** CANTUS and GregoBase hold them. The app reads what it can, finds
+  the known chant (*Dns dixit ad me* → *Dominus dixit ad me*, the Introit of the Midnight Mass of Christmas), aligns the
+  two, and takes the expansions from the match. Finding the chant also identifies it, which the melody alerts need
+  anyway. Only a text that can't be found falls back to guessing, and those guesses are flagged.
+- Reading the text itself: Kraken with a model trained on CATMuS Medieval (transcribed as written, which suits the two
+  readings). For print, an ordinary OCR model may do.
+
+**Changes to the format (docs/format.md)**
+
+- Each note of a neume gets its own position (an x for each note), so single notes can be dragged and the glyphs drawn
+  where the model saw them.
+- Each syllable gets the reading as written beside `text` (the expanded reading), for example `"dipl": "dñs"`.
+- A `checked` flag on items and syllables: what a person confirmed, as against what is only proposed.
+- A record of corrections: each one is a labelled training example (this region shows this neume, or these letters,
+  not those). The editing layer is also how training data is gathered for step 4.
+
+**Decisions still open (the user's)**
+
+- The chant font for drawing neumes: Gregorio's fonts (check their licences before adding one to the repo) or exsurge's
+  glyph shapes.
+- What a drag moves by default: a whole neume (suggested) or single notes.
+- What "accept" means: every item checked one by one, or accepting a staff confirms all on it.
+
 ## Plan
 
 0. **Set-up** (done, see below):
    - repo skeleton and GitHub Pages;
    - pdf.js page viewer (PDFs and page images);
    - the internal format, its GABC export and import, and tests.
-1. **No AI yet:**
-   - the editor over the page image: mark staves and their lines, place clefs, neumes, bars, custos and syllables;
+1. **The editing layer, no AI yet** (see "The editing layer"):
+   - fitting staff lines by hand, and drawing a chant from GABC onto them over the scan: the base everything else
+     needs, so first;
+   - then dragging and editing neumes, then the text layer (both readings), undo and redo;
+   - the format's additions (note positions, the as-written reading, `checked`, corrections);
    - pitch from the clef, the custos check, the other rule-based alerts;
    - GABC export (done in step 0), exsurge preview, MEI-Neumes and Volpiano export;
    - saving and opening a project.
-   - Test on one chant entered by hand.
+   - Test on one chant: place its GABC from GregoBase over a scan of the 1908 *Graduale Romanum* and correct it to the
+     page.
 2. **Layout:** find staves and text lines automatically (classical image processing first, a pixel classifier if
    needed); split a book into chants by their initials and titles, with the user confirming.
 3. **Training data:** the GregoBase download and synthetic rendering pipeline (in `training/`, Python), and aligning
    scans of the Vatican books with GregoBase.
-4. **The recognizer:** train it, run it in the browser, and feed its confidence scores into the alerts.
-5. **Mensural:** a five-line symbol set, the mensural rules, sorting partbooks into voices and pieces, scoring up and
+4. **The recognizer:** train it, run it in the browser, and feed its confidence scores into the alerts. Corrections made
+   in the editing layer feed later training.
+5. **Text:** recognition (OCR for print; Kraken with a CATMuS Medieval model for manuscripts), finding the chant's known
+   text in CANTUS or GregoBase, aligning the two, and taking expansions from it; guesses flagged.
+6. **Mensural:** a five-line symbol set, the mensural rules, sorting partbooks into voices and pieces, scoring up and
    MusicXML export (Elam Rotem's request). Proof of concept: one printer's partbooks, such as a complete Gardano set.
-6. **Later:** manuscripts, text recognition (perhaps Kraken), shared corrections.
+7. **Later:** manuscripts (the notation; their text comes in step 5), other printers, shared corrections.
 
 ## Done
 
@@ -129,7 +221,10 @@ for the reverse:
 - Which print, and which pages, for the first test (suggested: the 1908 *Graduale Romanum*).
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
-- GitHub Pages must be switched on by the user: Settings → Pages → Deploy from a branch → `main`, folder `/ (root)`.
+- The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
+- Step 0 is on the branch `step-0-setup`, not yet merged into `main`.
+- GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
+  folder `/ (root)`.
 
 ## Working with the user
 
