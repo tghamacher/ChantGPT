@@ -195,6 +195,12 @@
       if (again.length !== 4) bad.push(`with two marked already, ${again.length} found, expected 4`);
       return bad;
     } },
+    { name: 'staves: where chants begin: the staves set in for an initial, each side of the book apart', unit: () => {
+      const st = (id, x) => ({ id, lines: S().even([x, 100, 800, 48]) });
+      // odd pages' margin at 100, even pages' at 60; a chant begins at p1s1, p1s3 and p2s2 (set in 70 or more)
+      const pages = [{ n: 1, staves: [st('p1s1', 170), st('p1s2', 100), st('p1s3', 175), st('p1s4', 101)] }, { n: 2, staves: [st('p2s1', 60), st('p2s2', 130), st('p2s3', 62)] }];
+      return same('begin', S().beginnings(pages), ['p1s1', 'p1s3', 'p2s2']);
+    } },
     { name: 'staves: nothing is found where there is no staff', unit: () => {
       const w = 600, h = 300, g = new Uint8Array(w * h).fill(240);
       for (let x = 50; x < 550; x++) for (let y = 100; y < 102; y++) g[y * w + x] = 10;   // one line alone
@@ -245,6 +251,31 @@
         const want = N.yOf(lines, v.x + 83 * sc, 5), got = v.y - N.MIDDLE * sc;
         return Math.abs(got - want) < 0.5 ? [] : [`a note at x ${v.x.toFixed(0)} is at ${got.toFixed(1)}, its line at ${want.toFixed(1)}`];
       });
+    } },
+
+    { name: 'neumes: a chant spread over its staves: breaks between syllables, a clef to begin each, a custos to end it', unit: () => {
+      const N = global.CGNeumes, syl = C().fromGabc(GLORIA + ' Sic(f)ut(g) e(h)rat(h) in(g) prin(f)ci(gh)pi(h)o,(h.) (:) et(h) nunc(h) et(g) sem(f)per,(f.) (;) et(f) in(g) sǽ(h)cu(h)la(g) (::)').staves[0].syllables;
+      const lines = [S().even([300, 100, 700, 48]), S().even([100, 300, 900, 48]), S().even([100, 500, 500, 48])];
+      const parts = N.spread(syl, lines), g = p => p.map(s => s.items.map(i => i.g).join(' '));
+      const bad = [];
+      bad.push(...same('three lines', parts.length, 3));
+      bad.push(...same('every syllable, once, in order', parts.flat().filter(s => s.text).map(s => s.text), syl.filter(s => s.text).map(s => s.text)));
+      parts.forEach((p, k) => {
+        if (g(p)[0] !== 'c4') bad.push(`line ${k + 1} doesn't begin with the clef: ${g(p)[0]}`);
+        const content = p.filter(s => s.text || s.items.some(i => C().kind(i.g) === 'neume'));
+        if (k < 2 && !/\+$/.test(g(p)[p.length - 1])) bad.push(`line ${k + 1} doesn't end with a custos`);
+        if (p[1] && !p[1].text && p[1].items.every(i => C().kind(i.g) === 'bar')) bad.push(`line ${k + 1} begins with a bar`);
+        if (!content.length) bad.push(`line ${k + 1} is empty`);
+      });
+      // each custos points to the next line's first note
+      for (let k = 0; k < 2; k++) {
+        const c = g(parts[k])[parts[k].length - 1], first = parts[k + 1].flatMap(s => s.items).find(i => C().kind(i.g) === 'neume');
+        if (c[0] !== first.g[0]) bad.push(`line ${k + 1}'s custos ${c} isn't the next line's first note (${first.g})`);
+      }
+      // the shorter first line (set in) takes less than the second
+      const width = p => p.filter(s => s.text).length;
+      if (!(width(parts[0]) < width(parts[1]))) bad.push(`the first line (set in) has ${width(parts[0])} syllables, the second ${width(parts[1])}`);
+      return bad;
     } },
 
     // ---- the checks that need no AI
@@ -632,6 +663,35 @@
       await w.CGEditor.findHere();
       bad.push(...same('found again: none added', doc.pages[w.CGApp.state.page].staves.length, 4));
       bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
+    { name: 'app: a book: its staves and where its chants begin found; a chant spread over the page break; a line break moved', browser: true, unit: async app => {
+      const { w } = await app('test/pages/book-1.jpg', 'test/pages/book-2.jpg');
+      const book = await (await w.fetch('test/pages/book.json')).json(), doc = w.CGApp.state.doc, E = w.CGEditor, bad = [];
+      await E.findEverywhere();
+      bad.push(...same('staves on each page', doc.pages.map(p => p.staves.length), book.pages.map(p => p.staves.length)));
+      E.findBeginnings();
+      bad.push(...same('where chants begin', doc.pages.map(p => p.staves.map(s => s.begins === true)), book.pages.map(p => p.staves.map(s => s.begins))));
+      await w.CGApp.show(0);
+      E.selected = doc.pages[0].staves[3].id;
+      E.placeChant(book.chants[1]);
+      const kyrie = doc.chants[doc.chants.length - 1];
+      bad.push(...same('the Kyrie on its three staves, over both pages', kyrie.staves, [doc.pages[0].staves[3].id, doc.pages[0].staves[4].id, doc.pages[1].staves[0].id]));
+      const texts = () => kyrie.staves.map(id => doc.pages.flatMap(p => p.staves).find(s => s.id === id).syllables.filter(y => y.text).map(y => y.text));
+      const before = texts();
+      bad.push(...same('every syllable placed', before.flat().length, w.CGChant.fromGabc(book.chants[1]).staves[0].syllables.filter(y => y.text).length));
+      // the second line's first syllable moved back to the first
+      E.selectWord(doc.pages[0].staves[4].id, 1);
+      E.moveLine(-1);
+      const after = texts();
+      bad.push(...same('moved to the line before', [after[0].length, after[1].length], [before[0].length + 1, before[1].length - 1]));
+      const st4 = doc.pages[0].staves[3], last = st4.syllables[st4.syllables.length - 1].items[0].g;
+      const firstNote = doc.pages[0].staves[4].syllables.flatMap(y => y.items).find(i => w.CGChant.kind(i.g) === 'neume').g[0];
+      bad.push(...same('its custos points to the next line again', last, firstNote + '+'));
+      E.undo();
+      bad.push(...same('undone', texts(), before));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      bad.push(...same('no findings', E.alerts.map(a => a.text), []));
       return bad;
     } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {

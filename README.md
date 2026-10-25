@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.8.0** · a working title
+**Version 0.9.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -18,7 +18,12 @@ These are the first steps. You can:
   all, and bent where the page couldn't be scanned flat. Or drag a box around a staff to mark it yourself. If a line
   is off, drag it into place; double-click to bend a staff where it needs it; hold H to see the page without the lines
   over it;
-- place a chant's GABC (from GregoBase, say) on its staves: it is drawn in square notation over the page, in
+- mark where chants begin: in a Solesmes book, ChantGPT finds them at the staves set in for a chant's initial; you
+  confirm or correct each (B);
+- place a chant's GABC (from GregoBase, say) on its staves: GABC without line breaks is spread over all the chant's
+  staves, down to where the next chant begins, even over a page turn, with a clef at each line's start and a custos
+  at its end, as printed; if a line breaks elsewhere on the page, move a syllable to the next line or the one before.
+  It is drawn in square notation over the page, in
   Gregorio's own font, each note at its pitch on the staff, bent with the staff if it bends, so you can see where the
   page and the GABC differ. Hold H to see the page alone; make the notation more or less see-through;
 - correct it on the page: drag a neume up or down by steps (its GABC changes with it) or along the staff to line it
@@ -34,7 +39,7 @@ These are the first steps. You can:
   with neumes, each element tied to its place on the page, as DDMAL's Neon reads it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-Next, splitting a book into its chants, then the training data and recognition.
+Next, the training data and recognition.
 
 ## Running it on your computer
 

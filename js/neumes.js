@@ -315,7 +315,81 @@
     return out;
   }
 
-  const api = { parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, STEP, MIDDLE };
+  // ---------------------------------------------------------------- a chant over several staves
+  // A custos (GABC: a letter and +) for a note (a letter, under its clef), written under the clef of the staff the
+  // custos ends; null if it can't be (no clef, or off the staff).
+  function custosFor(letter, clef, hereClef) {
+    const want = Ch().pitch(letter, clef);
+    if (!want) return null;
+    for (let p = 0; p <= 12; p++) {
+      const q = Ch().pitch(String.fromCharCode(97 + p), hereClef);
+      if (q && q.step === want.step && q.octave === want.octave) return String.fromCharCode(97 + p) + '+';
+    }
+    return null;
+  }
+
+  // A chant's syllables spread over several staves, as a printed chant runs on from line to line: broken only between
+  // syllables, each staff taking a share in proportion to its length (less room for the clef and the custos it will
+  // carry); every staff after the first begun with the clef in force, every one but the last ended with a custos
+  // pointing to the next note, as printed. syllables: the chant's (one GABC line); linesList: each staff's lines, in
+  // order. Returns each staff's syllables (copies, without boxes, to be placed).
+  function spread(syllables, linesList) {
+    const n = linesList.length;
+    const sum = a => a.reduce((t, v) => t + v, 0);
+    const ws = syllables.map(syl => syl.items.reduce((t, it, k) => t + itemShapes(it.g, false).width + (k ? 0.8 * STEP : 0), 0) + 2.2 * STEP);
+    const caps = linesList.map((lines, k) => {
+      const xs = S().xsOf(lines[0]);
+      return Math.max(STEP, (xs[xs.length - 1] - xs[0]) / scaleOf(lines) - (k ? 2.5 * STEP : 0) - (k < n - 1 ? 1.6 * STEP : 0));
+    });
+    const r = sum(ws) / sum(caps), parts = [];
+    let i = 0, acc = 0, room = 0;
+    for (let k = 0; k < n; k++) {
+      if (k === n - 1 || i >= syllables.length) { parts.push(syllables.slice(i)); i = syllables.length; continue; }
+      room += caps[k];
+      const target = r * room;
+      // at least one syllable, and leave one for each staff still to come
+      let j = i + 1, cum = acc + ws[i];
+      while (j < syllables.length - (n - 1 - k) && Math.abs(cum + ws[j] - target) < Math.abs(cum - target)) cum += ws[j++];
+      // a bar ends the line it follows, never begins the next
+      const barOnly = syl => syl && !syl.text && syl.items.length && syl.items.every(it => Ch().kind(it.g) === 'bar');
+      while (j < syllables.length - (n - 1 - k) && barOnly(syllables[j])) cum += ws[j++];
+      parts.push(syllables.slice(i, j));
+      i = j; acc = cum;
+    }
+    while (parts.length < n) parts.push([]);
+    const out = parts.map(p => JSON.parse(JSON.stringify(p)).map(syl => {
+      delete syl.box;
+      syl.items.forEach(it => delete it.box);
+      return syl;
+    }));
+    // the clef in force at each staff's end, and the first note after each
+    const clefAt = [], firstNote = [];
+    let clef = null;
+    out.forEach((list, k) => {
+      firstNote[k] = null;
+      for (const syl of list) for (const it of syl.items) {
+        const kind = Ch().kind(it.g);
+        if (kind === 'clef') clef = it.g;
+        else if (firstNote[k] === null && (kind === 'neume' || kind === 'accidental')) {
+          const nn = Ch().notes(it.g).find(x => !x.acc);
+          if (nn) firstNote[k] = { p: nn.p, clef };
+        }
+      }
+      clefAt[k] = clef;
+    });
+    out.forEach((list, k) => {
+      if (k && clefAt[k - 1] && !(list[0] && list[0].items[0] && Ch().kind(list[0].items[0].g) === 'clef')) {
+        list.unshift({ text: '', items: [{ g: clefAt[k - 1] }] });
+        if (firstNote[k] && firstNote[k].clef === null) firstNote[k].clef = clefAt[k - 1];
+      }
+      // the custos: the next staff's first note, written under this staff's clef
+      const next = firstNote[k + 1], c = k < n - 1 && next && clefAt[k] ? custosFor(next.p, next.clef || clefAt[k], clefAt[k]) : null;
+      if (c) list.push({ text: '', items: [{ g: c }] });
+    });
+    return out;
+  }
+
+  const api = { parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, spread, custosFor, STEP, MIDDLE };
   global.CGNeumes = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

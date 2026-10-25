@@ -69,6 +69,9 @@ is how training data and tests will be made.
   (optional, but the recognizer will need them). A straight staff, level or tilted, has two points a line, its ends.
   A staff on a page that couldn't be scanned flat bends: it has a point at each bend, and runs straight between them.
   The app gives all four lines points at the same xs. The app keeps a page's staves in reading order, top to bottom.
+- `begins`: `true` if a chant begins on this staff (in the Solesmes books, the staff set in for the chant's initial),
+  `false` if a person said it doesn't; absent if no one has said (optional). Placing GABC without line breaks on a
+  staff spreads it over the staves down to the next one where a chant begins.
 - `syllables`: in order, left to right.
 
 **Syllable**
