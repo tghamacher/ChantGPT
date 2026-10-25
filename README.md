@@ -59,6 +59,18 @@ and open http://localhost:8000.
   [docs/format.md](docs/format.md).
 - `HANDOFF.md`: the plan.
 
+## Licence
+
+Copyright (C) 2026 Ted Hamacher.
+
+ChantGPT is free software: you can use it, share it and change it under the terms of the GNU General Public License,
+version 3 or (at your option) any later version; see [LICENSE](LICENSE). It comes with no warranty. In short: anyone may
+use and change it, and anyone who shares a changed version must share its source under the same licence.
+
+It is under the GPL because the way it gathers notes into glyphs follows Gregorio's own code, which is under the GPL.
+The parts made by others keep their own licences: pdf.js (Apache License 2.0) and the Greciliae font (SIL Open Font
+License 1.1), both of which may be shared with GPL software.
+
 ## Credits
 
 pdf.js by Mozilla, Apache License 2.0 (`vendor/pdfjs/LICENSE`). Greciliae, the chant font of

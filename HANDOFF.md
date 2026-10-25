@@ -242,9 +242,8 @@ and dragging, and as the record of where the model looked), but what the user se
     (z) breaks; each staff's items get boxes, spaced along the staff and stretched to fill it (as a printed line is
     justified). Drawn in red, see-through (adjustable), each glyph tilted with the staff where it sits; words under it.
     The chant is listed in the document's chants; saved as GABC with the page's line breaks.
-  - **Licence to settle:** neumes.js follows Gregorio's GPLv3 code closely (a port of its rules, not just the glyph
-    names), so ChantGPT should be GPLv3 (compatible with the OFL font and pdf.js's Apache 2.0) unless those rules are
-    rewritten independently. The repo has no licence yet: the user's decision.
+  - **Licence:** neumes.js follows Gregorio's GPLv3 code closely (a port of its rules), so ChantGPT is GPLv3 or later
+    (the user's decision, 2026-10-25; `LICENSE`). An independent rewrite of the rules was considered and declined.
   - Next: dragging neumes (up and down by step, rewriting their GABC; sideways along the staff) and syllables.
 - **Step 1, bent staves** (version 0.3.0, merged): pages that couldn't be scanned flat (the user
   sees these often in bound books).
@@ -271,8 +270,6 @@ and dragging, and as the record of where the model looked), but what the user se
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
 - The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
-- The notation (version 0.4.0) is on the branch `step-1-notation`, not yet merged into `main`.
-- The repo's licence (see above: GPLv3 suggested, because of the port of Gregorio's rules).
 - GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
   folder `/ (root)`.
 
