@@ -160,6 +160,8 @@
   $('redo').addEventListener('click', () => E.redo());
   $('save').addEventListener('click', save);
   $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
+  $('findBeginnings').addEventListener('click', () => E.findBeginnings());
+  $('beginsHere').addEventListener('change', e => E.toggleBegins(e.target.checked));
   $('clearChant').addEventListener('click', () => E.clearChant());
   $('showVolpiano').addEventListener('click', () => {
     const v = E.volpiano();
@@ -181,6 +183,8 @@
   $('sylStart').addEventListener('change', e => E.setWordStart(e.target.checked));
   $('splitHere').addEventListener('click', () => { E.splitHere(); $('sylText').focus(); });
   $('joinPrev').addEventListener('click', () => E.joinPrev());
+  $('linePrev').addEventListener('click', () => E.moveLine(-1));
+  $('lineNext').addEventListener('click', () => E.moveLine(1));
   $('acceptStaff').addEventListener('click', () => E.acceptStaff());
   // Enter in a syllable's field: done with it, back to the page
   for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });

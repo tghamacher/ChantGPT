@@ -96,6 +96,8 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .glyph.on { fill: var(--sel); }
 .cg-overlay .chant .syl { pointer-events: auto; cursor: grab; }
 .cg-overlay .mark { cursor: pointer; }
+.cg-overlay .begins line { stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.cg-overlay .begins polygon { fill: var(--accent); }
 .cg-overlay .mark circle { fill: var(--mark); stroke: var(--panel); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .cg-overlay .mark.note circle { fill: var(--mark-note); }
 .cg-overlay .mark text { fill: #fff; font-family: var(--ui); font-weight: bold; text-anchor: middle; pointer-events: none; }

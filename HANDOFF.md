@@ -191,8 +191,8 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
    - saving and opening a project.
    - Test on one chant: place its GABC from GregoBase over a scan of the 1908 *Graduale Romanum* and correct it to the
      page.
-2. **Layout:** find staves automatically (done: classical image processing); split a book into chants by their
-   initials and titles, with the user confirming.
+2. **Layout** (done): find staves automatically; split a book into chants at their set-in first staves, with the
+   user confirming; spread GregoBase GABC over a chant's staves.
 3. **Training data:** the GregoBase download and synthetic rendering pipeline (in `training/`, Python), and aligning
    scans of the Vatican books with GregoBase.
 4. **The recognizer:** train it, run it in the browser, and feed its confidence scores into the alerts. Corrections made
@@ -220,7 +220,29 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 2, finding the staves** (version 0.8.0, branch `step-2-layout`):
+- **Step 2, a book's chants** (version 0.9.0, branch `step-2-chants`). The user starts with Solesmes books.
+  - Staves have `begins` (true: a chant begins on it; false: said by hand it doesn't; absent: not said).
+    `beginnings()` in `js/staves.js`: a chant begins on a staff set in from its side's usual left margin (odd and
+    even pages apart; the margin is the lower fifth of the starts) by two and a half spaces or more, as Solesmes sets
+    the first staff of a chant for its initial; and on the book's first staff. "Find where chants begin" applies it
+    where not said; B or the box toggles a staff. A mark (a flag) before the staff shows it.
+  - Placing GABC without line breaks (as GregoBase gives it) on a staff spreads it over the staves down to the next
+    `begins` (across pages): `spread()` in `js/neumes.js` breaks only between syllables, each line's share in
+    proportion to its length (less room for the clef and custos it gets), a bar ending the line it follows; each
+    line after the first begins with the clef in force, each but the last ends with a custos (`custosFor()`). GABC
+    with (z) breaks still goes a line to a staff.
+  - Moving a line break: with a syllable or neume selected, ] moves it (and what follows on its line) to the next
+    line, [ (and what precedes) to the line before; only within its chant; both lines laid out afresh; custos kept
+    pointing right.
+  - Undo over several pages: a change touching more than the shown page records every page's staves (page null).
+  - Staff finding: the "no strong line between" rule is now "nearly as strong" (80%): dense notes in a staff's
+    spaces made a staff go missing at half.
+  - Test book: `tools/make-test-book.js` (exsurge) makes `test/pages/book-1.jpg`, `book-2.jpg` (three chants, drop
+    caps, set-in first staves, the Kyrie over the page turn) and `book.json` (lines, which staves begin chants, the
+    GABC).
+  - Not yet: titles and rubrics (Intr., Ant., the mode number over the initial) read as text; manuscripts' initials
+    without a set-in staff.
+- **Step 2, finding the staves** (version 0.8.0, merged):
   - `findStaves()` in `js/staves.js`: in a band across the page's middle (25–62% of its width), darkness summed
     along rows at the page's tilt; sharp peaks are lines; fours evenly spaced with no line between them at least
     half as strong are staves (that rule matters on evenly set pages, where the lines of different staves fall

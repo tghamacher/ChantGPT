@@ -217,6 +217,7 @@
         else if (ids.has(st.id)) bad.push(`${name}: the id ${st.id} is used twice.`);
         else ids.add(st.id);
         if (st.box !== undefined && !(box4(st.box) && inside(st.box))) bad.push(`${name}: its box is not on the page.`);
+        if (st.begins !== undefined && typeof st.begins !== 'boolean') bad.push(`${name}: "begins" is true or false.`);
         if (st.lines !== undefined) {
           const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);
           if (!(Array.isArray(st.lines) && st.lines.length === 4 && st.lines.every(pointsOk)))

@@ -46,14 +46,17 @@
 
   // ---------------------------------------------------------------- changes and undo
   // A change is recorded as the page's staves and the chants before and after it.
+  // (A change over several pages is recorded as every page's staves: page is then null.)
   const snapshot = () => ({ page: ctx.state.page, staves: JSON.stringify(page().staves), chants: JSON.stringify(ctx.state.doc.chants) });
+  const snapshotAll = () => ({ page: null, staves: JSON.stringify(ctx.state.doc.pages.map(p => p.staves)), chants: JSON.stringify(ctx.state.doc.chants) });
   function restore(snap) {
     const doc = ctx.state.doc;
-    doc.pages[snap.page].staves = JSON.parse(snap.staves);
+    if (snap.page === null) JSON.parse(snap.staves).forEach((list, k) => { doc.pages[k].staves = list; });
+    else doc.pages[snap.page].staves = JSON.parse(snap.staves);
     doc.chants = JSON.parse(snap.chants);
   }
   function commit(before) {
-    const after = snapshot();
+    const after = before.page === null ? snapshotAll() : snapshot();
     if (after.staves === before.staves && after.chants === before.chants) return;
     history.undo.push({ before, after });
     if (history.undo.length > 500) history.undo.shift();
@@ -65,11 +68,11 @@
     if (!h) return;
     to.push(h);
     restore(h[which]);
-    if (selected && !ctx.state.doc.pages[h[which].page].staves.some(s => s.id === selected)) selected = null;
+    if (selected && !page().staves.some(s => s.id === selected)) selected = null;
     if (!itemOf()) item = null;
     if (!sylOf()) word = null;
     ctx.changed();
-    if (h[which].page !== ctx.state.page) ctx.show(h[which].page); else draw();
+    if (h[which].page !== null && h[which].page !== ctx.state.page) ctx.show(h[which].page); else draw();
   }
   const undo = () => step(history.undo, history.redo, 'before');
   const redo = () => step(history.redo, history.undo, 'after');
@@ -443,11 +446,24 @@
     if (!st) { ctx.say('Select the staff the chant begins on first.', true); return false; }
     let r;
     try { r = C.fromGabc(src); } catch (e) { ctx.say(e.message, true); return false; }
-    const list = page().staves, from = list.indexOf(st), targets = list.slice(from, from + r.staves.length);
-    const before = snapshot();
+    // the staves it goes on, in the book's order: one per line of the GABC, if it has line breaks; else (as GregoBase
+    // gives it) all the chant's staves, down to where the next chant begins, the chant spread over them as printed
+    const order = bookStaves(), from = order.findIndex(v => v.staff === st);
+    let targets, lines;
+    if (r.staves.length > 1) { targets = order.slice(from, from + r.staves.length); lines = r.staves.map(v => v.syllables); }
+    else {
+      let to = from + 1;
+      const ends = order.slice(from + 1).some(v => v.staff.begins === true);
+      if (ends) while (to < order.length && order[to].staff.begins !== true) to++;
+      targets = order.slice(from, to);
+      lines = targets.length > 1 ? N.spread(r.staves[0].syllables, targets.map(v => v.staff.lines)) : [r.staves[0].syllables];
+    }
+    const pages = new Set(targets.map(v => v.page));
+    const before = pages.size > 1 || !pages.has(ctx.state.page) ? snapshotAll() : snapshot();
     letGo();
+    targets = targets.map(v => v.staff);
     targets.forEach((t, k) => {
-      t.syllables = JSON.parse(JSON.stringify(r.staves[k].syllables));
+      t.syllables = JSON.parse(JSON.stringify(lines[k]));
       N.place(t);
     });
     const ids = targets.map(t => t.id);
@@ -459,8 +475,89 @@
     const name = r.headers.name ? `${r.headers.name}: ` : '';
     if (r.staves.length > targets.length)
       ctx.say(`${name}placed on ${targets.length} ${targets.length === 1 ? 'staff' : 'staves'}, but it has ${r.staves.length} lines; the last ${r.staves.length - targets.length} had no staff below to go on. Mark more staves and place it again.`, true);
-    else ctx.say(`${name}placed on ${targets.length === 1 ? 'the staff' : `${targets.length} staves`}. Hold H to compare it with the page.`);
+    else ctx.say(`${name}placed on ${targets.length === 1 ? 'the staff' : `${targets.length} staves`}${pages.size > 1 ? ` over ${pages.size} pages` : ''}${r.staves.length === 1 && targets.length > 1 ? ', spread over them as the page has it (check the line breaks)' : ''}. Hold H to compare it with the page.`);
     return true;
+  }
+
+  // every staff of the book in order, with its page
+  const bookStaves = () => ctx.state.doc.pages.flatMap((p, k) => p.staves.map(staff => ({ staff, page: k })));
+
+  // ---------------------------------------------------------------- where chants begin
+  // Marked on the staves: begins true (a chant begins on it), false (not, said by hand), or not said. Found in the book
+  // from indented first staves (S.beginnings), where not said already.
+  function findBeginnings() {
+    const doc = ctx.state.doc, ids = new Set(S.beginnings(doc.pages));
+    if (!bookStaves().length) { ctx.say('Find the staves first.', true); return; }
+    const before = snapshotAll();
+    let n = 0;
+    for (const { staff } of bookStaves()) if (staff.begins === undefined && ids.has(staff.id)) { staff.begins = true; n++; }
+    commit(before);
+    draw();
+    const all = bookStaves().filter(v => v.staff.begins === true).length;
+    ctx.say(`${all} ${all === 1 ? 'chant begins' : 'chants begin'} in the book${n < all ? ` (${n} found now)` : ''}, at the staves set in for their initials. Check them: select a staff and press B (or the box in the Chant panel) to mark or unmark one.`);
+  }
+  function toggleBegins(on) {
+    const st = staffOf(selected);
+    if (!st) return;
+    const before = snapshot();
+    st.begins = on === undefined ? st.begins !== true : !!on;
+    commit(before);
+    draw();
+  }
+
+  // ---------------------------------------------------------------- line breaks
+  // The selected syllable (or the selected neume's) moved to the next line, with everything after it on its line
+  // (dir 1), or to the line before, with everything before it (dir -1): as a printed chant's lines break. Only within
+  // its chant. Both lines are laid out again (what was lined up on them by hand, not), and each line's custos made to
+  // point to the next line's first note again.
+  const only = (syl, kind) => !syl.text && syl.items.length && syl.items.every(it => C.kind(it.g) === kind);
+  function moveLine(dir) {
+    const st = staffOf(selected), s = word !== null ? word : item ? item.s : null;
+    if (!st || s === null) { ctx.say('Select the syllable (or a neume of it) where the line should break.'); return; }
+    const order = bookStaves(), at = order.findIndex(v => v.staff === st), other = order[at + dir];
+    const chant = ctx.state.doc.chants.find(c => c.staves.includes(st.id));
+    if (!other || !chant || !chant.staves.includes(other.staff.id)) { ctx.say(`This is the chant's ${dir > 0 ? 'last' : 'first'} line.`); return; }
+    const sy = st.syllables;
+    let lead = 0, tail = sy.length;
+    while (lead < sy.length && only(sy[lead], 'clef')) lead++;
+    while (tail > lead && only(sy[tail - 1], 'custos')) tail--;
+    if (s < lead || s >= tail) { ctx.say('Select a syllable of the chant, not the clef or the custos.'); return; }
+    if ((dir > 0 && s === lead) || (dir < 0 && s === tail - 1)) { ctx.say('That would leave this line empty.'); return; }
+    const before = other.page === ctx.state.page ? snapshot() : snapshotAll();
+    const moving = dir > 0 ? sy.slice(s, tail) : sy.slice(lead, s + 1);
+    st.syllables = dir > 0 ? sy.slice(0, s).concat(sy.slice(tail)) : sy.slice(0, lead).concat(sy.slice(s + 1));
+    const os = other.staff.syllables;
+    if (dir > 0) { let k = 0; while (k < os.length && only(os[k], 'clef')) k++; os.splice(k, 0, ...moving); }
+    else { let k = os.length; while (k > 0 && only(os[k - 1], 'custos')) k--; os.splice(k, 0, ...moving); }
+    for (const t of [st, other.staff]) {
+      for (const syl of t.syllables) { delete syl.box; syl.items.forEach(it => delete it.box); }
+      N.place(t);
+    }
+    const [a, b] = dir > 0 ? [st, other.staff] : [other.staff, st];
+    custos(a, b);
+    // and the line before the pair, whose custos points into it
+    const prev = order[order.findIndex(v => v.staff === a) - 1];
+    if (prev && chant.staves.includes(prev.staff.id)) custos(prev.staff, a);
+    letGo();
+    commit(before);
+    if (other.page !== ctx.state.page) { selected = other.staff.id; ctx.show(other.page); } else draw();
+    ctx.say(`Moved to the ${dir > 0 ? 'next' : 'previous'} line. Both lines are laid out afresh.`);
+  }
+  // a line's custos made to point to the next line's first note
+  function custos(a, b) {
+    const last = a.syllables[a.syllables.length - 1];
+    if (!last || !only(last, 'custos')) return;
+    let clefA = null, clefB = null, first = null;
+    for (const syl of a.syllables) for (const it of syl.items) if (C.kind(it.g) === 'clef') clefA = it.g;
+    clefB = clefA;
+    for (const syl of b.syllables) for (const it of syl.items) {
+      if (first) break;
+      const kd = C.kind(it.g);
+      if (kd === 'clef') clefB = it.g;
+      else if (kd === 'neume' || kd === 'accidental') { const n = C.notes(it.g).find(x => !x.acc); if (n) first = n.p; }
+    }
+    const g = first && clefA && N.custosFor(first, clefB, clefA);
+    if (g && g !== last.items[0].g) { last.items[0].g = g; N.fitBox(a, last.items[0]); }
   }
 
   // the chant taken off the selected staff
@@ -632,8 +729,9 @@
     if (mod && !e.altKey && (k === 'y' || k === 'Y')) { redo(); return true; }
     if (mod || e.altKey) return false;
     const u = unit() * (e.shiftKey ? 10 : 1);
-    // Shift+Enter: the staff accepted
+    // Shift+Enter: the staff accepted; [ and ]: the selected syllable to the line before, or the next
     if (k === 'Enter' && e.shiftKey && selected) { acceptStaff(); return true; }
+    if ((k === '[' || k === ']') && (sylOf() || itemOf())) { moveLine(k === ']' ? 1 : -1); return true; }
     // a syllable selected: the keys are its
     if (sylOf()) {
       if (k === 'Escape') { word = null; draw(); return true; }
@@ -661,6 +759,7 @@
     if (k === 'Escape') { selected = null; draw(); return true; }
     if (k === 'Delete' || k === 'Backspace') { remove(); return true; }
     if (k === 'f' || k === 'F') { refit(); return true; }
+    if (k === 'b' || k === 'B') { toggleBegins(); return true; }
     if (k === 'e' || k === 'E') { evenly(); return true; }
     if (k === 'ArrowUp') { nudge(0, -u); return true; }
     if (k === 'ArrowDown') { nudge(0, u); return true; }
@@ -695,6 +794,14 @@
       // the staff's area: its lines, half a space beyond the outer ones; grabbing it moves the staff
       el('polygon', { points: pts(l[0], -s).concat(pts(l[3], s).reverse()).map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
       for (const ln of l) el('polyline', { points: pts(ln, 0).map(q => q.join(',')).join(' '), class: 'line', 'data-act': 'body', 'data-staff': st.id }, g);
+      // a chant begins here: a mark before the staff
+      if (st.begins === true) {
+        const x = l[0][0] - 1.6 * s, y0 = l[0][1] - 2 * s, y1 = l[3][1] + 2 * s;
+        const m = el('g', { class: 'begins' }, g);
+        el('line', { x1: x, y1: y0, x2: x, y2: y1 }, m);
+        el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
+        el('title', {}, m).textContent = 'A chant begins here';
+      }
       // the chant: its glyphs where they are, along the staff (tilted with it); its words under it
       if (st.syllables.some(syl => syl.items.some(it => it.box))) {
         const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
@@ -767,6 +874,8 @@
     document.getElementById('findStaves').disabled = busy;
     document.getElementById('findEverywhere').hidden = busy || ctx.state.doc.pages.length < 2;
     document.getElementById('stopFinding').hidden = !busy || ctx.state.doc.pages.length < 2;
+    const begins = document.getElementById('beginsHere');
+    if (begins) { begins.disabled = !st; begins.checked = !!(st && st.begins === true); }
     const place = document.getElementById('placeChant');
     if (place) {
       place.disabled = !st;
@@ -775,6 +884,7 @@
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
       wordPanel(syl);
       document.getElementById('splitHere').disabled = !it || item.i === 0;
+      document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? 'Select the staff the chant begins on.'
         : st.syllables.length ? progress(st)
@@ -849,8 +959,8 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop,
-    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei,
+    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

@@ -370,9 +370,9 @@
       if (q.length < 4) continue;
       const st = q.map(v => v.strength), weakest = Math.min(...st);
       if (weakest < Math.max(...st) / 3) continue;
-      // a staff's lines are neighbours: no line between them as strong as half of theirs (fours made of the lines of
-      // several staves have whole staves between)
-      if (peaks.some(v => v.y > q[0].y && v.y < q[3].y && !q.includes(v) && v.strength >= weakest / 2)) continue;
+      // a staff's lines are neighbours: no line between them nearly as strong as theirs (fours made of the lines of
+      // several staves have whole staves between; the notes in a staff's spaces make weaker rows)
+      if (peaks.some(v => v.y > q[0].y && v.y < q[3].y && !q.includes(v) && v.strength >= 0.8 * weakest)) continue;
       cands.push({ q, g: (q[3].y - q[0].y) / 3, score: st.reduce((t, v) => t + v, 0) });
     }
     // the spacing most fours agree on (within 15%) is the staves': lines of different staves can fall evenly too, on a
@@ -410,6 +410,27 @@
     return out;
   }
 
+  // Where chants begin in a book, as the Solesmes books (and many others) show it: the first staff of a chant is
+  // indented, to make room for its large initial. pages: the document's pages. Returns the ids of the staves that
+  // begin a chant: those starting well in (two and a half spaces or more) from the usual left margin of their side of
+  // the book (odd and even pages have different margins), and the book's very first staff.
+  function beginnings(pages) {
+    const margin = {};
+    for (const side of [0, 1]) {
+      const starts = pages.filter(p => p.n % 2 === side).flatMap(p => p.staves.map(st => xsOf(st.lines[0])[0])).sort((a, b) => a - b);
+      // the usual margin: where most staves start (the lower fifth of the starts, past any stray)
+      if (starts.length) margin[side] = starts[Math.floor(starts.length * 0.2)];
+    }
+    const out = [];
+    let first = true;
+    for (const p of pages) for (const st of p.staves) {
+      const x = xsOf(st.lines[0])[0], g = spacing(st.lines);
+      if (first || x - margin[p.n % 2] > 2.5 * g) out.push(st.id);
+      first = false;
+    }
+    return out;
+  }
+
   // RGBA pixels (from a canvas) to grey, one byte a pixel
   function grey(rgba) {
     const out = new Uint8Array(rgba.length / 4);
@@ -417,7 +438,7 @@
     return out;
   }
 
-  const api = { count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, fitStaff, fit, grey };
+  const api = { count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, beginnings, fitStaff, fit, grey };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
