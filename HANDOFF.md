@@ -193,8 +193,8 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
      page.
 2. **Layout** (done): find staves automatically; split a book into chants at their set-in first staves, with the
    user confirming; spread GregoBase GABC over a chant's staves.
-3. **Training data:** the GregoBase download and synthetic rendering pipeline (in `training/`, Python), and aligning
-   scans of the Vatican books with GregoBase.
+3. **Training data** (begun): the GregoBase corpus and synthetic pages (`training/`), and aligning scans of the
+   Vatican and Solesmes books with GregoBase.
 4. **The recognizer:** train it, run it in the browser, and feed its confidence scores into the alerts. Corrections made
    in the editing layer feed later training.
 5. **Text:** recognition (OCR for print; Kraken with a CATMuS Medieval model for manuscripts), finding the chant's known
@@ -205,6 +205,21 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **Step 3, the corpus and synthetic pages** (version 0.10.0, branch `step-3-data`). See `training/README.md`.
+  - The network: gregobase.selapa.net, cantusdatabase.org and archive.org are allowed from the session (the user
+    allowed them, 2026-10-25). cantusindex.org and cantus.uwaterloo.ca are still blocked.
+  - `training/gregobase.py`: GregoBase's GitHub repository (`gregorio-project/GregoBase`) keeps a dump of its
+    database. `build` reads it (18,762 chants, January 2024). `update` fetches the chants added since from the site's
+    per-chant GABC download, one a second (to id 20,974 on 2026-10-25). Each chant keeps its books and pages,
+    which is what aligning real scans needs. The site has no bulk export.
+  - `training/render.html` and `render.js`: synthetic Solesmes-like pages from the corpus, drawn by the app's own
+    layout in greciliae, with their answers as a ChantGPT document plus a glyph list. The spacing is the book's:
+    the wider of neumes and words, words further apart than syllables, the last line of a chant cut short.
+    GregoBase's markup (`<sp>V/</sp>`, `<i>`, `<v>`, braces, brackets) is cleaned from the words. 200 pages: 2,110
+    staves, 81,761 glyphs, 6 chants skipped. All 200 answer documents pass `CGChant.check`.
+  - `js/neumes.js`: `layout()` now gives each glyph's pitch (`p`).
+  - Next in step 3: aligning scans of the Vatican and Solesmes books with the corpus (page numbers); a second
+    engraver for variety.
 - **Step 1, first part: staves** (version 0.2.0, merged):
   - `js/editor.js`: the editing layer. Drag a box round a staff to add it; its lines are found in the ink, or spread
     evenly over the box if they can't be. Select a staff (click, or Tab) to move it (drag, or arrow keys), drag one
@@ -220,7 +235,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 2, a book's chants** (version 0.9.0, branch `step-2-chants`). The user starts with Solesmes books.
+- **Step 2, a book's chants** (version 0.9.0, merged). The user starts with Solesmes books.
   - Staves have `begins` (true: a chant begins on it; false: said by hand it doesn't; absent: not said).
     `beginnings()` in `js/staves.js`: a chant begins on a staff set in from its side's usual left margin (odd and
     even pages apart; the margin is the lower fifth of the starts) by two and a half spaces or more, as Solesmes sets

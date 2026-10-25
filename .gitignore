@@ -1,2 +1,5 @@
 # local scans and output (not published)
 _local/
+# the corpus and what is made from it (built locally, not published)
+training/data/
+__pycache__/
