@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.9.0** · a working title
+**Version 0.10.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -39,7 +39,8 @@ These are the first steps. You can:
   with neumes, each element tied to its place on the page, as DDMAL's Neon reads it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-Next, the training data and recognition.
+Next, recognition. Its training data is being made: GregoBase's chants, drawn as synthetic pages with their answers
+(see [training/README.md](training/README.md)).
 
 ## Running it on your computer
 
@@ -56,6 +57,7 @@ and open http://localhost:8000.
 
 - In a browser: serve the folder as above and open http://localhost:8000/test/ (add `?only=gabc` to run some).
 - With Node, the tests that don't need a browser: `node test/node.js`.
+- The training corpus reader: `python -I training/test_gregobase.py`.
 
 ## The pieces
 
@@ -73,6 +75,8 @@ and open http://localhost:8000.
 - `js/checks.js`: the checks that need no AI. `js/export.js`: Volpiano and MEI.
 - `js/chant.js`: the document format (GABC placed on the page), reading and writing GABC, and checks. See
   [docs/format.md](docs/format.md).
+- `training/`: the training data: GregoBase's chants as a corpus (`gregobase.py`), and synthetic pages drawn from it
+  with their answers (`render.js`). See [training/README.md](training/README.md).
 - `HANDOFF.md`: the plan.
 
 ## Licence

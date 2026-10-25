@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ChantGPT training pages</title>
+<!-- Draws synthetic chant pages for training, with their answers; driven by training/render.js. -->
+<style>@font-face { font-family: "greciliae"; src: url("../fonts/greciliae.ttf") format("truetype"); font-display: block; }</style>
+</head>
+<body>
+<script src="../js/chant.js"></script>
+<script src="../js/staves.js"></script>
+<script src="../js/greciliae.js"></script>
+<script src="../js/neumes.js"></script>
+<script>
+'use strict';
+const Ch = CGChant, S = CGStaves, N = CGNeumes;
+
+// a seeded random source: () => [0, 1)
+function rng(seed) { let s = (seed % 2147483646) + 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+
+// GregoBase's GABC made plain for drawing: markup out of the words (<sp>V/</sp> as ℣), brace and bracket
+// annotations out of the notes, verses after the first kept (they are printed under the chant).
+function clean(gabc) {
+  return gabc
+    .replace(/<alt>.*?<\/alt>/g, '').replace(/<v>.*?<\/v>/g, '')
+    .replace(/<sp>V\/<\/sp>\.?/g, '℣.').replace(/<sp>R\/<\/sp>\.?/g, '℟.').replace(/<sp>\*<\/sp>/g, '*')
+    .replace(/<sp>[^<]*<\/sp>/g, '').replace(/<\/?[a-z]+>/g, '')
+    .replace(/[{}]/g, '').replace(/\[[^\]]*\]/g, '');
+}
+
+// a staff's four lines across [x0, x1] at top y (the top line), spacing g; tilted (radians) and bowed (page units,
+// the middle's rise over the ends): polylines with shared xs
+function staffLines(x0, x1, y, g, tilt, bow) {
+  const n = bow ? 7 : 2, xs = Array.from({ length: n }, (_, k) => x0 + (x1 - x0) * k / (n - 1));
+  return [0, 1, 2, 3].map(i => xs.flatMap(x => {
+    const t = (x - x0) / (x1 - x0);
+    return [x, y + i * g + (x - x0) * Math.tan(tilt) - bow * Math.sin(Math.PI * t)];
+  }));
+}
+
+// A staff's items given their places as a book sets them: each syllable as wide as its neumes or its words,
+// whichever is wider, its neumes in the middle of that; the gaps stretched to fill the staff (but for a chant's last
+// line); a custos at the staff's very end. tw(text) measures a syllable's words. Returns how far the line overruns
+// the staff (page units; 0 if it fits).
+function placeLine(st, g, tw, justify, tsz, tdrop) {
+  const sc = g / 2 / N.STEP, xs = S.xsOf(st.lines[0]), x0 = xs[0], x1 = xs[xs.length - 1];
+  let first = true;
+  const slots = st.syllables.map(syl => {
+    const its = syl.items.map(it => {
+      const isClef = Ch.kind(it.g) === 'clef', sh = N.itemShapes(it.g, isClef && first);
+      if (isClef) first = false;
+      return { it, sh, w: sh.width * sc };
+    });
+    const nw = its.reduce((t, v, k) => t + v.w + (k ? 0.8 * N.STEP * sc : 0), 0);
+    const words = syl.dipl !== undefined ? syl.dipl : syl.text;
+    return { syl, words, tw: words ? tw(words) : 0, its, nw, w: Math.max(nw, words ? tw(words) + 0.15 * g : 0), join: !!syl.join, custos: its.length === 1 && Ch.kind(its[0].it.g) === 'custos' };
+  });
+  const custos = slots.length && slots[slots.length - 1].custos ? slots.pop() : null;
+  // closer within a word than between words
+  const gapOf = v => v.join ? 0.3 * g : 0.9 * g, room = x1 - x0 - 0.15 * g - (custos ? custos.w + 0.4 * g : 0);
+  const gaps = slots.slice(1).reduce((t, v) => t + gapOf(v), 0), used = slots.reduce((t, v) => t + v.w, 0) + gaps;
+  const stretch = justify && gaps && used < room ? 1 + (room - used) / gaps : 1;
+  let x = x0 + 0.15 * g, textEnd = -Infinity;
+  slots.forEach((v, k) => {
+    if (k) x += gapOf(v) * stretch;
+    let at = x + (v.w - v.nw) / 2;
+    // the words: under the first note when the neumes are the wider, else in the middle; never into the last words
+    if (v.words) {
+      const first = v.its.find(u => Ch.kind(u.it.g) === 'neume');
+      let cx = v.nw > v.tw && first ? at + v.its.slice(0, v.its.indexOf(first)).reduce((t, u) => t + u.w + 0.8 * N.STEP * sc, 0) + Math.min(first.w, 1.2 * g) / 2 : x + v.w / 2;
+      cx = Math.max(cx, textEnd + (v.join ? 0.08 : 0.5) * g + v.tw / 2);
+      textEnd = cx + v.tw / 2;
+      const base = S.yAt(st.lines[3], cx) + tdrop * g;
+      v.syl.box = [cx - v.tw / 2, base - 0.7 * tsz, v.tw, 0.7 * tsz];
+    }
+    v.its.forEach((u, i) => { if (i) at += 0.8 * N.STEP * sc; u.it.box = [at, 0, u.w, 0]; at += u.w; });
+    x += v.w;
+  });
+  if (custos) custos.its[0].it.box = [x1 - custos.w - 0.1 * g, 0, custos.w, 0];
+  // a chant's last line: the staff ends a little after its last sign, as printed
+  if (!justify && !custos) st.lines = st.lines.map(l => clip(l, Math.min(x1, x + 0.6 * g)));
+  for (const v of slots.concat(custos ? [custos] : [])) for (const u of v.its) N.fitBox(st, u.it, u.sh);
+  return Math.max(0, x - (x1 - (custos ? custos.w + 0.4 * g : 0)), textEnd - x1);
+}
+
+// a polyline [x0, y0, x1, y1, …] cut off at x
+function clip(l, at) {
+  const out = [];
+  for (let i = 0; i < l.length; i += 2) {
+    if (l[i] <= at) { out.push(l[i], l[i + 1]); continue; }
+    const t = (at - l[i - 2]) / (l[i] - l[i - 2]);
+    out.push(at, l[i - 1] + t * (l[i + 1] - l[i - 1]));
+    break;
+  }
+  return out;
+}
+
+// the office parts' rubrics over the initial (GregoBase's codes)
+const PARTS = { an: 'Ant.', in: 'Intr.', gr: 'Grad.', al: 'Allel.', tr: 'Tract.', of: 'Offert.', co: 'Comm.', re: 'R.',
+  rb: 'R. br.', hy: 'Hymn.', se: 'Seq.', ca: 'Cant.', ps: 'Ps.', pa: 'Prosa.', ky: '', im: '', rh: '', su: '', tp: '',
+  or: '', pr: '', va: '' };
+
+// Draws one page: chants one under another, each opening with its initial and a staff set in for it, spread over
+// as many staves as it needs, until the page is full. spec: { chants: [{ id, gabc, mode, part }], seed, W, H }.
+// Returns { jpeg (base64), doc (a ChantGPT document: the answers), glyphs (each drawn glyph: name, pitch, box),
+// used (the ids of the chants drawn), skipped ([id, why]) }.
+async function render(spec) {
+  await document.fonts.load('40px greciliae');
+  const r = rng(spec.seed), W = spec.W, H = spec.H;
+  const between = (a, b) => a + (b - a) * r();
+  const g = between(13, 22);                                  // the line spacing
+  const margin = between(0.07, 0.12) * W, x0 = margin, x1 = W - between(0.06, 0.1) * W;
+  const gap = between(6.2, 8) * g;                            // from one staff's top line to the next's
+  const tilt = (r() - 0.5) * 0.012, bowAll = r() < 0.3 ? between(0.3, 1.6) * g : 0;
+  const serif = ['Liberation Serif', 'DejaVu Serif', 'Times New Roman', 'serif'][Math.floor(r() * 4)];
+  const tsize = between(1.2, 1.55) * g, tdrop = between(2.1, 2.5), mc = document.createElement('canvas').getContext('2d');
+  mc.font = `${tsize}px "${serif}"`;
+  const tw = t => mc.measureText(t).width;
+  const doc = Ch.newDocument({ name: `synthetic-${spec.seed}`, type: 'images', sizes: [[W, H]] });
+  const page = doc.pages[0], glyphs = [], used = [], skipped = [], drawn = [];
+  let y = between(0.06, 0.1) * H + 2 * g, k = 0;
+  const bottom = H - 0.06 * H - 2 * g;
+  for (const c of spec.chants) {
+    let parsed;
+    // (some of GregoBase's GABC keeps its own headers)
+    try { parsed = Ch.fromGabc(/^%%\s*$/m.test(c.gabc) ? clean(c.gabc) : '%%\n' + clean(c.gabc)); }
+    catch (e) { skipped.push([c.id, e.message]); continue; }
+    const syls = parsed.staves.flatMap(s => s.syllables);
+    // a verse number before the words (1. Benedictus) is not the initial
+    const lead = syls.find(s => s.text);
+    if (lead) lead.text = lead.text.replace(/^[0-9]+\.\s*/, '');
+    if (!syls.length || Ch.kind(syls[0].items[0] && syls[0].items[0].g) !== 'clef') { skipped.push([c.id, 'no clef first']); continue; }
+    // the initial: the first letter of the words, set big beside the first staff (which is set in for it)
+    const firstText = syls.find(s => s.text);
+    const initial = firstText ? firstText.text.replace(/[^A-Za-zÀ-ÿ]/g, '').charAt(0) : '';
+    const inset = initial ? between(2.6, 3.4) * g : 0;
+    if (initial) { const s0 = syls.find(s => s.text); s0.dipl = s0.text.replace(initial, ''); }
+    const wide = syls.reduce((t, syl) => t + Math.max(N.itemShapes(syl.items[0] ? syl.items[0].g : '', false).width * g / 2 / N.STEP, syl.text ? tw(syl.text) : 0) + 0.5 * g, 0);
+    let n = Math.max(1, Math.ceil(wide * 1.05 / (x1 - x0 - 2.5 * g)));
+    let staves = null;
+    for (let tries = 0; tries < 4 && !staves; tries++, n++) {
+      // a chant longer than the page is drawn only on an empty page: it fills it, and runs on past its foot
+      if (y + (n - 1) * gap + 3 * g > bottom && (used.length || n > 40)) break;
+      const linesList = Array.from({ length: n }, (_, i) => staffLines(i ? x0 : x0 + inset, x1, y + i * gap, g, tilt, bowAll * between(0.6, 1.2)));
+      let parts;
+      try { parts = n > 1 ? N.spread(syls, linesList) : [JSON.parse(JSON.stringify(syls))]; } catch (e) { skipped.push([c.id, e.message]); break; }
+      if (parts.some(p => !p.length)) continue;
+      const list = parts.map((p, i) => ({ lines: linesList[i], syllables: p }));
+      let fits = true;
+      list.forEach((st, i) => { if (placeLine(st, g, tw, i < list.length - 1, tsize, tdrop) > 0.3 * g) fits = false; });
+      if (fits) staves = list;
+    }
+    if (!staves) { if (!used.length && !skipped.some(v => v[0] === c.id)) skipped.push([c.id, 'too long to set']); if (used.length) break; else continue; }
+    const runsOn = staves.length > 1 && S.yAt(staves[staves.length - 1].lines[3], x1) > bottom;
+    if (runsOn) staves = staves.filter(st => S.yAt(st.lines[3], x0) <= bottom && S.yAt(st.lines[3], x1) <= bottom);
+    staves.forEach((st, i) => {
+      st.id = `p1s${++k}`;
+      st.begins = i === 0;
+      st.box = S.box(st.lines, [W, H]);
+      page.staves.push(st);
+    });
+    doc.chants.push(Object.assign({ headers: { name: c.incipit || '', 'office-part': c.part || '', mode: c.mode || '', gregobase: String(c.id) }, staves: staves.map(s => s.id) }, runsOn ? { runsOn: true } : {}));
+    drawn.push({ staves, initial, inset, part: c.part, mode: c.mode });
+    used.push(c.id);
+    y += n * gap + between(0.4, 1.2) * g;
+    if (runsOn) break;
+  }
+  // drawing: the ink on white first, then paper, wear and the scanner over it
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+  const ink = `rgb(${Math.floor(between(10, 40))},${Math.floor(between(8, 30))},${Math.floor(between(5, 25))})`;
+  const red = r() < 0.5 ? ink : `rgb(${Math.floor(between(150, 190))},${Math.floor(between(20, 50))},${Math.floor(between(20, 40))})`;
+  x.fillStyle = x.strokeStyle = ink;
+  const lineW = between(0.07, 0.13) * g;
+  for (const d of drawn) {
+    for (const st of d.staves) {
+      x.strokeStyle = red; x.lineWidth = lineW;   // red lines, in some books
+      for (const l of st.lines) { x.beginPath(); for (let i = 0; i < l.length; i += 2) i ? x.lineTo(l[i], l[i + 1]) : x.moveTo(l[i], l[i + 1]); x.stroke(); }
+      const L = N.layout(st);
+      x.fillStyle = ink;
+      x.font = `${L.size}px greciliae`;
+      for (const v of L.glyphs) {
+        if (!v.ch) continue;
+        x.save(); x.translate(v.x, v.y); x.rotate(v.angle * Math.PI / 180); x.fillText(v.ch, 0, 0);
+        const m = x.measureText(v.ch); x.restore();
+        const it = st.syllables[v.syllable].items[v.item];
+        glyphs.push({ staff: st.id, syllable: v.syllable, item: v.item, g: it.g, name: v.name, p: v.p,
+          box: [v.x - m.actualBoundingBoxLeft, v.y - m.actualBoundingBoxAscent, m.actualBoundingBoxLeft + m.actualBoundingBoxRight, m.actualBoundingBoxAscent + m.actualBoundingBoxDescent].map(n => Math.round(n * 10) / 10) });
+      }
+      x.font = `${tsize}px "${serif}"`; x.textAlign = 'center';
+      for (const t of L.texts) {
+        const syl = st.syllables[t.syllable], s = syl.dipl !== undefined ? syl.dipl : syl.text;
+        if (!s) continue;
+        // the signs (℣, ℟, *, †) red, the words black
+        const m = x.measureText(s);
+        let at = t.x - m.width / 2;
+        x.textAlign = 'start';
+        for (const part of s.split(/([℣℟*†]\.?)/).filter(Boolean)) {
+          x.fillStyle = /^[℣℟*†]/.test(part) ? red : ink;
+          x.fillText(part, at, t.y); at += x.measureText(part).width;
+        }
+        x.textAlign = 'center';
+        syl.box = [t.x - m.actualBoundingBoxLeft, t.y - m.actualBoundingBoxAscent, m.actualBoundingBoxLeft + m.actualBoundingBoxRight, m.actualBoundingBoxAscent + m.actualBoundingBoxDescent].map(n => Math.round(n * 10) / 10);
+      }
+      x.textAlign = 'start';
+    }
+    if (d.initial) {
+      const st = d.staves[0], top = S.yAt(st.lines[0], S.xsOf(st.lines[0])[0]);
+      x.fillStyle = ink; x.font = `bold ${2.9 * g}px "${serif}"`;
+      x.fillText(d.initial, x0 - 0.1 * g, top + 3 * g + 0.3 * g);
+      const m = x.measureText(d.initial);
+      d.initialBox = [x0 - 0.1 * g, top + 3.3 * g - m.actualBoundingBoxAscent, m.actualBoundingBoxRight, m.actualBoundingBoxAscent].map(n => Math.round(n * 10) / 10);
+      // the rubric over it: the office part and mode, small and red
+      const rub = [PARTS[d.part] !== undefined ? PARTS[d.part] : d.part, d.mode].filter(Boolean).join(' ');
+      if (rub) { x.fillStyle = red; x.font = `italic ${0.95 * g}px "${serif}"`; x.fillText(rub, x0 - 0.1 * g, top - 0.9 * g); }
+    }
+  }
+  // the paper, its uneven light, the blur of the scan, specks, and JPEG
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const o = out.getContext('2d');
+  const pr = between(228, 248), paper = [pr, pr - between(4, 14), pr - between(14, 40)].map(Math.floor);
+  o.fillStyle = `rgb(${paper})`; o.fillRect(0, 0, W, H);
+  o.filter = `blur(${(between(0.015, 0.05) * g).toFixed(2)}px)`; o.globalCompositeOperation = 'multiply';
+  o.drawImage(cv, 0, 0);
+  o.filter = 'none'; o.globalCompositeOperation = 'source-over';
+  const img = o.getImageData(0, 0, W, H), a = img.data, noise = between(10, 40), fx = between(250, 600), fy = between(300, 700);
+  for (let i = 0; i < a.length; i += 4) {
+    const px = (i / 4) % W, py = (i / 4 / W) | 0;
+    const light = 0.9 + 0.08 * Math.sin(px / fx) * Math.cos(py / fy), nz = (r() - 0.5) * noise;
+    for (let q = 0; q < 3; q++) a[i + q] = Math.max(0, Math.min(255, a[i + q] * light + nz));
+    if (r() < 0.0006) a[i] = a[i + 1] = a[i + 2] = 60;
+  }
+  o.putImageData(img, 0, 0);
+  const jpeg = out.toDataURL('image/jpeg', between(0.7, 0.92)).split(',')[1];
+  // the answers: the document with every box rounded, and each chant's initial
+  for (const st of page.staves) st.lines = S.roundLines(st.lines);
+  doc.chants.forEach((ch, i) => { if (drawn[i].initialBox) ch.initial = { letter: drawn[i].initial, box: drawn[i].initialBox }; });
+  return { jpeg, doc, glyphs, used, skipped, spacing: g };
+}
+window.render = render;
+</script>
+</body>
+</html>
