@@ -40,12 +40,12 @@ class Reader(nn.Module):
         return self.out(self.along(y))    # (batch, tokens + 1, W / 2)
 
 
-def load(data):
+def load(data, labels='labels.jsonl'):
     """A folder's staves: labels.jsonl with tokens (staffdata.py), or with GABC items (align.js), tokenized here."""
     sys.path.insert(0, HERE)
     import staffdata
     rows = []
-    for l in open(os.path.join(data, 'labels.jsonl'), encoding='utf-8'):
+    for l in open(os.path.join(data, labels), encoding='utf-8'):
         r = json.loads(l)
         if 'tokens' not in r: r['tokens'] = staffdata.tokens(r['items'])
         if 'width' not in r:
@@ -156,7 +156,7 @@ def split(rows, every):
 
 def train(o):
     rows, test = split(load(o.data), 33) if o.data else ([], [])
-    real, real_test = split(load(o.real), 10) if o.real else ([], [])
+    real, real_test = split(load(o.real, o.real_labels), 10) if o.real else ([], [])
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     old = torch.load(o.resume, map_location=device) if o.resume else None
     vocab = old['vocab'] if old else vocab_of(rows + real)
@@ -219,12 +219,30 @@ def restore(path):
 
 def test(o):
     m, s = restore(o.model)
-    rows = load(o.data)
+    rows = load(o.data, o.real_labels)
     if o.held: rows = split(rows, o.held)[1]
     index = set(s['vocab'])
     rows = [r for r in rows if all(t in index for t in r['tokens'])]
     ter, ner = evaluate(m, rows, None, s['vocab'], 'cpu', limit=o.test_limit)
     print(f'{min(len(rows), o.test_limit or len(rows))} staves: token errors {ter:.2%}, note errors {ner:.2%}')
+
+
+def clean(o):
+    """The real staves whose answers the model can believe: those it reads with fewer than half their notes wrong.
+    An answer it reads far off is mostly not this staff's (the alignment broke the chant in the wrong place, or GregoBase
+    has another version). Writes labels-clean.jsonl beside labels.jsonl."""
+    m, s = restore(o.model)
+    rows = load(o.data)
+    kept = dropped = 0
+    with open(os.path.join(o.data, 'labels-clean.jsonl'), 'w', encoding='utf-8') as out:
+        for r in rows:
+            x, l = collate([ink(image(r['dir'], r['file']))])
+            with torch.no_grad(): seq, _ = greedy(m(x), l, s['vocab'])[0]
+            a, b = [t for t in seq if t not in '|/'], [t for t in r['tokens'] if t not in '|/']
+            if edits(a, b) < 0.5 * max(1, len(b)):
+                out.write(json.dumps({k: v for k, v in r.items() if k != 'dir'}, ensure_ascii=False) + '\n'); kept += 1
+            else: dropped += 1
+    print(f'{kept} staves kept, {dropped} dropped -> {os.path.join(o.data, "labels-clean.jsonl")}')
 
 
 def export(o):
@@ -242,12 +260,13 @@ def export(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['train', 'test', 'export'])
+    a.add_argument('what', choices=['train', 'test', 'export', 'clean'])
     a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'))
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'model'))
     a.add_argument('--model')
     a.add_argument('--real', help='real staves too (align.js), every tenth page kept out to test on')
     a.add_argument('--real-weight', type=int, default=3)
+    a.add_argument('--real-labels', default='labels.jsonl', help='the real staves\' labels (clean: those the model agrees with)')
     a.add_argument('--held', type=int, help='test: only the pages kept out (every so many)')
     a.add_argument('--resume')
     a.add_argument('--onnx', default=os.path.join(HERE, '..', 'models', 'chant.onnx'))
@@ -257,4 +276,4 @@ if __name__ == '__main__':
     a.add_argument('--width', type=int, default=128)
     a.add_argument('--test-limit', type=int, default=400)
     o = a.parse_args()
-    {'train': train, 'test': test, 'export': export}[o.what](o)
+    {'train': train, 'test': test, 'export': export, 'clean': clean}[o.what](o)
