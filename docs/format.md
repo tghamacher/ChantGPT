@@ -51,7 +51,12 @@ is how training data and tests will be made.
   kept in the document.
 - `pages`: one for each page of the source, in order.
 - `chants`: the pieces found in the source. Each has GABC `headers` (`name`, `mode`, `office-part` and so on, as
-  GregoBase uses them) and the `staves` it runs over, by id, in order. A chant can run over several pages.
+  GregoBase uses them) and the `staves` it runs over, by id, in order. A chant can run over several pages. A chant
+  placed from a book's index has its GregoBase id in a `gregobase` header.
+- `book` (optional): which book the source is, when its index from GregoBase is used: `title`, `gregobase` (the
+  book's source number in GregoBase) and `first`, the source's page (from 0) that is the first page of the book's
+  index. The book's pages are numbered from there. The index itself (a `.book.json`, made by
+  `training/gregobase.py book`) is not kept in the document; open it again with the scan.
 
 **Page**
 

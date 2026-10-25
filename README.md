@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.10.0** · a working title
+**Version 0.11.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -26,6 +26,11 @@ These are the first steps. You can:
   It is drawn in square notation over the page, in
   Gregorio's own font, each note at its pitch on the staff, bent with the staff if it bends, so you can see where the
   page and the GABC differ. Hold H to see the page alone; make the notation more or less see-through;
+- place a whole book's chants page by page, for a book GregoBase has indexed, such as the 1908 *Graduale Romanum*:
+  open the book's index (made with `training/gregobase.py book`; see [training/README.md](training/README.md)) with
+  the scan, say once which page of the book a scan page is, and on each page "Place this page's chants" finds the
+  staves and where chants begin, and places the chants GregoBase lists for that page, a chant running over the page
+  turn included;
 - correct it on the page: drag a neume up or down by steps (its GABC changes with it) or along the staff to line it
   up with the source; Shift-drag moves a single note; or use the arrow keys, and Enter to accept a neume and go on;
 - correct the words: click a syllable to change its text, give its reading as written (for abbreviations: *dñs* for

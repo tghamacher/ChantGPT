@@ -205,6 +205,29 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **Step 3, aligning a book with GregoBase** (version 0.11.0, branch `step-3-align`). The user chose the 1908
+  *Graduale Romanum* to start.
+  - The scan: archive.org `graduale-romanum-1908` (the CMAA's PDF, the scan GregoBase's index was made from): 948
+    pages, 1-bit CCITT at 300 dpi. Scan page 25 is printed page 1; the offset holds to the end (100, 500 and 100*
+    checked). Its first 24 pages are an article from *Sacred Music* and the preface. Downloads come from
+    `*.archive.org`; both it and `archive.org` are allowed.
+  - `training/gregobase.py book --source N`: a book's index (`format: chantgpt-book`): its pages as numbered, the
+    chants on each in order with `sequence`, `extent` (pages it runs over) and GABC. GregoBase sends no CORS headers,
+    so the app takes the index as a file.
+  - The app: the index opens like a document (by its `format`). Chant panel, "From the book's index": say which page
+    of the book the shown page is (`doc.book.first`); the page's chants are listed (click one: placed on the selected
+    staff); "Place this page's chants": finds the staves on the page (and on the pages its chants run onto), marks
+    where chants begin where nothing is marked (the first staff begins one unless a chant runs on from the page before,
+    by the index; the others where set in), places the chants in order at those staves, one undo for all.
+  - `put()` / `staves()` in editor.js: placing split from its undo. A chant with no chant marked after it now goes
+    down to the end of its page (or as many pages as the index says it runs over): it used to take one staff only.
+  - `neumes.js` draws the words without GABC markup (`<i>`, `<sp>V/</sp>` as ℣, braces).
+  - Tried on the Graduale's pages 1–4: staves found, the chants at the right set-in staves, *Ad te levavi* and the
+    Alleluia *Ostende* over the page turn. The index lists *Sanctissimus namque Gregorius* on page 1 too (it is in
+    the engraving at the head of the page, not on a staff): a count mismatch is reported, not guessed at.
+  - The line breaks come from the proportional spread and drift from the print by a few syllables; `[` and `]` fix
+    them. Better would be to read the breaks from the scan (the custos, the ink along each staff): for step 4.
+  - Test: `test/pages/book.book.json`, an index for the test book; a browser test of the page-by-page flow.
 - **Step 3, the corpus and synthetic pages** (version 0.10.0, branch `step-3-data`). See `training/README.md`.
   - The network: gregobase.selapa.net, cantusdatabase.org and archive.org are allowed from the session (the user
     allowed them, 2026-10-25). cantusindex.org and cantus.uwaterloo.ca are still blocked.

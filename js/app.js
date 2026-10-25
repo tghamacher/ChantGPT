@@ -8,7 +8,8 @@
   // src: the open source (viewer.js); doc: its document (chant.js); page: the page shown, from 0;
   // zoom: 'width' or 'page' (fitted to the window) or a number (page units to CSS pixels);
   // dirty: changed since it was last saved
-  const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false };
+  // book: a book's index from GregoBase (made by training/gregobase.py book), if one is open
+  const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false, book: null };
   window.CGApp = { state, open, show, save };
 
   // ---------------------------------------------------------------- status
@@ -23,6 +24,11 @@
   const isDoc = f => /\.json$/i.test(f.name) || f.type === 'application/json';
   async function open(files) {
     files = [...files];
+    // a book's index, among them, is opened as that
+    const books = [];
+    for (const f of files.filter(isDoc)) { try { if (JSON.parse(await f.text()).format === 'chantgpt-book') books.push(f); } catch (e) { } }
+    files = files.filter(f => !books.includes(f));
+    if (books.length) { if (!(await openBook(books[0]))) return false; if (!files.length) { if (state.src) await show(state.page); return true; } }
     const docs = files.filter(isDoc), scans = files.filter(f => !isDoc(f));
     if (docs.length > 1) { say('Open one document at a time.', true); return false; }
     if (scans.length) {
@@ -35,6 +41,7 @@
       state.src = src;
       pixelCache = null;
       state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes });
+      if (state.book) state.doc.book = bookOf(state.book);
       state.page = 0;
       state.dirty = false;
       E.reset();
@@ -72,6 +79,31 @@
     say(`${file.name}: ${n} ${n === 1 ? 'staff' : 'staves'} on ${doc.pages.filter(p => p.staves.length).length} pages.` +
       (doc.source.name && doc.source.name !== src.name ? ` It was made for ${doc.source.name}; the pages match.` : ''));
     return true;
+  }
+
+  // A book's index: its pages as the book numbers them, and the chants on each from GregoBase. The document keeps which
+  // book it is and which scan page is the book's first (book.first), once said.
+  async function openBook(file) {
+    let idx;
+    try { idx = JSON.parse(await file.text()); } catch (e) { idx = null; }
+    if (!idx || idx.format !== 'chantgpt-book' || !Array.isArray(idx.pages) || !Array.isArray(idx.chants)) { say(`${file.name} isn't a book's index.`, true); return false; }
+    state.book = idx;
+    if (state.doc && !(state.doc.book && state.doc.book.gregobase === bookOf(idx).gregobase)) { state.doc.book = bookOf(idx); state.dirty = true; }
+    const s = idx.source || {};
+    say(`The index of ${s.title || file.name}${s.year ? ` (${s.year})` : ''}: ${idx.pages.length} pages, ${idx.chants.length} chants.` + (state.src ? ' Go to a page of the book and say which page it is (in the Chant panel).' : ' Now open the scan of the book.'));
+    return true;
+  }
+  const bookOf = idx => ({ title: (idx.source && idx.source.title) || '', gregobase: idx.source && idx.source.gregobase });
+  // the shown scan page is the book's page called label: so the book's pages are matched to the scan's
+  function setBookPage(label) {
+    const idx = state.book;
+    if (!idx || !state.doc) return;
+    const k = idx.pages.findIndex(p => p.toLowerCase() === String(label).trim().toLowerCase());
+    if (k < 0) { say(`The book has no page "${label}". Its pages run ${idx.pages[0]} … ${idx.pages[idx.pages.length - 1]}.`, true); return; }
+    state.doc.book = Object.assign(state.doc.book || bookOf(idx), { first: state.page - k });
+    state.dirty = true;
+    say(`Scan page ${state.page + 1} is the book's page ${idx.pages[k]}; the other pages follow from it.`);
+    E.draw();
   }
 
   // ---------------------------------------------------------------- saving
@@ -160,6 +192,10 @@
   $('redo').addEventListener('click', () => E.redo());
   $('save').addEventListener('click', save);
   $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
+  $('openBook').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });
+  $('setBookPage').addEventListener('click', () => setBookPage($('bookPage').value));
+  $('bookPage').addEventListener('keydown', e => { if (e.key === 'Enter') { setBookPage(e.target.value); e.target.blur(); } });
+  $('placePage').addEventListener('click', () => E.placePage());
   $('findBeginnings').addEventListener('click', () => E.findBeginnings());
   $('beginsHere').addEventListener('change', e => E.toggleBegins(e.target.checked));
   $('clearChant').addEventListener('click', () => E.clearChant());
