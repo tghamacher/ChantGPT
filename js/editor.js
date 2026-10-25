@@ -451,21 +451,23 @@
   // GABC placed on the selected staff: a line of it on each staff from there down the page, as many as its line
   // breaks (z) say. Each staff's chant is laid out along it, its gaps stretched to fill the staff; the chant is
   // listed in the document's chants under its name. Returns false (and says why) if it can't be placed.
-  function placeChant(src, last) {
+  async function placeChant(src, last) {
     const st = staffOf(selected);
     if (!st) { ctx.say('Select the staff the chant begins on first.', true); return false; }
     let r;
     try { r = C.fromGabc(src); } catch (e) { ctx.say(e.message, true); return false; }
     const where = staves(st, r, last), pages = new Set(where.map(v => v.page));
+    const seen = r.staves.length === 1 && where.length > 1 ? await seenOf(where) : null;
+    if (!staffOf(st.id)) return false;
     const before = pages.size > 1 || !pages.has(ctx.state.page) ? snapshotAll() : snapshot();
     letGo();
-    const n = put(st, r, last);
+    const n = put(st, r, last, seen);
     commit(before);
     draw();
     const name = r.headers.name ? `${r.headers.name}: ` : '';
     if (r.staves.length > n)
       ctx.say(`${name}placed on ${n} ${n === 1 ? 'staff' : 'staves'}, but it has ${r.staves.length} lines; the last ${r.staves.length - n} had no staff below to go on. Mark more staves and place it again.`, true);
-    else ctx.say(`${name}placed on ${n === 1 ? 'the staff' : `${n} staves`}${pages.size > 1 ? ` over ${pages.size} pages` : ''}${r.staves.length === 1 && n > 1 ? ', spread over them as the page has it (check the line breaks)' : ''}. Hold H to compare it with the page.`);
+    else ctx.say(`${name}placed on ${n === 1 ? 'the staff' : `${n} staves`}${pages.size > 1 ? ` over ${pages.size} pages` : ''}${r.staves.length === 1 && n > 1 ? (seen ? ', its lines broken where the page seems to break them (check them)' : ', spread over them as the page has it (check the line breaks)') : ''}. Hold H to compare it with the page.`);
     return true;
   }
   // the staves a chant (read from GABC) goes on from staff st, in the book's order, with their pages: one per line of
@@ -482,10 +484,13 @@
   }
   // the chant put on those staves (spread over them as printed, if it has no line breaks) and listed in the
   // document's chants (taken off any chant they were part of); no undo recorded. Returns how many staves it went on.
-  function put(st, r, last) {
+  function put(st, r, last, seen) {
     let targets = staves(st, r, last), lines;
     if (r.staves.length > 1) lines = r.staves.map(v => v.syllables);
-    else lines = targets.length > 1 ? N.spread(r.staves[0].syllables, targets.map(v => v.staff.lines)) : [r.staves[0].syllables];
+    else if (targets.length > 1) {
+      const syls = r.staves[0].syllables, starts = seen && seen.length === targets.length ? N.breaks(syls, seen) : null;
+      lines = N.spread(syls, targets.map(v => v.staff.lines), starts || undefined);
+    } else lines = [r.staves[0].syllables];
     targets = targets.map(v => v.staff);
     targets.forEach((t, k) => {
       t.syllables = JSON.parse(JSON.stringify(lines[k]));
@@ -496,6 +501,35 @@
     ctx.state.doc.chants = ctx.state.doc.chants.filter(c => c.staves.length);
     ctx.state.doc.chants.push({ headers: r.headers, staves: ids });
     return targets.length;
+  }
+
+  // What each of these staves ({ staff, page }) carries, read from the page's ink (S.carries): for finding where a
+  // chant's lines break. A staff that can't be read gives null.
+  async function seenOf(list) {
+    const out = new Array(list.length).fill(null), pages = [...new Set(list.map(v => v.page))];
+    for (const pg of pages) {
+      let px;
+      try { px = await ctx.pixels(pg); } catch (e) { continue; }
+      list.forEach((v, k) => { if (v.page === pg) out[k] = S.carries(px.gray, px.w, px.h, v.staff.lines.map(l => l.map(u => u * px.scale))); });
+    }
+    return out;
+  }
+  // The chant on the selected staff given its line breaks again, read from the page: its syllables gathered from all
+  // its staves and spread over them anew (what was lined up by hand on them is laid out afresh).
+  async function readBreaks() {
+    const st = staffOf(selected), chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id));
+    if (!chant || chant.staves.length < 2) { ctx.say(chant ? 'This chant is on one staff: it has no line breaks.' : 'Select a staff with a chant on it.', true); return; }
+    const order = bookStaves(), list = chant.staves.map(id => order.find(v => v.staff.id === id)).filter(Boolean);
+    const seen = await seenOf(list);
+    const syls = N.gather(list.map(v => v.staff.syllables)), starts = N.breaks(syls, seen);
+    if (!starts) { ctx.say('Couldn\'t read where this chant\'s lines break from the page.', true); return; }
+    const before = snapshotAll();
+    letGo();
+    const parts = N.spread(syls, list.map(v => v.staff.lines), starts);
+    list.forEach((v, k) => { v.staff.syllables = parts[k]; N.place(v.staff); });
+    commit(before);
+    draw();
+    ctx.say(`Its line breaks read from the page${new Set(list.map(v => v.page)).size > 1 ? ', over the page turn' : ''}. Check them; [ and ] move one.`);
   }
 
   // ---------------------------------------------------------------- a book's chants, from its index
@@ -552,7 +586,10 @@
       const n = Math.min(starts.length, bp.chants.length), bad = [];
       letGo();
       for (let i = 0; i < n; i++) {
-        try { put(starts[i], C.fromGabc(gabcOf(bp.chants[i])), pg + (bp.chants[i].extent || 1) - 1); } catch (e) { bad.push(`${bp.chants[i].incipit}: ${e.message}`); }
+        try {
+          const r = C.fromGabc(gabcOf(bp.chants[i])), last = pg + (bp.chants[i].extent || 1) - 1, where = staves(starts[i], r, last);
+          put(starts[i], r, last, r.staves.length === 1 && where.length > 1 ? await seenOf(where) : null);
+        } catch (e) { bad.push(`${bp.chants[i].incipit}: ${e.message}`); }
       }
       commit(before);
       if (starts[0]) selected = starts[0].id;
@@ -571,7 +608,7 @@
   // one chant of the index placed on the selected staff (from the list of the page's chants)
   function placeOne(id) {
     const c = ctx.state.book && ctx.state.book.chants.find(v => v.id === id);
-    return c ? placeChant(gabcOf(c), ctx.state.page + (c.extent || 1) - 1) : false;
+    return c ? placeChant(gabcOf(c), ctx.state.page + (c.extent || 1) - 1) : Promise.resolve(false);
   }
 
   // every staff of the book in order, with its page
@@ -975,6 +1012,7 @@
     if (place) {
       place.disabled = !st;
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
+      document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
       document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length;
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
       wordPanel(syl);
@@ -1087,7 +1125,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage,
+    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

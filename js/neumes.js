@@ -338,9 +338,10 @@
   // carry); every staff after the first begun with the clef in force, every one but the last ended with a custos
   // pointing to the next note, as printed. syllables: the chant's (one GABC line); linesList: each staff's lines, in
   // order. Returns each staff's syllables (copies, without boxes, to be placed).
-  function spread(syllables, linesList) {
+  function spread(syllables, linesList, starts) {
     const n = linesList.length;
     const sum = a => a.reduce((t, v) => t + v, 0);
+    if (starts) return dress(syllables, starts.concat(syllables.length).slice(0, n).map((a, k, all) => k < n - 1 ? syllables.slice(a, starts[k + 1]) : syllables.slice(a)));
     const ws = syllables.map(syl => syl.items.reduce((t, it, k) => t + itemShapes(it.g, false).width + (k ? 0.8 * STEP : 0), 0) + 2.2 * STEP);
     const caps = linesList.map((lines, k) => {
       const xs = S().xsOf(lines[0]);
@@ -362,6 +363,12 @@
       i = j; acc = cum;
     }
     while (parts.length < n) parts.push([]);
+    return dress(syllables, parts);
+  }
+  // each staff's syllables (copies, without boxes), each line after the first begun with the clef in force, each but
+  // the last ended with a custos
+  function dress(syllables, parts) {
+    const n = parts.length;
     const out = parts.map(p => JSON.parse(JSON.stringify(p)).map(syl => {
       delete syl.box;
       syl.items.forEach(it => delete it.box);
@@ -394,7 +401,93 @@
     return out;
   }
 
-  const api = { parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, spread, custosFor, STEP, MIDDLE };
+  // Where a chant's lines break, read from what its staves carry on the page (S.carries): seen: for each staff, its
+  // ink's mass (a measure of its notes) and its custos (a staff position, or null). Each syllable weighs its notes (a
+  // bar, an accidental and a clef change less); the masses are scaled to the chant's whole weight; the breaks are
+  // those whose lines weigh most nearly what their staves carry, a custos agreeing with the next line's first note,
+  // no line begun by a bar. Returns the syllable each line starts at (the first at 0), or null if it can't say.
+  function breaks(syllables, seen) {
+    const n = syllables.length, S_ = seen.length;
+    if (S_ < 2 || n < S_ || seen.some(v => !v || !(v.mass >= 0))) return S_ === 1 ? [0] : null;
+    let clef = null, first = true;
+    const w = [], letters = [], firstP = [], clefBefore = [], barOnly = [];
+    syllables.forEach((syl, i) => {
+      letters.push(plain(syl.text).replace(/[\s*†℣℟.,;:!?]/g, '').length);
+      clefBefore[i] = clef;
+      let t = 0, fp = null;
+      for (const it of syl.items) {
+        const kind = Ch().kind(it.g);
+        if (kind === 'clef') { if (!first) t += 1.5; clef = it.g; }
+        else if (kind === 'bar') t += /::/.test(it.g) ? 1.2 : 0.6;
+        else if (kind === 'accidental') t += 0.5;
+        else if (kind === 'neume') {
+          const ns = Ch().notes(it.g).filter(x => !x.acc);
+          t += ns.length;
+          if (fp === null && ns.length) fp = { p: ns[0].p, clef };
+        }
+        if (kind !== 'clef') first = false;
+      }
+      w.push(t); firstP.push(fp);
+      barOnly.push(!syl.text && syl.items.length > 0 && syl.items.every(it => Ch().kind(it.g) === 'bar'));
+    });
+    const pre = [0], preL = [0];
+    for (const v of w) pre.push(pre[pre.length - 1] + v);
+    for (const v of letters) preL.push(preL[preL.length - 1] + v);
+    const total = pre[n], mass = seen.reduce((t, v) => t + v.mass, 0);
+    if (!(total > 0 && mass > 0)) return null;
+    const expect = seen.map(v => v.mass * total / mass);
+    // the words, if they were read: letters against their ink
+    const totalL = preL[n], ink = seen.reduce((t, v) => t + (v.words || 0), 0), useWords = totalL > 0 && ink > 0 && seen.every(v => v.words >= 0);
+    const expectL = seen.map(v => useWords ? v.words * totalL / ink : 0);
+    // the first note at or after syllable i, under the clef in force
+    const nextNote = [];
+    for (let i = n - 1; i >= 0; i--) nextNote[i] = firstP[i] ? Object.assign({}, firstP[i], { clef: firstP[i].clef || clefBefore[i] }) : nextNote[i + 1] || null;
+    const custosMiss = (k, i) => {
+      const c = seen[k].custos, nn = nextNote[i];
+      if (c === null || c === undefined || !nn || !nn.clef) return 0;
+      const here = clefBefore[i] || nn.clef, g = custosFor(nn.p, nn.clef, here);
+      return g && g.charCodeAt(0) - 97 === c ? -1 : 8;
+    };
+    const cost = (k, a, b) => {
+      const d = pre[b] - pre[a] - expect[k], e = preL[b] - preL[a] - expectL[k];
+      return d * d / ((0.2 * expect[k]) ** 2 + 1) + (useWords ? e * e / ((0.08 * expectL[k]) ** 2 + 1) : 0);
+    };
+    // dp[k][i]: the best for staves 0..k-1 over syllables 0..i-1
+    const dp = Array.from({ length: S_ + 1 }, () => new Float64Array(n + 1).fill(Infinity)), from = Array.from({ length: S_ + 1 }, () => new Int32Array(n + 1));
+    dp[0][0] = 0;
+    for (let k = 1; k <= S_; k++) {
+      for (let i = k; i <= n - (S_ - k); i++) {
+        if (k < S_ && (i >= n || barOnly[i])) continue;
+        for (let a = k - 1; a < i; a++) {
+          if (dp[k - 1][a] === Infinity) continue;
+          const c = dp[k - 1][a] + cost(k - 1, a, i) + (k < S_ ? custosMiss(k - 1, i) : 0);
+          if (c < dp[k][i]) { dp[k][i] = c; from[k][i] = a; }
+        }
+      }
+    }
+    if (dp[S_][n] === Infinity) return null;
+    const starts = [];
+    for (let k = S_, i = n; k > 0; k--) { i = from[k][i]; starts.unshift(i); }
+    return starts;
+  }
+
+  // A chant's syllables gathered back from its staves (as spread() left them): the custos taken off each line's end,
+  // and the clef that begins a line after the first, if it is only the clef in force repeated.
+  function gather(staves) {
+    const out = [];
+    let clef = null;
+    staves.forEach((syls, k) => {
+      syls.forEach((syl, i) => {
+        const items = syl.items.filter(it => Ch().kind(it.g) !== 'custos');
+        if (k && i === 0 && !syl.text && items.length === 1 && Ch().kind(items[0].g) === 'clef' && items[0].g === clef) return;
+        for (const it of items) if (Ch().kind(it.g) === 'clef') clef = it.g;
+        if (items.length || syl.text) out.push(Object.assign({}, syl, { items }));
+      });
+    });
+    return out;
+  }
+
+  const api = { parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, spread, breaks, gather, custosFor, STEP, MIDDLE };
   global.CGNeumes = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

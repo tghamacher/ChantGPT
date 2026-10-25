@@ -438,7 +438,85 @@
     return out;
   }
 
-  const api = { count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, beginnings, fitStaff, fit, grey };
+  // ---------------------------------------------------------------- what a staff carries
+  // How much a staff carries, read from the ink along it (lines in the pixels' coordinates): mass, the ink of its
+  // notes and signs in squared spaces, beyond what the four lines themselves make (each column's ink, from a space
+  // and a half above the top line to just below the bottom one, less what a column of bare staff has), the clef at
+  // its start left out; and its custos, if it ends with one: the staff position where it stands (a = 0; the bottom
+  // line is 3, the top 9), else null. Used to find where a chant's lines break.
+  function carries(gray, w, h, lines) {
+    const g = spacing(lines), xs = xsOf(lines[0]);
+    const x0 = Math.max(0, Math.round(xs[0])), x1 = Math.min(w - 1, Math.round(xs[xs.length - 1]));
+    if (x1 - x0 < 4 * g) return null;
+    const top = x => yAt(lines[0], x) - 1.6 * g, bot = x => yAt(lines[3], x) + 0.9 * g;
+    // ink: darker than half the paper (the paper is the band's lighter half)
+    const sample = [];
+    for (let x = x0; x <= x1; x += 7) for (let y = Math.max(0, Math.round(top(x))); y < Math.min(h, bot(x)); y += 5) sample.push(gray[y * w + x]);
+    sample.sort((a, b) => a - b);
+    const paper = sample[Math.floor(sample.length * 0.75)], cut = paper * 0.55;
+    const W = x1 - x0 + 1, col = new Float64Array(W);
+    for (let i = 0; i < W; i++) {
+      const x = x0 + i, ya = Math.max(0, Math.round(top(x))), yb = Math.min(h - 1, Math.round(bot(x)));
+      let n = 0;
+      for (let y = ya; y <= yb; y++) if (gray[y * w + x] < cut) n++;
+      col[i] = n;
+    }
+    // a column of bare staff: the lines alone (most columns between the notes)
+    const base = Array.from(col).sort((a, b) => a - b)[Math.floor(W * 0.25)];
+    const extra = Array.from(col, v => Math.max(0, v - base - 0.08 * g));
+    // the clef: the first run of ink from the staff's start
+    let i = 0;
+    while (i < W && extra[i] === 0) i++;
+    const clefFrom = i;
+    while (i < W && (extra[i] > 0 || extra.slice(i, i + Math.round(0.15 * g)).some(v => v > 0))) i++;
+    const clefTo = i - clefFrom < 2 * g ? i : clefFrom;
+    // the custos: a last run of ink, narrow, short (not a bar, which spans the staff), set apart from what's before
+    let custos = null, end = W;
+    let j = W - 1;
+    while (j > 0 && extra[j] === 0) j--;
+    const runEnd = j;
+    // (set close to the last neume: a gap of a tenth of a space is enough)
+    while (j > 0 && extra.slice(Math.max(0, j - Math.max(1, Math.round(0.1 * g))), j + 1).some(v => v > 0)) j--;
+    const runFrom = j + 1, wide = runEnd - runFrom + 1;
+    if (wide > 0.2 * g && wide < 1.1 * g && W - runEnd < 1.5 * g) {
+      // its rows: the ink beyond the lines' own (rows of the lines are ink in bare columns too)
+      const rowsOf = (a, b) => {
+        const rows = new Map();
+        for (let x = x0 + a; x <= x0 + b; x++) {
+          const ya = Math.max(0, Math.round(top(x))), yb = Math.min(h - 1, Math.round(bot(x)));
+          for (let y = ya; y <= yb; y++) if (gray[y * w + x] < cut) { const d = Math.round(y - yAt(lines[0], x)); rows.set(d, (rows.get(d) || 0) + 1); }
+        }
+        return rows;
+      };
+      // less the lines: what the bare columns just before it have in each row, as much per column
+      const gap = rowsOf(Math.max(0, runFrom - Math.round(0.3 * g)), runFrom - 1), gw = Math.min(runFrom, Math.round(0.3 * g));
+      const rows = rowsOf(runFrom, runEnd);
+      for (const [d, n] of rows) rows.set(d, Math.max(0, n - (gw ? (gap.get(d) || 0) * wide / gw : 0)));
+      const ys = [...rows.entries()].filter(([, n]) => n >= 0.5 * wide).map(([d]) => d);
+      const span = ys.length ? Math.max(...ys) - Math.min(...ys) : Infinity;
+      // the head: the stretch of half a space with the most ink; a custos has most of its ink there, a bar hasn't
+      let best = -1, at = 0, all = 0;
+      const hd = Math.max(2, Math.round(0.5 * g));
+      for (const n of rows.values()) all += n;
+      for (const d of rows.keys()) { let n = 0; for (let k = 0; k < hd; k++) n += rows.get(d + k) || 0; if (n > best) { best = n; at = d + hd / 2; } }
+      if (span < 3.6 * g && best > 0.33 * all) {
+        const p = 9 - at / (g / 2);
+        custos = Math.round(p);
+        end = runFrom;
+      }
+    }
+    let mass = 0;
+    for (let k = clefTo; k < end; k++) mass += extra[k];
+    // the words under it: the ink in their band, from just below the notes to well below the bottom line
+    let words = 0;
+    for (let x = x0; x <= x1; x++) {
+      const ya = Math.max(0, Math.round(yAt(lines[3], x) + 1.0 * g)), yb = Math.min(h - 1, Math.round(yAt(lines[3], x) + 2.9 * g));
+      for (let y = ya; y <= yb; y++) if (gray[y * w + x] < cut) words++;
+    }
+    return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
+  }
+
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, beginnings, fitStaff, fit, grey };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
