@@ -283,6 +283,11 @@
   // Everything to draw on a staff: each glyph with its character, its baseline on the page, its size (the font size
   // in page units) and the staff's slope there (degrees), with the item and syllable it belongs to; and each
   // syllable's text, centred under its first note.
+  // a syllable's words as printed: GABC's markup taken out (<i>, <sp>V/</sp> as ℣, the braces of centring)
+  const SP = { 'V/': '℣', 'R/': '℟', 'A/': '℣', '+': '†', "'ae": 'ǽ', "'oe": 'œ́', 'ae': 'æ', 'oe': 'œ', '*': '*' };
+  const plain = t => String(t || '').replace(/<v>.*?<\/v>/g, '').replace(/<sp>(.*?)<\/sp>/g, (m, k) => SP[k] !== undefined ? SP[k] : k)
+    .replace(/<\/?[a-z]+>/g, '').replace(/[{}]/g, '');
+
   function layout(staff) {
     const sc = scaleOf(staff.lines), size = 1000 * sc, out = { glyphs: [], texts: [], size };
     let firstClef = true, k = 0;
@@ -303,10 +308,10 @@
         }
       });
       // a syllable with a box of its own is drawn there (its middle, on its bottom); else centred under its first note
-      if (syl.text && syl.box) out.texts.push({ text: syl.text, x: syl.box[0] + syl.box[2] / 2, y: syl.box[1] + syl.box[3], syllable: si, join: !!syl.join, checked: syl.checked });
+      if (syl.text && syl.box) out.texts.push({ text: plain(syl.text), x: syl.box[0] + syl.box[2] / 2, y: syl.box[1] + syl.box[3], syllable: si, join: !!syl.join, checked: syl.checked });
       else if (syl.text && syl.items.some(it => it.box)) {
         const first = syl.items.find(it => it.box);
-        out.texts.push({ text: syl.text, x: textAt !== null ? textAt : first.box[0] + first.box[2] / 2, syllable: si, join: !!syl.join, checked: syl.checked });
+        out.texts.push({ text: plain(syl.text), x: textAt !== null ? textAt : first.box[0] + first.box[2] / 2, syllable: si, join: !!syl.join, checked: syl.checked });
       }
     });
     // the words' baseline two spaces below the bottom line, where it lies at each syllable, as in the printed books

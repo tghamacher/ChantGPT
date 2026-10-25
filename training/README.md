@@ -33,6 +33,13 @@ This writes `training/data/gregobase-1.book.json`, a book's index for the app:
 GregoBase sends no CORS headers, so the app can't fetch from it directly; the index is made here and opened in the app
 with the scan.
 
+In the app, open the scan and the index together, go to a page of the book, and say which page of the book it is
+(Chant panel, "From the book's index"). Then, page by page, "Place this page's chants". Correct each page and save the
+document: the corrected pages are real pages with answers, for training.
+
+The 1908 Graduale: archive.org has the CMAA's scan (item `graduale-romanum-1908`, 948 pages, 1-bit at 300 dpi).
+Scan page 25 is the book's page 1, and the rest follow without a break (checked at pages 100, 500 and 100*).
+
 Test: `python -I training/test_gregobase.py`.
 
 ## 2. Synthetic pages

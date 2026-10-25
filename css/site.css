@@ -121,6 +121,12 @@ button, select, input { font: inherit; color: inherit; }
 .cg-word label { display: block; margin-bottom: 6px; }
 .cg-word input[type=text] { width: 100%; font: 15px var(--textfont); background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; margin-top: 2px; }
 .cg-word .cg-check { display: flex; gap: 6px; align-items: center; }
+.cg-book { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; background: var(--field); }
+.cg-book h3 { margin: 0 0 6px; font-size: 13px; }
+.cg-book input[type=text] { width: 4.5em; background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 5px; }
+.cg-bookchants { margin: 0 0 8px; padding-left: 20px; }
+.cg-bookchants li { margin-bottom: 4px; }
+.cg-bookchants .placed::after { content: " ✓"; color: var(--checked); }
 .cg-slider { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .cg-slider input { flex: 1; }
 .cg-slider span { color: var(--muted); font-size: 12px; }

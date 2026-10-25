@@ -694,6 +694,31 @@
       bad.push(...same('no findings', E.alerts.map(a => a.text), []));
       return bad;
     } },
+    { name: 'app: a book\'s index: the page said once, each page\'s chants placed where they begin, one running over the page turn', browser: true, unit: async app => {
+      const { w } = await app('test/pages/book-1.jpg', 'test/pages/book-2.jpg');
+      const text = await (await w.fetch('test/pages/book.book.json')).text(), doc = w.CGApp.state.doc, E = w.CGEditor, bad = [];
+      await w.CGApp.open([new w.File([text], 'test.book.json', { type: 'application/json' })]);
+      bad.push(...same('the index open', !!w.CGApp.state.book, true));
+      await w.CGApp.show(0);
+      const d = w.document;
+      d.getElementById('bookPage').value = '1';
+      d.getElementById('setBookPage').click();
+      bad.push(...same('the book\'s first page', doc.book && doc.book.first, 0));
+      bad.push(...same('the page\'s chants listed', [...d.querySelectorAll('#bookChants li')].length, 2));
+      await E.placePage();
+      bad.push(...same('staves found on both pages (the Kyrie runs on)', doc.pages.map(p => p.staves.length), [5, 4]));
+      await w.CGApp.show(1);
+      await E.placePage();
+      const where = id => doc.chants.find(c => String(c.headers.gregobase) === String(id));
+      bad.push(...same('the Gloria Patri', where(9001) && where(9001).staves, ['p1s1', 'p1s2', 'p1s3']));
+      bad.push(...same('the Kyrie, over the page turn', where(9002) && where(9002).staves, ['p1s4', 'p1s5', 'p2s1']));
+      bad.push(...same('the Salve Regina', where(9003) && where(9003).staves, ['p2s2', 'p2s3', 'p2s4']));
+      bad.push(...same('marked placed', [...d.querySelectorAll('#bookChants .placed')].length, 1));
+      E.undo();
+      bad.push(...same('one undo takes the page\'s chants off', [!!where(9003), doc.pages[1].staves[1].syllables.length, !!where(9002)], [false, 0, true]));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {
       const { w } = await app('test/pages/two-pages.pdf');
       await w.CGEditor.addStaff([20, 45, 380, 65]);

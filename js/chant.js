@@ -205,6 +205,8 @@
     if (!doc || doc.format !== FORMAT) return ['Not a ChantGPT document.'];
     if (doc.version !== VERSION) bad.push(`Version ${doc.version}; this app reads version ${VERSION}.`);
     if (!Array.isArray(doc.pages)) return bad.concat('The document has no pages.');
+    if (doc.book !== undefined && !(doc.book && typeof doc.book === 'object' && (doc.book.first === undefined || Number.isInteger(doc.book.first))))
+      bad.push('"book" says which book the scan is: { title, gregobase, first (the scan page, from 0, that is the book\'s first) }.');
     const ids = new Set();
     doc.pages.forEach((page, pi) => {
       const where = `Page ${page.n || pi + 1}`;
