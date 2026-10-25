@@ -196,6 +196,9 @@ def main():
     elif o.what == 'build':
         with open(dump_path(o.dump), encoding='utf-8') as f: t = tables(f.read())
         rows = list(chants(t))
+        # the chants already fetched from the site, newer than the dump, are kept
+        have = {r['id'] for r in rows}
+        if os.path.exists(o.out): rows += [r for r in read(o.out) if r.get('from') == 'site' and r['id'] not in have]
         write(o.out, rows)
         with open(os.path.join(os.path.dirname(o.out), 'gregobase-sources.json'), 'w', encoding='utf-8') as f:
             json.dump(sources(t), f, ensure_ascii=False, indent=1)
