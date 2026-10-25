@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.5.0">
+<link rel="stylesheet" href="css/site.css?v=0.6.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.5.0">version 0.5.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.6.0">version 0.6.0</span>
   <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
   <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
 </header>
@@ -77,8 +77,23 @@
         <li>Drag a neume up or down to move it by steps (its GABC changes with it), or along the staff to line it up with the page.</li>
         <li>Shift-drag to move just the note under the pointer.</li>
         <li>With a neume selected: arrow keys move it, Enter accepts it and goes on to the next, Tab skips to the next, Delete takes it out, Esc lets go of it.</li>
+        <li>Click the words under a neume to correct them, or drag them into place.</li>
+        <li>When a staff looks right, accept it (Shift+Enter): its unchecked neumes and words are checked with it. Doubtful ones, in orange, must be accepted one by one first.</li>
       </ul>
       <p class="cg-hint" id="chantInfo"></p>
+      <div class="cg-word" id="wordPanel" hidden>
+        <label>Text <input type="text" id="sylText" spellcheck="false" title="The syllable as it goes into the GABC, abbreviations written out"></label>
+        <label>As written <input type="text" id="sylDipl" spellcheck="false" placeholder="if it differs: dñs, xps …" title="The syllable as the source writes it, abbreviation marks and all"></label>
+        <label class="cg-check"><input type="checkbox" id="sylStart"> Begins a word</label>
+        <p class="cg-hint" id="sylInfo"></p>
+      </div>
+      <div class="cg-row">
+        <button type="button" id="splitHere" title="Start a new syllable at the selected neume">New syllable here</button>
+        <button type="button" id="joinPrev" title="Join the selected syllable onto the one before it">Join to the one before</button>
+      </div>
+      <div class="cg-row">
+        <button type="button" id="acceptStaff" title="Accept the selected staff: its neumes and words not yet checked (Shift+Enter)">Accept this staff</button>
+      </div>
       <label class="cg-slider">Notation <input type="range" id="opacity" min="0.15" max="1" step="0.05" value="0.7"> <span>see-through</span></label>
       <div class="cg-row">
         <button type="button" id="downloadGabc" title="Save the chant as a .gabc file, with the page's line breaks">Save as GABC</button>
@@ -112,12 +127,12 @@
   </section>
 </main>
 
-<script src="js/chant.js?v=0.5.0"></script>
-<script src="js/staves.js?v=0.5.0"></script>
-<script src="js/greciliae.js?v=0.5.0"></script>
-<script src="js/neumes.js?v=0.5.0"></script>
-<script src="js/viewer.js?v=0.5.0"></script>
-<script src="js/editor.js?v=0.5.0"></script>
-<script src="js/app.js?v=0.5.0"></script>
+<script src="js/chant.js?v=0.6.0"></script>
+<script src="js/staves.js?v=0.6.0"></script>
+<script src="js/greciliae.js?v=0.6.0"></script>
+<script src="js/neumes.js?v=0.6.0"></script>
+<script src="js/viewer.js?v=0.6.0"></script>
+<script src="js/editor.js?v=0.6.0"></script>
+<script src="js/app.js?v=0.6.0"></script>
 </body>
 </html>

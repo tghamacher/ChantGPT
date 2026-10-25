@@ -8,7 +8,7 @@
   --panel: #fffdf8; --field: #fff; --accent: #8a2a1b; --accent-ink: #fff; --focus: #b5542f;
   --err-bg: #fbe4df; --err-rule: #e6a99c;
   --staff: rgba(31, 94, 168, .9); --staff-fill: rgba(31, 94, 168, .07); --doubt: #c2410c;
-  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1); --notation-ink: #c0261b;
+  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1); --notation-ink: #c0261b; --checked: #1d6b3a;
   --page-shadow: 0 2px 12px rgba(0,0,0,.22);
   --textfont: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --ui: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -21,7 +21,7 @@
     --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
     --err-bg: #34201b; --err-rule: #6e3529;
     --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a;
     --page-shadow: 0 2px 16px rgba(0,0,0,.7);
   }
 }
@@ -31,7 +31,7 @@
   --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
   --err-bg: #34201b; --err-rule: #6e3529;
   --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a;
   --page-shadow: 0 2px 16px rgba(0,0,0,.7);
 }
 * { box-sizing: border-box; }
@@ -92,7 +92,11 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .chant { opacity: var(--notation, .7); pointer-events: none; }
 .cg-overlay .glyph { font-family: "greciliae"; fill: var(--notation-ink); }
 .cg-overlay .glyph.doubt { fill: var(--doubt); }
+.cg-overlay .glyph.ok, .cg-overlay .syl.ok { fill: var(--checked); }
 .cg-overlay .glyph.on { fill: var(--sel); }
+.cg-overlay .chant .syl { pointer-events: auto; cursor: grab; }
+.cg-overlay .syl.doubt { fill: var(--doubt); }
+.cg-overlay .syl.on { fill: var(--sel); text-decoration: underline; }
 .cg-overlay .neume { fill: transparent; cursor: grab; }
 .cg-overlay .neume.on { fill: var(--sel-fill); stroke: var(--sel); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .syl { font-family: var(--textfont); fill: var(--notation-ink); text-anchor: middle; }
@@ -100,6 +104,10 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .item.doubt { stroke: var(--doubt); stroke-width: 2; }
 .cg-keys { margin: 0 0 10px; padding-left: 18px; }
 .cg-group textarea { width: 100%; font: 12px/1.4 ui-monospace, Consolas, monospace; background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 6px; margin-bottom: 8px; resize: vertical; }
+.cg-word { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; background: var(--field); }
+.cg-word label { display: block; margin-bottom: 6px; }
+.cg-word input[type=text] { width: 100%; font: 15px var(--textfont); background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; margin-top: 2px; }
+.cg-word .cg-check { display: flex; gap: 6px; align-items: center; }
 .cg-slider { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .cg-slider input { flex: 1; }
 .cg-slider span { color: var(--muted); font-size: 12px; }

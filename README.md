@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.5.0** · a working title
+**Version 0.6.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -22,11 +22,15 @@ These are the first steps. You can:
   page and the GABC differ. Hold H to see the page alone; make the notation more or less see-through;
 - correct it on the page: drag a neume up or down by steps (its GABC changes with it) or along the staff to line it
   up with the source; Shift-drag moves a single note; or use the arrow keys, and Enter to accept a neume and go on;
+- correct the words: click a syllable to change its text, give its reading as written (for abbreviations: *dñs* for
+  *Dominus*), drag it into place, split a syllable at a neume or join it to the one before;
+- accept a staff once it's right (Shift+Enter). Places the recognizer will be unsure of must be accepted one by
+  one first; what you've checked turns green;
 - save the chant as GABC again, with the page's line breaks;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-Next, accepting a whole staff at once, and the words: moving and correcting syllables. After that, finding staves by
-itself, and then recognition.
+Next, the checks that need no AI (does each custos match the next staff's first note?), then finding staves by
+itself, then the training data and recognition.
 
 ## Running it on your computer
 

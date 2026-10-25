@@ -77,7 +77,11 @@ is how training data and tests will be made.
   stand on a syllable with no text, as in GABC's `(c4)` and `(::)`.
 - `join`: `true` when the syllable goes on with the word before it (no space). It may be the first syllable of a
   staff, for a word broken over a line.
-- `box`: around the text (optional).
+- `dipl`: the syllable as written in the source, abbreviation marks and all, in MUFI characters (`dñs`), when it
+  differs from `text`, which is the reading expanded (`Dominus`) and goes into the GABC (optional).
+- `box`: around the text (optional). The app draws the text centred in it, on its bottom; without one, centred under
+  the syllable's first note, two spaces below the staff.
+- `checked`: as for items, below: how a person confirmed the text (optional).
 - `items`: the GABC groups over this syllable, in order.
 
 **Item**

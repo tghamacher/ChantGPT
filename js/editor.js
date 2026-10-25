@@ -3,7 +3,9 @@
 // line's point up or down, or the bar through all four lines at a point (an end, or a bend) to move it; double-click
 // a staff to bend it there, or a bend's bar to straighten it; find its lines again, space them evenly, or delete it.
 // A staff's chant is drawn on it; a neume (a GABC group: all that stands over a syllable in it) is dragged up or down
-// by steps, which rewrites its GABC, or along the staff; Shift-drag moves one note of it. Every change can be undone.
+// by steps, which rewrites its GABC, or along the staff; Shift-drag moves one note of it. A syllable's words are
+// dragged into place and corrected in the side panel; a staff is accepted when its doubtful neumes have been checked.
+// Every change can be undone.
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
@@ -14,6 +16,7 @@
   let ctx = null;            // { state, svg, say, changed, pixels(page) }
   let selected = null;       // the selected staff's id
   let item = null;           // the selected neume (an item of the selected staff): { s: syllable, i: item }, by index
+  let word = null;           // or the selected syllable's words: the syllable's index on the selected staff
   let drag = null;           // what the pointer is doing
   const history = { undo: [], redo: [] };
 
@@ -27,7 +30,7 @@
   }
 
   // a new document: nothing selected, nothing to undo
-  function reset() { selected = null; item = null; drag = null; history.undo.length = history.redo.length = 0; info(); }
+  function reset() { selected = null; item = null; word = null; drag = null; history.undo.length = history.redo.length = 0; info(); }
 
   const page = () => ctx.state.doc.pages[ctx.state.page];
   const staffOf = id => page().staves.find(s => s.id === id) || null;
@@ -63,6 +66,7 @@
     restore(h[which]);
     if (selected && !ctx.state.doc.pages[h[which].page].staves.some(s => s.id === selected)) selected = null;
     if (!itemOf()) item = null;
+    if (!sylOf()) word = null;
     ctx.changed();
     if (h[which].page !== ctx.state.page) ctx.show(h[which].page); else draw();
   }
@@ -140,7 +144,7 @@
     if (!st) return;
     const before = snapshot();
     page().staves = page().staves.filter(s => s !== st);
-    item = null;
+    letGo();
     for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => id !== st.id);
     selected = null;
     commit(before);
@@ -174,6 +178,16 @@
     const st = staffOf(selected);
     return st && s !== null && s !== undefined && st.syllables[s] && st.syllables[s].items[i] || null;
   }
+  // the selected syllable, or null
+  function sylOf() {
+    const st = staffOf(selected);
+    return st && word !== null && st.syllables[word] || null;
+  }
+  // nothing selected within the staff
+  const letGo = () => { item = null; word = null; };
+  const DOUBT = 0.8;
+  const doubtful = x => x.conf !== undefined && x.conf < DOUBT && !x.checked;
+
   // the staff position (a = 0) at a point on the page, on the selected staff, and the size of a step there
   function pitchAt(st, x, y) {
     const b = S.yAt(st.lines[3], x), t = S.yAt(st.lines[0], x), step = (b - t) / 6;
@@ -230,8 +244,142 @@
     if (!list.length) return;
     const at = list.findIndex(v => v.id === selected && item && v.s === item.s && v.i === item.i);
     const v = list[at < 0 ? (d > 0 ? 0 : list.length - 1) : (at + d + list.length) % list.length];
-    selected = v.id; item = { s: v.s, i: v.i };
+    selected = v.id; item = { s: v.s, i: v.i }; word = null;
     draw();
+  }
+
+  // ---------------------------------------------------------------- the words
+  // The selected syllable's text (expanded: what goes into the GABC), its reading as written, whether it begins a
+  // word. Each counts as checking it.
+  function setText(v) {
+    const syl = sylOf();
+    if (!syl) return;
+    v = String(v).replace(/[()]/g, '').trim();
+    if (v === syl.text) return;
+    const before = snapshot();
+    syl.text = v;
+    syl.checked = 'edited';
+    commit(before);
+    draw();
+  }
+  function setDipl(v) {
+    const syl = sylOf();
+    if (!syl) return;
+    v = String(v).trim();
+    if (v === (syl.dipl || '')) return;
+    const before = snapshot();
+    if (v && v !== syl.text) syl.dipl = v; else delete syl.dipl;
+    syl.checked = 'edited';
+    commit(before);
+    draw();
+  }
+  function setWordStart(on) {
+    const syl = sylOf();
+    if (!syl || on === !syl.join) return;
+    const before = snapshot();
+    if (on) delete syl.join; else syl.join = true;
+    syl.checked = 'edited';
+    commit(before);
+    draw();
+  }
+  function nudgeWord(dx, dy) {
+    const syl = sylOf(), box = syl && wordBox(word);
+    if (!box) return;
+    const before = snapshot();
+    syl.box = [box[0] + dx, box[1] + dy, box[2], box[3]].map(v => Math.round(v * 100) / 100);
+    syl.checked = 'edited';
+    commit(before);
+    draw();
+  }
+  // a syllable's box as drawn: its own, or one made from where it is drawn now (its middle, its baseline, its width)
+  function wordBox(s) {
+    const st = staffOf(selected), syl = st && st.syllables[s];
+    if (!syl) return null;
+    if (syl.box) return syl.box.slice();
+    const t = ctx.svg.querySelector(`.syl[data-staff="${st.id}"][data-s="${s}"]`);
+    if (!t) return null;
+    const x = +t.getAttribute('x'), y = +t.getAttribute('y'), h = +t.getAttribute('font-size'), w = t.getBBox().width;
+    return [x - w / 2, y - h, w, h];
+  }
+  // a new syllable from the selected neume on (the neume must not be its syllable's first): it takes that neume and
+  // those after it, and has no text yet; it goes on with the word before it
+  function splitHere() {
+    const st = staffOf(selected), it = itemOf();
+    if (!it) return;
+    if (item.i === 0) { ctx.say('This neume already begins its syllable. Select a later one to split there.'); return; }
+    const before = snapshot(), syl = st.syllables[item.s];
+    const fresh = { text: '', items: syl.items.splice(item.i), join: true, checked: 'edited' };
+    st.syllables.splice(item.s + 1, 0, fresh);
+    word = item.s + 1; item = null;
+    commit(before);
+    draw();
+    ctx.say('A new syllable begins at that neume. Type its text in the side panel.');
+  }
+  // the selected syllable joined onto the one before it on the staff: its text and its neumes
+  function joinPrev() {
+    const st = staffOf(selected), s = word !== null ? word : item ? item.s : null;
+    if (s === null) return;
+    if (s === 0) { ctx.say('This is the staff\'s first syllable; there is none before it on the staff to join it to.'); return; }
+    const before = snapshot(), cur = st.syllables[s], prev = st.syllables[s - 1];
+    prev.text += cur.text;
+    if (cur.dipl || prev.dipl) prev.dipl = (prev.dipl || prev.text) + (cur.dipl || cur.text);
+    prev.items.push(...cur.items);
+    prev.checked = 'edited';
+    st.syllables.splice(s, 1);
+    item = null; word = s - 1;
+    commit(before);
+    draw();
+  }
+  function acceptWord() {
+    const syl = sylOf();
+    if (!syl) return;
+    const before = snapshot();
+    if (syl.checked !== 'edited') syl.checked = 'item';
+    commit(before);
+    nextWord(1);
+  }
+  // the next (or previous) syllable with words on the selected staff, then on the staves after it
+  function nextWord(d) {
+    const list = [];
+    page().staves.forEach(st => st.syllables.forEach((syl, s) => { if (syl.text) list.push({ id: st.id, s }); }));
+    if (!list.length) return;
+    const at = list.findIndex(v => v.id === selected && v.s === word);
+    const v = list[at < 0 ? (d > 0 ? 0 : list.length - 1) : (at + d + list.length) % list.length];
+    selected = v.id; word = v.s; item = null;
+    draw();
+  }
+
+  // ---------------------------------------------------------------- accepting a staff
+  // The selected staff accepted: its neumes and words not yet checked are checked with it. Not while a doubtful one
+  // (the recognizer unsure of it) is unchecked: then the first of those is selected, to be looked at alone.
+  function acceptStaff() {
+    const st = staffOf(selected);
+    if (!st || !st.syllables.length) return;
+    const left = [];
+    st.syllables.forEach((syl, s) => {
+      syl.items.forEach((it, i) => { if (it.box && doubtful(it)) left.push({ s, i }); });
+      if (syl.text && doubtful(syl)) left.push({ s, i: null });
+    });
+    if (left.length) {
+      const first = left[0];
+      if (first.i === null) { word = first.s; item = null; } else { item = { s: first.s, i: first.i }; word = null; }
+      draw();
+      ctx.say(`${left.length} doubtful ${left.length === 1 ? 'place' : 'places'} on this staff still to check, one by one (Enter accepts each). Then accept the staff.`, true);
+      return;
+    }
+    const before = snapshot();
+    let n = 0;
+    for (const syl of st.syllables) {
+      for (const it of syl.items) if (it.box && !it.checked) { it.checked = 'staff'; n++; }
+      if (syl.text && !syl.checked) { syl.checked = 'staff'; n++; }
+    }
+    commit(before);
+    // on to the next staff with chant on it
+    const list = page().staves, next = list.slice(list.indexOf(st) + 1).find(t => t.syllables.length);
+    if (next) selected = next.id;
+    letGo();
+    draw();
+    ctx.say(`Staff accepted${n ? ` (${n} more ${n === 1 ? 'thing' : 'things'} checked with it)` : ''}.` + (next ? ' On to the next staff.' : ' That was the last staff with chant on this page.'));
   }
 
   // ---------------------------------------------------------------- the chant on a staff
@@ -245,7 +393,7 @@
     try { r = C.fromGabc(src); } catch (e) { ctx.say(e.message, true); return false; }
     const list = page().staves, from = list.indexOf(st), targets = list.slice(from, from + r.staves.length);
     const before = snapshot();
-    item = null;
+    letGo();
     targets.forEach((t, k) => {
       t.syllables = JSON.parse(JSON.stringify(r.staves[k].syllables));
       N.place(t);
@@ -269,7 +417,7 @@
     if (!st || !st.syllables.length) return;
     const before = snapshot();
     st.syllables = [];
-    item = null;
+    letGo();
     for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => id !== st.id);
     ctx.state.doc.chants = ctx.state.doc.chants.filter(c => c.staves.length);
     commit(before);
@@ -307,8 +455,15 @@
     try { ctx.svg.setPointerCapture(e.pointerId); } catch (err) { }
     if (act === 'new') { drag = { act, from: p, to: p }; return; }
     const id = t.dataset.staff;
+    if (act === 'syl') {
+      selected = id; word = +t.dataset.s; item = null;
+      const syl = sylOf();
+      drag = { act, from: p, box: wordBox(word), had: syl.box ? syl.box.slice() : null, checked: syl.checked, before: snapshot(), moved: false };
+      draw();
+      return;
+    }
     if (act === 'neume') {
-      selected = id; item = { s: +t.dataset.s, i: +t.dataset.i };
+      selected = id; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null;
       const st = staffOf(id), it = itemOf();
       // Shift: only the note nearest the pointer
       let note = null;
@@ -321,7 +476,7 @@
       draw();
       return;
     }
-    item = null;
+    letGo();
     if (selected !== id) { selected = id; draw(); }
     const st = staffOf(id);
     drag = { act, from: p, start: JSON.stringify(st.lines), boxes: boxesOf(st), before: snapshot(), knot: +t.dataset.knot, line: +t.dataset.line, moved: false };
@@ -333,6 +488,14 @@
     if (!drag.moved && Math.hypot(dx, dy) < MIN_DRAG * unit()) return;
     drag.moved = true;
     if (drag.act === 'new') { drag.to = p; draw(); return; }
+    if (drag.act === 'syl') {
+      const syl = sylOf();
+      if (!syl || !drag.box) return;
+      syl.box = [drag.box[0] + dx, drag.box[1] + dy, drag.box[2], drag.box[3]].map(v => Math.round(v * 100) / 100);
+      syl.checked = 'edited';
+      draw(true);
+      return;
+    }
     if (drag.act === 'neume') {
       // along the staff as it goes; up or down by whole steps, which rewrites its letters
       const st = staffOf(selected), it = itemOf();
@@ -363,7 +526,7 @@
     const d = drag;
     drag = null;
     if (d.act === 'new') {
-      if (!d.moved) { if (selected) { selected = null; item = null; draw(); } return; }
+      if (!d.moved) { if (selected) { selected = null; letGo(); draw(); } return; }
       const x = Math.min(d.from[0], d.to[0]), y = Math.min(d.from[1], d.to[1]);
       const rect = [x, y, Math.abs(d.to[0] - d.from[0]), Math.abs(d.to[1] - d.from[1])];
       draw();
@@ -372,6 +535,17 @@
       return;
     }
     if (!d.moved) { draw(); return; }
+    if (d.act === 'syl') {
+      const syl = sylOf();
+      // moved and put back: as it was
+      if (syl && Math.hypot(syl.box[0] - d.box[0], syl.box[1] - d.box[1]) < unit()) {
+        if (d.had) syl.box = d.had; else delete syl.box;
+        if (d.checked === undefined) delete syl.checked; else syl.checked = d.checked;
+      }
+      commit(d.before);
+      draw();
+      return;
+    }
     if (d.act === 'neume') {
       const it = itemOf();
       // moved and put back: as it was, checked or not
@@ -395,6 +569,19 @@
     if (mod && !e.altKey && (k === 'y' || k === 'Y')) { redo(); return true; }
     if (mod || e.altKey) return false;
     const u = unit() * (e.shiftKey ? 10 : 1);
+    // Shift+Enter: the staff accepted
+    if (k === 'Enter' && e.shiftKey && selected) { acceptStaff(); return true; }
+    // a syllable selected: the keys are its
+    if (sylOf()) {
+      if (k === 'Escape') { word = null; draw(); return true; }
+      if (k === 'ArrowUp') { nudgeWord(0, -u); return true; }
+      if (k === 'ArrowDown') { nudgeWord(0, u); return true; }
+      if (k === 'ArrowLeft') { nudgeWord(-u, 0); return true; }
+      if (k === 'ArrowRight') { nudgeWord(u, 0); return true; }
+      if (k === 'Tab') { nextWord(e.shiftKey ? -1 : 1); return true; }
+      if (k === 'Enter') { acceptWord(); return true; }
+      return false;
+    }
     // a neume selected: the keys are its
     if (itemOf()) {
       if (k === 'Escape') { item = null; draw(); return true; }
@@ -450,12 +637,14 @@
         const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
         const isSel = (s, i) => sel && item && item.s === s && item.i === i;
         for (const v of L.glyphs) {
-          const cls = 'glyph' + (v.conf !== undefined && v.conf < 0.8 && !v.checked ? ' doubt' : '') + (isSel(v.syllable, v.item) ? ' on' : '');
+          const cls = 'glyph' + (v.checked ? ' ok' : v.conf !== undefined && v.conf < DOUBT ? ' doubt' : '') + (isSel(v.syllable, v.item) ? ' on' : '');
           const t = el('text', { x: v.x, y: v.y, 'font-size': L.size, class: cls, transform: `rotate(${v.angle.toFixed(3)} ${v.x} ${v.y})` }, ch);
           t.textContent = v.ch;
         }
         for (const v of L.texts) {
-          const t = el('text', { x: v.x, y: v.y, 'font-size': L.textSize, class: 'syl' }, ch);
+          const on = sel && word === v.syllable, syl = st.syllables[v.syllable];
+          const cls = 'syl' + (v.checked ? ' ok' : doubtful(syl) ? ' doubt' : '') + (on ? ' on' : '');
+          const t = el('text', { x: v.x, y: v.y, 'font-size': L.textSize, class: cls, 'data-act': 'syl', 'data-staff': st.id, 'data-s': v.syllable }, ch);
           t.textContent = v.text.replace(/<[^>]*>/g, '');
         }
       }
@@ -465,7 +654,7 @@
         const w = Math.max(it.box[2], 8 * u), x = it.box[0] + it.box[2] / 2 - w / 2;
         el('rect', { x, y: it.box[1], width: w, height: it.box[3], class: 'neume' + (sel && item && item.s === s && item.i === i ? ' on' : ''), 'data-act': 'neume', 'data-staff': st.id, 'data-s': s, 'data-i': i }, g);
       }));
-      if (!sel || item) continue;
+      if (!sel || item || word !== null) continue;
       // the dots no bigger than a third of a space, so the bar between them can still be grabbed
       const rr = Math.max(2.5 * u, Math.min(r, S.spacing(l) / 3));
       // at each point (the ends, and any bends): a bar through all four lines, and a dot on each line
@@ -503,13 +692,41 @@
       place.disabled = !st;
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
       document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length;
-      const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf();
-      document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : !st ? 'Select the staff the chant begins on.'
+      const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
+      wordPanel(syl);
+      document.getElementById('splitHere').disabled = !it || item.i === 0;
+      document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
+      document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? 'Select the staff the chant begins on.'
+        : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
     }
     document.getElementById('undo').disabled = !history.undo.length;
     document.getElementById('redo').disabled = !history.redo.length;
+  }
+
+  // how far a staff has been checked
+  function progress(st) {
+    const its = st.syllables.flatMap(syl => syl.items.filter(it => it.box)), words = st.syllables.filter(syl => syl.text);
+    const done = its.filter(it => it.checked).length + words.filter(w => w.checked).length, all = its.length + words.length;
+    const doubts = its.filter(doubtful).length + words.filter(doubtful).length;
+    return `${done} of ${all} neumes and syllables on this staff checked` + (doubts ? `; ${doubts} doubtful still to look at.` : '.') +
+      (done < all ? ' Shift+Enter accepts the staff.' : '');
+  }
+
+  // the side panel's fields for the selected syllable (kept as they are while being typed in)
+  function wordPanel(syl) {
+    const panel = document.getElementById('wordPanel');
+    if (!panel) return;
+    panel.hidden = !syl;
+    if (!syl) return;
+    const set = (id, v) => { const f = document.getElementById(id); if (document.activeElement !== f) f.value = v; };
+    set('sylText', syl.text);
+    set('sylDipl', syl.dipl || '');
+    document.getElementById('sylStart').checked = !syl.join;
+    document.getElementById('joinPrev').disabled = word === 0;
+    const how = { item: 'Checked.', edited: 'Changed by you (so checked).', staff: 'Checked with its staff.' }[syl.checked] || 'Not checked yet.';
+    document.getElementById('sylInfo').textContent = how + ' Drag the words into place, or use the arrow keys; Enter accepts them and goes on; Tab skips.';
   }
 
   // what the side panel says of a neume: its GABC, its syllable, its notes by name, and whether it's been checked
@@ -524,7 +741,9 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc,
-    get selected() { return selected; }, set selected(id) { selected = id; item = null; draw(); },
-    get neume() { return item && Object.assign({}, item); }, selectNeume(id, s, i) { selected = id; item = { s, i }; draw(); },
+    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord,
+    get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
+    get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
+    get neume() { return item && Object.assign({}, item); }, selectNeume(id, s, i) { selected = id; item = { s, i }; word = null; draw(); },
   };
 })(window);

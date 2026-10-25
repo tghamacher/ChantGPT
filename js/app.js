@@ -158,6 +158,14 @@
   $('save').addEventListener('click', save);
   $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
   $('clearChant').addEventListener('click', () => E.clearChant());
+  $('sylText').addEventListener('change', e => E.setText(e.target.value));
+  $('sylDipl').addEventListener('change', e => E.setDipl(e.target.value));
+  $('sylStart').addEventListener('change', e => E.setWordStart(e.target.checked));
+  $('splitHere').addEventListener('click', () => { E.splitHere(); $('sylText').focus(); });
+  $('joinPrev').addEventListener('click', () => E.joinPrev());
+  $('acceptStaff').addEventListener('click', () => E.acceptStaff());
+  // Enter in a syllable's field: done with it, back to the page
+  for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });
   $('downloadGabc').addEventListener('click', () => {
     const g = E.gabc();
     if (!g) return;

@@ -220,7 +220,19 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 1, dragging neumes** (version 0.5.0, branch `step-1-dragging`). Decided with the user: a drag moves a
+- **Step 1, words and accepting staves** (version 0.6.0, branch `step-1-words`):
+  - Syllables: click the words to select (side panel: Text, As written, Begins a word); drag them, or arrow keys,
+    to move them (they get a `box`); Enter accepts and goes on, Tab skips. `dipl` holds the reading as written when
+    it differs from `text`. "New syllable here" splits a syllable at the selected neume (the new one takes that
+    neume and those after, joined to the word, text to be typed); "Join to the one before" merges text and neumes.
+  - Accept this staff (Shift+Enter), the middle way: refused while a doubtful neume or syllable (`conf` < 0.8,
+    unchecked) is left, selecting the first; otherwise everything unchecked becomes `"staff"` and the next staff
+    with chant is selected. Checked things are drawn green, doubtful orange, the rest red. The side panel counts
+    what's checked on the staff.
+  - Line finding: a staff whose bends come to less than a sixth of a space is straight (noise), fitted whole.
+  - Not yet: a neume dragged past its neighbour keeps its GABC order; joining across staves; the text's own
+    recognition (step 5).
+- **Step 1, dragging neumes** (version 0.5.0, merged). Decided with the user: a drag moves a
   whole neume; accepting is the "middle way" (below).
   - A neume here is an item: one GABC group, all that stands over a syllable in it (a climacus `hvGF` moves as one).
     Click to select (its staff is selected too; the staff's handles hide). Drag up or down: snaps by steps and

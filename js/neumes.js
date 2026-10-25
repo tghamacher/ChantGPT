@@ -302,13 +302,15 @@
           if (textAt === null && v.notes.length) textAt = x + Math.min(v.w, 166) * sc / 2;
         }
       });
-      if (syl.text && syl.items.some(it => it.box)) {
+      // a syllable with a box of its own is drawn there (its middle, on its bottom); else centred under its first note
+      if (syl.text && syl.box) out.texts.push({ text: syl.text, x: syl.box[0] + syl.box[2] / 2, y: syl.box[1] + syl.box[3], syllable: si, join: !!syl.join, checked: syl.checked });
+      else if (syl.text && syl.items.some(it => it.box)) {
         const first = syl.items.find(it => it.box);
-        out.texts.push({ text: syl.text, x: textAt !== null ? textAt : first.box[0] + first.box[2] / 2, syllable: si, join: !!syl.join });
+        out.texts.push({ text: syl.text, x: textAt !== null ? textAt : first.box[0] + first.box[2] / 2, syllable: si, join: !!syl.join, checked: syl.checked });
       }
     });
     // the words' baseline two spaces below the bottom line, where it lies at each syllable, as in the printed books
-    for (const t of out.texts) t.y = S().yAt(staff.lines[3], t.x) + 2 * S().spacing(staff.lines);
+    for (const t of out.texts) if (t.y === undefined) t.y = S().yAt(staff.lines[3], t.x) + 2 * S().spacing(staff.lines);
     out.textSize = S().spacing(staff.lines);
     return out;
   }

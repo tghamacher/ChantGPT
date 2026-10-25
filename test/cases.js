@@ -330,6 +330,7 @@
         if (off > 1.5) bad.push(`staff ${k + 1}: lines up to ${off.toFixed(1)} px off`);
         if (Math.abs(l[0][0] - t[0][0]) > g / 2 || Math.abs(l[0][2] - t[0][2]) > g / 2) bad.push(`staff ${k + 1}: runs ${l[0][0]}–${l[0][2]}, truly ${t[0][0]}–${t[0][2]}`);
         if (Math.abs(w.CGStaves.tilt(l) - 0.7) > 0.1) bad.push(`staff ${k + 1}: tilted ${w.CGStaves.tilt(l).toFixed(2)}°, truly 0.70°`);
+        if (w.CGStaves.count(l[0]) !== 2) bad.push(`staff ${k + 1}: straight, but given ${w.CGStaves.count(l[0]) - 2} bends`);
       });
       return bad;
     } },
@@ -446,6 +447,49 @@
       for (let i = 0; i < 5; i++) w.CGEditor.undo();
       bad.push(...same('all undone', [st().syllables[2].items[0].g, st().syllables[3].items[0].g, st().syllables[4].items[0].g], ['gh', 'hj', 'h.']));
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
+      return bad;
+    } },
+    { name: 'app: words corrected, dragged, split and joined; a staff accepted once its doubtful places are checked', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 545, 1060, 95]);
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const [a] = w.CGApp.state.doc.pages[0].staves, bad = [], doc = w.CGApp.state.doc;
+      w.CGEditor.selected = a.id;
+      w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::) (z) (c4) Gló(f)ri(gh)a(h) (:)');
+      const st = () => doc.pages[0].staves[0];
+      st().syllables[2].items[0].conf = 0.5; st().syllables[3].conf = 0.4;   // as if the recognizer doubted them
+      w.CGEditor.selected = st().id;
+      const key = (k, o = {}) => w.document.dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, o)));
+      key('Enter', { shiftKey: true });
+      bad.push(...same('refused: the doubtful neume first', w.CGEditor.neume, { s: 2, i: 0 }));
+      if (!/2 doubtful places/.test(w.document.getElementById('status').textContent)) bad.push('No word of the doubtful places: ' + w.document.getElementById('status').textContent);
+      key('Enter');
+      key('Enter', { shiftKey: true });
+      bad.push(...same('then the doubtful syllable', w.CGEditor.word, 3));
+      w.CGEditor.setText('lu');
+      w.CGEditor.setDipl('lú');
+      bad.push(...same('text and reading as written', [st().syllables[3].text, st().syllables[3].dipl, st().syllables[3].checked], ['lu', 'lú', 'edited']));
+      w.CGEditor.setDipl('lu');
+      bad.push(...same('no reading as written when it is the same', st().syllables[3].dipl, undefined));
+      // the words of Al dragged
+      const t = w.document.querySelector('#overlay .syl[data-s="1"]'), x = +t.getAttribute('x'), y = +t.getAttribute('y');
+      await drag(w, [x, y - 3], [x - 12, y + 5]);
+      const box = st().syllables[1].box;
+      if (!box || Math.abs(box[0] + box[2] / 2 - (x - 12)) > 1.5 || Math.abs(box[1] + box[3] - (y + 8)) > 1.5) bad.push(`dragged to ${JSON.stringify(box)}, not round ${x - 12}, ${y + 8}`);
+      // joined, then split again at the second neume
+      w.CGEditor.selectWord(st().id, 2);
+      w.CGEditor.joinPrev();
+      bad.push(...same('joined', [st().syllables[1].text, st().syllables[1].items.map(i => i.g)], ['Alle', ['f', 'gh']]));
+      w.CGEditor.selectNeume(st().id, 1, 1);
+      w.CGEditor.splitHere();
+      w.CGEditor.setText('le');
+      bad.push(...same('split', st().syllables.slice(1, 3).map(s => [s.text, s.items.map(i => i.g), !!s.join]), [['Alle', ['f'], false], ['le', ['gh'], true]]));
+      w.CGEditor.selected = st().id;
+      key('Enter', { shiftKey: true });
+      bad.push(...same('accepted: everything checked', st().syllables.every(s => (!s.text || s.checked) && s.items.every(i => i.checked)), true));
+      bad.push(...same('how', st().syllables[0].items[0].checked, 'staff'));
+      bad.push(...same('on to the next staff', w.CGEditor.selected, doc.pages[0].staves[1].id));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },
     { name: 'app: GABC with more lines than staves says so', browser: true, unit: async app => {

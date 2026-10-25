@@ -232,7 +232,8 @@
   // strip before says the lines should be: the same spacing, within a quarter, and no more than a little over half a
   // space from where they were heading. A strip that doesn't fit is stepped over (a drop cap, a smudge); three in a
   // row, or a strip where the lines stop short, and the staff has ended. The points that make no difference are then
-  // taken away, and if none is left between the ends, the staff is straight and fitted again as a whole.
+  // taken away, and if none is left between the ends (or those left bend it by less than a sixth of a space, as noise
+  // can), the staff is straight and fitted again as a whole.
   function fitStaff(gray, w, h, region, trace) {
     const [rx, ry, rw, rh] = region;
     const rx0 = Math.max(0, rx), rx1 = Math.min(w, rx + rw);
@@ -281,8 +282,10 @@
     let lines = [0, 1, 2, 3].map(i => knots.flatMap(k => [k.x, k.ys[i]]));
     lines = simplify(lines, 0.06 * g);
     if (trace) Object.assign(trace, { spacing: g, knots: knots.map(k => Math.round(k.x)), misses, kept: count(lines[0]) });
-    if (count(lines[0]) === 2) {
-      // straight: the whole stretch fitted at once is steadier than its ends carried on from strips
+    if (count(lines[0]) === 2 || bend(lines) < 0.15) {
+      // straight, or as near it as noise can make a straight staff look (its bends less than a sixth of a space): the
+      // whole stretch fitted at once is steadier than its ends carried on from strips
+      lines = [0, 1, 2, 3].map(i => [lines[i][0], lines[i][1], lines[i][lines[i].length - 2], lines[i][lines[i].length - 1]]);
       const ys = lines.flatMap(l => [l[1], l[3]]);
       const whole = fit(gray, w, h, [ends[0] - g, Math.min(...ys) - 1.5 * g, ends[1] - ends[0] + 2 * g, Math.max(...ys) - Math.min(...ys) + 3 * g], { slope: ((ys[1] - ys[0]) + (ys[7] - ys[6])) / 2 / Math.max(1, lines[0][2] - lines[0][0]) });
       if (whole && Math.abs(whole.spacing - g) < 0.15 * g) return { lines: whole.lines, spacing: whole.spacing };

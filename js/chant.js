@@ -224,6 +224,8 @@
         }
         (st.syllables || []).forEach((syl, yi) => {
           if (syl.box !== undefined && !(box4(syl.box) && inside(syl.box))) bad.push(`${name}, syllable ${yi + 1}: its box is not on the page.`);
+          if (syl.dipl !== undefined && typeof syl.dipl !== 'string') bad.push(`${name}, syllable ${yi + 1}: its reading as written is not text.`);
+          if (syl.checked !== undefined && !CHECKED.includes(syl.checked)) bad.push(`${name}, syllable ${yi + 1}: it is checked as "${syl.checked}"; it can be ${CHECKED.join(', ')}.`);
           (syl.items || []).forEach(it => {
             if (typeof it.g !== 'string' || !it.g.trim()) bad.push(`${name}, syllable ${yi + 1}: an item has no GABC.`);
             else if (/[()]/.test(it.g)) bad.push(`${name}, syllable ${yi + 1}: "${it.g}" has parentheses; give the GABC inside them.`);
