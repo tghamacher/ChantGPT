@@ -171,10 +171,8 @@ and dragging, and as the record of where the model looked), but what the user se
 - A record of corrections: each one is a labelled training example (this region shows this neume, or these letters,
   not those). The editing layer is also how training data is gathered for step 4.
 
-**Decisions still open (the user's)**
+**Decisions still open (the user's)** (the font is settled: greciliae, see Done)
 
-- The chant font for drawing neumes: Gregorio's fonts (check their licences before adding one to the repo) or exsurge's
-  glyph shapes.
 - What a drag moves by default: a whole neume (suggested) or single notes.
 - What "accept" means: every item checked one by one, or accepting a staff confirms all on it.
 
