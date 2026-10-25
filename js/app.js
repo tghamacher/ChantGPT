@@ -151,6 +151,9 @@
   // ---------------------------------------------------------------- controls
   E.init({ state, svg: $('overlay'), say, pixels, show, changed: () => { state.dirty = true; } });
   $('refit').addEventListener('click', () => E.refit());
+  $('findStaves').addEventListener('click', () => E.findHere());
+  $('findEverywhere').addEventListener('click', () => E.findEverywhere());
+  $('stopFinding').addEventListener('click', () => E.stop());
   $('evenly').addEventListener('click', () => E.evenly());
   $('remove').addEventListener('click', () => E.remove());
   $('undo').addEventListener('click', () => E.undo());

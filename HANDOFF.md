@@ -191,8 +191,8 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
    - saving and opening a project.
    - Test on one chant: place its GABC from GregoBase over a scan of the 1908 *Graduale Romanum* and correct it to the
      page.
-2. **Layout:** find staves and text lines automatically (classical image processing first, a pixel classifier if
-   needed); split a book into chants by their initials and titles, with the user confirming.
+2. **Layout:** find staves automatically (done: classical image processing); split a book into chants by their
+   initials and titles, with the user confirming.
 3. **Training data:** the GregoBase download and synthetic rendering pipeline (in `training/`, Python), and aligning
    scans of the Vatican books with GregoBase.
 4. **The recognizer:** train it, run it in the browser, and feed its confidence scores into the alerts. Corrections made
@@ -220,7 +220,23 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 1, checks and exports** (version 0.7.0, branch `step-1-checks`). Step 1 is now complete.
+- **Step 2, finding the staves** (version 0.8.0, branch `step-2-layout`):
+  - `findStaves()` in `js/staves.js`: in a band across the page's middle (25–62% of its width), darkness summed
+    along rows at the page's tilt; sharp peaks are lines; fours evenly spaced with no line between them at least
+    half as strong are staves (that rule matters on evenly set pages, where the lines of different staves fall
+    evenly too); the spacing most fours agree on is the staves', and the strongest fours near it are taken, none
+    overlapping. Each is then fitted across the whole page with `fitStaff()` between its neighbours (ends, tilt,
+    bends of its own). Staves already marked are skipped. About a third of a second a page.
+  - "Find the staves on this page", and "… on every page" (from this one on, page by page, with Stop; one undo
+    per page).
+  - Tested: all five staves on the engraved and on the warped page (within 2 px, ends within a few), both pages of
+    the PDF, a synthetic page of six with an indented first staff and lines of words.
+  - Limits: a scan of an open book (two pages in one image) should be split first: a staff is fitted across the
+    whole width and would join the two pages' staves. Staves shorter than the middle band (a short last line
+    ending before the middle) can be missed: mark them by hand.
+  - Next in step 2: splitting a book into chants (by initials, indented first staves, titles), with the user
+    confirming.
+- **Step 1, checks and exports** (version 0.7.0, merged). Step 1 is now complete.
   - `js/checks.js` (no AI): each staff begins with a clef; a custos agrees with the next note (across a line and a
     clef change); leaps of a seventh or more (not across a bar); flats and naturals only on B (or E); notes over no
     syllable; with `mode` in the GABC headers, the last note is the mode's final (or its usual transposition: A, B,

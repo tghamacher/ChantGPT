@@ -170,6 +170,31 @@
       }
       return bad;
     } },
+    { name: 'staves: every staff on a page found, the indented one too, and none in the words', unit: () => {
+      // six staves 270 apart, tilted, faint, with notes and a line of words under each; the first indented (for an initial)
+      const w = 1400, h = 1800, g = new Uint8Array(w * h);
+      let seed = 3;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < g.length; i++) g[i] = Math.max(0, Math.min(255, 232 + (rnd() - 0.5) * 40));
+      const ink = (x, y, v = 25) => { if (x >= 0 && y >= 0 && x < w && y < h) g[y * w + x] = v; };
+      for (let k = 0; k < 6; k++) {
+        const top = 150 + k * 270, x0 = k ? 120 : 380, x1 = 1280, sl = 0.008;
+        for (let i = 0; i < 4; i++) for (let x = x0; x < x1; x++) { const y = Math.round(top + 16 * i + sl * (x - 700)); ink(x, y, 110); ink(x, y + 1, 110); }
+        for (let j = 0; j < 30; j++) { const cx = x0 + 40 + j * 28, cy = Math.round(top + ((j * 5) % 9) * 8 - 8 + sl * (cx - 700)); for (let a = 0; a < 13; a++) for (let b = 0; b < 12; b++) ink(cx + a, cy + b); }
+        for (let x = x0 + 20; x < x1 - 100; x++) if ((x % 11) < 7) for (let y = top + 80; y < top + 96; y++) if ((x + y) % 3) ink(x, y);
+      }
+      const r = S().findStaves(g, w, h), bad = [];
+      if (r.length !== 6) return [`${r.length} staves found, expected 6`];
+      r.forEach((v, k) => {
+        const top = 150 + k * 270, at = S().yAt(v.lines[0], 700), xs = S().xsOf(v.lines[0]);
+        if (Math.abs(at - (top + 0.5)) > 1) bad.push(`staff ${k + 1}: top line at ${at.toFixed(1)}, expected ${top + 0.5}`);
+        if (Math.abs(xs[0] - (k ? 120 : 380)) > 3 || Math.abs(xs[xs.length - 1] - 1280) > 3) bad.push(`staff ${k + 1}: runs ${xs[0]}–${xs[xs.length - 1]}`);
+      });
+      // those already marked are left alone
+      const again = S().findStaves(g, w, h, { skip: [[100, 140, 1200, 80], [100, 950, 1200, 80]] });
+      if (again.length !== 4) bad.push(`with two marked already, ${again.length} found, expected 4`);
+      return bad;
+    } },
     { name: 'staves: nothing is found where there is no staff', unit: () => {
       const w = 600, h = 300, g = new Uint8Array(w * h).fill(240);
       for (let x = 50; x < 550; x++) for (let y = 100; y < 102; y++) g[y * w + x] = 10;   // one line alone
@@ -576,6 +601,38 @@
       await until(() => w.CGApp.state.doc.pages[0].staves.length === 1);
       w.CGEditor.placeChant('(c4) a(f) (z) b(g) (z) c(h)');
       return /2 had no staff below/.test(w.document.getElementById('status').textContent) ? [] : ['No word of the lines left over: ' + w.document.getElementById('status').textContent];
+    } },
+    { name: 'app: every staff found on a page, on the engraved and the warped page alike', browser: true, unit: async app => {
+      const bad = [];
+      for (const f of ['engraved', 'warped']) {
+        const { w } = await app(`test/pages/${f}.jpg`);
+        const truth = await (await w.fetch(`test/pages/${f}-lines.json`)).json(), S = w.CGStaves;
+        await w.CGEditor.findHere();
+        const st = w.CGApp.state.doc.pages[0].staves;
+        if (st.length !== truth.length) { bad.push(`${f}: ${st.length} staves, expected ${truth.length}`); continue; }
+        st.forEach((s, k) => {
+          const l = s.lines, t = truth[k], xs = S.xsOf(l[0]), tx = S.xsOf(t[0]);
+          let off = 0;
+          for (let x = Math.max(xs[0], tx[0]); x <= Math.min(xs[xs.length - 1], tx[tx.length - 1]); x += 4) for (let i = 0; i < 4; i++) off = Math.max(off, Math.abs(S.yAt(l[i], x) - S.yAt(t[i], x)));
+          if (off > 2) bad.push(`${f}, staff ${k + 1}: up to ${off.toFixed(1)} px off`);
+          if (Math.abs(xs[0] - tx[0]) > 6 || Math.abs(xs[xs.length - 1] - tx[tx.length - 1]) > 6) bad.push(`${f}, staff ${k + 1}: runs ${xs[0]}–${xs[xs.length - 1]}, truly ${tx[0]}–${tx[tx.length - 1]}`);
+        });
+        w.CGEditor.undo();
+        if (w.CGApp.state.doc.pages[0].staves.length) bad.push(`${f}: one undo should take them all away`);
+      }
+      return bad;
+    } },
+    { name: 'app: the staves found on every page of a PDF, and none twice', browser: true, unit: async app => {
+      const { w } = await app('test/pages/two-pages.pdf');
+      await w.CGEditor.findEverywhere();
+      const doc = w.CGApp.state.doc, bad = [];
+      bad.push(...same('on each page', doc.pages.map(p => p.staves.length), [4, 4]));
+      bad.push(...same('top lines (points)', doc.pages[1].staves.map(s => Math.round(s.lines[0][1])), [61, 171, 281, 390]));
+      bad.push(...same('ids', doc.pages[1].staves.map(s => s.id), ['p2s1', 'p2s2', 'p2s3', 'p2s4']));
+      await w.CGEditor.findHere();
+      bad.push(...same('found again: none added', doc.pages[w.CGApp.state.page].staves.length, 4));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
     } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {
       const { w } = await app('test/pages/two-pages.pdf');

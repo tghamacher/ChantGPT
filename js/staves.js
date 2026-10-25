@@ -307,6 +307,109 @@
     return atXs(lines, xs);
   }
 
+  // Finds every staff on a page: [{ lines, spacing }] in the image's pixels, top to bottom. skip: boxes [x, y, w, h]
+  // (in pixels) of staves already marked, left alone.
+  //
+  // How: first where the staves are. In a band across the middle of the page (where staves run, past any drop cap or
+  // margin note), darkness is summed along rows at the page's tilt (as fit() does for one staff); the rows that stand
+  // out sharply are lines. Every four of them evenly spaced, with no strong line between them, could be a staff. The
+  // spacing most of those agree on is the staves' (rows of text can fall evenly too); of the fours near it the
+  // strongest are taken first, none sharing a line or overlapping another. Each staff found is then fitted on its own
+  // across the page's whole width with fitStaff(), between the staves above and below it, so its ends, tilt and bends
+  // are its own.
+  function findStaves(gray, w, h, { skip = [], trace } = {}) {
+    const bx0 = Math.round(0.25 * w), bx1 = Math.round(0.62 * w);
+    const dm = darkness(gray, w, bx0, 0, bx1, h);
+    if (!dm) return [];
+    const { dark, W, H } = dm;
+    const noise = Math.max(1, (dm.level(0.75) - dm.paper) / 0.674) * Math.sqrt(W);
+    const xc = (W - 1) / 2, pad = Math.ceil(0.06 * W) + 2, n = H + 2 * pad;
+    const profile = slope => {
+      const p = new Float64Array(n);
+      for (let x = 0; x < W; x++) {
+        const shift = pad - Math.round(slope * (x - xc));
+        for (let y = 0; y < H; y++) p[y + shift] += dark[y * W + x];
+      }
+      return p;
+    };
+    let best = null;
+    const tryS = sl => { const p = profile(sl); let sc = 0; for (let r = 0; r < n; r++) if (p[r] > 0) sc += p[r] * p[r]; if (!best || sc > best.sc) best = { sl, p, sc }; };
+    for (let k = -50; k <= 50; k += 5) tryS(k / 1000);
+    const coarse = best.sl;
+    for (let k = -4; k <= 4; k++) if (k) tryS(coarse + k / 1600);
+    const { p, sl: slope } = best;
+    // the lines: rows darker than those about them by much more than the paper's noise could make them
+    let max = 0;
+    for (let r = 0; r < n; r++) max = Math.max(max, p[r]);
+    const peaks = [];
+    for (let r = 1; r < n - 1; r++) {
+      if (!(p[r] >= p[r - 1] && p[r] > p[r + 1])) continue;
+      let base = Infinity;
+      for (let j = Math.max(0, r - 4); j <= Math.min(n - 1, r + 4); j++) base = Math.min(base, p[j]);
+      const rise = p[r] - base;
+      if (rise < 8 * noise || rise < 0.08 * max) continue;
+      let sum = 0, at = 0;
+      for (let j = r - 1; j <= r + 1; j++) { const v = Math.max(0, p[j] - base); sum += v; at += v * j; }
+      peaks.push({ y: at / sum - pad, strength: sum });
+    }
+    // fours evenly spaced: from each line, the next three at the spacing its neighbour sets (within a quarter)
+    const cands = [];
+    for (let i = 0; i < peaks.length; i++) for (let k = i + 1; k <= i + 4 && k < peaks.length; k++) {
+      const g = peaks[k].y - peaks[i].y;
+      if (g < 3) continue;
+      const q = [peaks[i], peaks[k]];
+      for (const m of [2, 3]) {
+        let hit = null, off = Infinity;
+        for (let j = k + 1; j < peaks.length && peaks[j].y < peaks[i].y + (m + 0.5) * g; j++) {
+          const d = Math.abs(peaks[j].y - (peaks[i].y + m * g));
+          if (d < 0.25 * g && d < off) { off = d; hit = peaks[j]; }
+        }
+        if (!hit) break;
+        q.push(hit);
+      }
+      if (q.length < 4) continue;
+      const st = q.map(v => v.strength), weakest = Math.min(...st);
+      if (weakest < Math.max(...st) / 3) continue;
+      // a staff's lines are neighbours: no line between them as strong as half of theirs (fours made of the lines of
+      // several staves have whole staves between)
+      if (peaks.some(v => v.y > q[0].y && v.y < q[3].y && !q.includes(v) && v.strength >= weakest / 2)) continue;
+      cands.push({ q, g: (q[3].y - q[0].y) / 3, score: st.reduce((t, v) => t + v, 0) });
+    }
+    // the spacing most fours agree on (within 15%) is the staves': lines of different staves can fall evenly too, on a
+    // page whose staves are evenly set, but there are fewer such fours than staves
+    let common = 0, votes = -1;
+    for (const c of cands) {
+      const v = cands.filter(o => Math.abs(o.g - c.g) < 0.15 * c.g).length;
+      if (v > votes || (v === votes && c.g < common)) { votes = v; common = c.g; }
+    }
+    const near = cands.filter(c => Math.abs(c.g - common) < 0.3 * common).sort((a, b) => b.score - a.score);
+    const used = new Set(), found = [];
+    for (const c of near) {
+      if (c.q.some(v => used.has(v))) continue;
+      // nor overlapping one already taken
+      if (found.some(f => c.q[0].y < f.q[3].y + f.g && c.q[3].y > f.q[0].y - f.g)) continue;
+      c.q.forEach(v => used.add(v));
+      found.push(c);
+    }
+    // spacing far from the rest's (text, or a stray four): dropped
+    const gs = found.map(f => f.g).sort((a, b) => a - b), mid = gs[gs.length >> 1];
+    const staves = found.filter(f => Math.abs(f.g - mid) < 0.3 * mid).sort((a, b) => a.q[0].y - b.q[0].y);
+    if (trace) Object.assign(trace, { slope, peaks: peaks.length, candidates: cands.length, found: found.length, kept: staves.length, spacing: mid });
+    // each fitted on its own, between its neighbours, across the page; those already marked left alone
+    const out = [];
+    staves.forEach((f, k) => {
+      // where it lies at the page's middle, as the band saw it
+      const top = f.q[0].y, bot = f.q[3].y, g = f.g;
+      const above = k ? (staves[k - 1].q[3].y + top) / 2 : 0, below = k < staves.length - 1 ? (bot + staves[k + 1].q[0].y) / 2 : h;
+      const y0 = Math.max(above, top - 2.5 * g), y1 = Math.min(below, bot + 2.5 * g);
+      const midY = (top + bot) / 2;
+      if (skip.some(b => midY > b[1] && midY < b[1] + b[3])) return;
+      const r = fitStaff(gray, w, h, [0, y0 - Math.abs(slope) * w / 2, w, y1 - y0 + Math.abs(slope) * w]);
+      if (r && Math.abs(r.spacing - g) < 0.3 * g) out.push(r);
+    });
+    return out;
+  }
+
   // RGBA pixels (from a canvas) to grey, one byte a pixel
   function grey(rgba) {
     const out = new Uint8Array(rgba.length / 4);
@@ -314,7 +417,7 @@
     return out;
   }
 
-  const api = { count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, fitStaff, fit, grey };
+  const api = { count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, fitStaff, fit, grey };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

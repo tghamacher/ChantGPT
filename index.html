@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.7.0">
+<link rel="stylesheet" href="css/site.css?v=0.8.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.7.0">version 0.7.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.8.0">version 0.8.0</span>
   <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
   <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
 </header>
@@ -45,7 +45,12 @@
     </section>
 
     <section class="cg-group" id="staffGroup" hidden><h2>3 · Staves</h2>
-      <p>Drag a box around a staff, from its first note to its last, to add it. ChantGPT finds the four lines inside; if they're off, click the staff and drag them into place.</p>
+      <p>Let ChantGPT find the staves, or drag a box around a staff, from its first note to its last, to add it yourself. If its lines are off, click the staff and drag them into place.</p>
+      <div class="cg-row">
+        <button type="button" id="findStaves" title="Find every staff on this page (those already marked are left as they are)">Find the staves on this page</button>
+        <button type="button" id="findEverywhere" title="Find the staves on every page from this one on">… on every page</button>
+        <button type="button" id="stopFinding" hidden>Stop</button>
+      </div>
       <ul class="cg-keys">
         <li>Drag a staff to move it.</li>
         <li>Drag the dot at the end of a line to move that end up or down.</li>
@@ -138,14 +143,14 @@
   </section>
 </main>
 
-<script src="js/chant.js?v=0.7.0"></script>
-<script src="js/staves.js?v=0.7.0"></script>
-<script src="js/greciliae.js?v=0.7.0"></script>
-<script src="js/neumes.js?v=0.7.0"></script>
-<script src="js/checks.js?v=0.7.0"></script>
-<script src="js/export.js?v=0.7.0"></script>
-<script src="js/viewer.js?v=0.7.0"></script>
-<script src="js/editor.js?v=0.7.0"></script>
-<script src="js/app.js?v=0.7.0"></script>
+<script src="js/chant.js?v=0.8.0"></script>
+<script src="js/staves.js?v=0.8.0"></script>
+<script src="js/greciliae.js?v=0.8.0"></script>
+<script src="js/neumes.js?v=0.8.0"></script>
+<script src="js/checks.js?v=0.8.0"></script>
+<script src="js/export.js?v=0.8.0"></script>
+<script src="js/viewer.js?v=0.8.0"></script>
+<script src="js/editor.js?v=0.8.0"></script>
+<script src="js/app.js?v=0.8.0"></script>
 </body>
 </html>

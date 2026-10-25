@@ -115,6 +115,57 @@
     draw();
   }
 
+  // Every staff on the shown page found (those already marked left as they are). Returns how many were added.
+  let busy = false, stopping = false;
+  async function findAll() {
+    const pg = ctx.state.page, px = await ctx.pixels(pg);
+    if (ctx.state.page !== pg) return 0;
+    const skip = page().staves.map(st => st.box.map(v => v * px.scale));
+    const found = S.findStaves(px.gray, px.w, px.h, { skip });
+    if (ctx.state.page !== pg) return 0;
+    const before = snapshot();
+    for (const r of found) {
+      const st = { id: newId(), lines: r.lines.map(l => l.map(v => v / px.scale)), syllables: [] };
+      page().staves.push(st);
+      settle(st);
+    }
+    commit(before);
+    draw();
+    return found.length;
+  }
+  // on this page, saying what was found
+  async function findHere() {
+    if (busy) return;
+    busy = true;
+    ctx.say('Finding the staves …');
+    try {
+      const n = await findAll();
+      ctx.say(n ? `${n} ${n === 1 ? 'staff' : 'staves'} found. Check them (hold H to see the page alone); drag any that are off, delete any that aren't staves.` : page().staves.length ? 'No more staves found on this page.' : 'No staves found on this page. Drag a box round one to mark it.');
+    } catch (e) { ctx.say(`Couldn't read the page: ${e.message || e}`, true); }
+    busy = false;
+    info();
+  }
+  // on every page from this one on, one at a time, until done or stopped
+  async function findEverywhere() {
+    if (busy) return;
+    busy = true; stopping = false;
+    const doc = ctx.state.doc, from = ctx.state.page;
+    let total = 0, pages = 0;
+    info();
+    try {
+      for (let i = from; i < doc.pages.length && !stopping; i++) {
+        await ctx.show(i);
+        ctx.say(`Finding the staves on page ${i + 1} of ${doc.pages.length} … (${total} so far)`);
+        total += await findAll();
+        pages++;
+      }
+      ctx.say(`${total} ${total === 1 ? 'staff' : 'staves'} found on ${pages} ${pages === 1 ? 'page' : 'pages'}${stopping ? ' (stopped)' : ''}. Check them page by page.`);
+    } catch (e) { ctx.say(`Couldn't read page ${ctx.state.page + 1}: ${e.message || e}`, true); }
+    busy = false; stopping = false;
+    info();
+  }
+  const stop = () => { stopping = true; };
+
   async function refit() {
     const st = staffOf(selected);
     if (!st) return;
@@ -713,6 +764,9 @@
     out.textContent = text;
     checkList();
     for (const id of ['refit', 'evenly', 'remove']) document.getElementById(id).disabled = !st;
+    document.getElementById('findStaves').disabled = busy;
+    document.getElementById('findEverywhere').hidden = busy || ctx.state.doc.pages.length < 2;
+    document.getElementById('stopFinding').hidden = !busy || ctx.state.doc.pages.length < 2;
     const place = document.getElementById('placeChant');
     if (place) {
       place.disabled = !st;
@@ -795,7 +849,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc,
+    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop,
     setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
