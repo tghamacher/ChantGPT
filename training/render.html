@@ -170,9 +170,13 @@ async function render(spec) {
   const x = cv.getContext('2d');
   x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
   const ink = `rgb(${Math.floor(between(10, 40))},${Math.floor(between(8, 30))},${Math.floor(between(5, 25))})`;
-  const red = r() < 0.5 ? ink : `rgb(${Math.floor(between(150, 190))},${Math.floor(between(20, 50))},${Math.floor(between(20, 40))})`;
+  // some scans are black and white only (the CMAA's Graduale is): then everything is black, lines a little heavier
+  const bw = r() < 0.4;
+  const red = bw || r() < 0.5 ? ink : `rgb(${Math.floor(between(150, 190))},${Math.floor(between(20, 50))},${Math.floor(between(20, 40))})`;
   x.fillStyle = x.strokeStyle = ink;
-  const lineW = between(0.07, 0.13) * g;
+  const lineW = (bw ? between(0.11, 0.16) : between(0.07, 0.13)) * g;
+  // heavier notes, as many printed books have them (the Vatican edition's are nearly a space high): outlined
+  const heavy = r() < 0.6 ? between(0.04, 0.2) * g : 0;
   for (const d of drawn) {
     for (const st of d.staves) {
       x.strokeStyle = red; x.lineWidth = lineW;   // red lines, in some books
@@ -183,6 +187,7 @@ async function render(spec) {
       for (const v of L.glyphs) {
         if (!v.ch) continue;
         x.save(); x.translate(v.x, v.y); x.rotate(v.angle * Math.PI / 180); x.fillText(v.ch, 0, 0);
+        if (heavy) { x.lineWidth = heavy; x.lineJoin = 'miter'; x.strokeStyle = ink; x.strokeText(v.ch, 0, 0); }
         const m = x.measureText(v.ch); x.restore();
         const it = st.syllables[v.syllable].items[v.item];
         glyphs.push({ staff: st.id, syllable: v.syllable, item: v.item, g: it.g, name: v.name, p: v.p,
@@ -230,6 +235,10 @@ async function render(spec) {
     const light = 0.9 + 0.08 * Math.sin(px / fx) * Math.cos(py / fy), nz = (r() - 0.5) * noise;
     for (let q = 0; q < 3; q++) a[i + q] = Math.max(0, Math.min(255, a[i + q] * light + nz));
     if (r() < 0.0006) a[i] = a[i + 1] = a[i + 2] = 60;
+  }
+  if (bw) {
+    const t = between(0.6, 0.75) * (paper[0] + paper[1] + paper[2]) / 3;
+    for (let i = 0; i < a.length; i += 4) { const v = (a[i] + a[i + 1] + a[i + 2]) / 3 < t ? 0 : 255; a[i] = a[i + 1] = a[i + 2] = v; }
   }
   o.putImageData(img, 0, 0);
   const jpeg = out.toDataURL('image/jpeg', between(0.7, 0.92)).split(',')[1];

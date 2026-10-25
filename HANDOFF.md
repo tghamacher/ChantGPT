@@ -205,6 +205,29 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **Step 4, the recognizer** (in progress, branch `step-4-recognizer`; the user is away and asked for work to go
+  on without files from them). See `training/README.md`.
+  - The container: 4 CPUs, 15 GB, no GPU; PyTorch 2.14 (CPU) in `/home/user/venv`. Training here is slow (a pass
+    over 14,000 staves about 50 minutes), enough to prove the pipeline; the real training is for the user's RX 6700 XT
+    (ROCm).
+  - Synthetic pages now also have heavier notes (outlined glyphs) and black-and-white scans (solid black lines).
+  - `training/staffdata.py`: each staff straightened along its lines to 64 rows, 8 pixels to a space (top line at row
+    20); its tokens: notes (letter, shape, liquescence), accidentals, mora, episema, ictus, clefs, bars, custos, `/`
+    between glyphs and `|` between neumes. A custos, bar or clef written against other signs (`f+::c4`, as GregoBase
+    has it) is split off, here and in `js/chant.js`.
+  - `training/recognizer.py`: a CNN (about 800,000 weights; rows folded away, then dilated 1-D convolutions along the
+    staff), CTC, augmentation; ONNX export (opset 17, dynamic width) with `chant.json` (tokens and the straightening's
+    constants). ONNX Runtime agrees with PyTorch to 1e-7.
+  - `training/align.js`: the Graduale aligned with GregoBase in the app, page by page; the staves of chants whose every
+    custos agrees with the next line kept (about 57%), straightened, with their GABC: real staves with answers, not
+    checked by hand.
+  - `js/recognizer.js`: straightening (agrees with Python within one grey level), greedy CTC decoding, tokens into
+    neumes (each with its place along the staff and its least sure token's probability), loading ONNX Runtime Web
+    (`vendor/onnxruntime`, 1.27.0, the WebAssembly build only) and `models/chant.onnx` when first wanted.
+  - The editor: "Read the notes" (selected staff) and "… on the whole page". On an empty staff what was read is put on
+    it, a neume to a syllable. On a staff with chant, the reading is lined up with it (global alignment of neumes by
+    their notes): each neume moved to where it was seen; where they differ the neume gets `conf` under 0.8 (orange)
+    and `read`, what was read (`""`: nothing seen). The side panel says what the recognizer read.
 - **Step 3, line breaks read from the page** (version 0.12.0, branch `step-3-breaks`):
   - `carries()` in `js/staves.js`: what a staff carries, from the ink along it: `mass` (its notes' ink beyond the
     lines', each column less a bare column's, the clef left out, in squared spaces), `words` (the ink in the band of

@@ -33,6 +33,10 @@ These are the first steps. You can:
   the scan, say once which page of the book a scan page is, and on each page "Place this page's chants" finds the
   staves and where chants begin, and places the chants GregoBase lists for that page, a chant running over the page
   turn included;
+- read the notes from the scan (an early recognizer, trained so far on synthetic pages and on the 1908 Graduale): on
+  a staff without chant, what it reads is put on the staff; on a staff with chant placed from GregoBase, each neume is
+  moved to where it was seen and those that differ from what was read are marked in orange, with what was read, so
+  you look only at those. Placing a book page's chants does this by itself when the recognizer is there;
 - correct it on the page: drag a neume up or down by steps (its GABC changes with it) or along the staff to line it
   up with the source; Shift-drag moves a single note; or use the arrow keys, and Enter to accept a neume and go on;
 - correct the words: click a syllable to change its text, give its reading as written (for abbreviations: *dñs* for
@@ -46,8 +50,8 @@ These are the first steps. You can:
   with neumes, each element tied to its place on the page, as DDMAL's Neon reads it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-Next, recognition. Its training data is being made: GregoBase's chants, drawn as synthetic pages with their answers
-(see [training/README.md](training/README.md)).
+The recognizer is at an early stage: see [training/README.md](training/README.md) for how it is trained and how
+well it reads.
 
 ## Running it on your computer
 

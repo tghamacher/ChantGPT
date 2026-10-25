@@ -253,6 +253,24 @@
       });
     } },
 
+    { name: 'recognizer: the model\'s scores read as tokens, then as neumes, each with where it lies and how sure', unit: () => {
+      const R = CGRecognizer, bad = [];
+      const vocab = ['c4', 'f', 'g', 'h', '|', '/', ';', 'g+'];
+      // steps: c4 c4 _ | f g _ / h | ; | g+   (blank 0; token k is vocab[k - 1])
+      const best = [1, 1, 0, 5, 2, 3, 0, 6, 4, 5, 7, 5, 8], T = best.length, C = vocab.length + 1;
+      const scores = new Float32Array(C * T);
+      best.forEach((c, t) => { for (let k = 0; k < C; k++) scores[k * T + t] = k === c ? (t === 4 ? 1 : 5) : 0; });
+      const read = R.decode(scores, T, vocab);
+      bad.push(...same('tokens', read.map(r => r.t), ['c4', '|', 'f', 'g', '/', 'h', '|', ';', '|', 'g+']));
+      bad.push(...same('repeats merged: the clef spans steps 0 to 1', [read[0].from, read[0].to], [0, 1]));
+      bad.push(...same('a less sure step', read[2].p < 0.5 && read[3].p > 0.9, true));
+      const gs = R.groups(read);
+      bad.push(...same('neumes', gs.map(v => v.g), ['c4', 'fg/h', ';', 'g+']));
+      bad.push(...same('their steps', gs.map(v => [v.from, v.to]), [[0, 1], [4, 8], [10, 10], [12, 12]]));
+      bad.push(...same('a neume as sure as its least sure note', gs[1].conf === read[2].p, true));
+      bad.push(...same('a bar is its own neume, | or not', R.groups(R.decode(scores, T, vocab).filter(r => r.t !== '|')).map(v => v.g), ['c4', 'fg/h', ';', 'g+']));
+      return bad;
+    } },
     { name: 'neumes: line breaks chosen by what each staff carries; a custos settles a tie; gathered back from the staves', unit: () => {
       const N = CGNeumes, C = CGChant, bad = [];
       const syls = C.fromGabc('(c4) a(f) b(gh) c(h) d(g) (;) e(f) f(gfg) g(h) h(j) (::)').staves[0].syllables;
@@ -764,6 +782,37 @@
       E.selected = ch.staves[0];
       await E.readBreaks();
       bad.push(...same('read again', list(), read));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
+    { name: 'app: the recognizer: a synthetic page\'s staves read, onto empty staves and against the chant placed on them', browser: true, unit: async app => {
+      const { w } = await app('test/pages/synth.jpg');
+      if (!(await w.fetch('models/chant.json')).ok) return [];   // (no model in this copy)
+      const truth = await (await w.fetch('test/pages/synth.json')).json(), doc = w.CGApp.state.doc, E = w.CGEditor, N = w.CGNeumes, bad = [];
+      doc.pages[0].staves = truth.doc.pages[0].staves.map(s => ({ id: s.id, lines: s.lines, box: s.box, begins: s.begins, syllables: [] }));
+      const want = truth.doc.pages[0].staves.map(s => s.syllables.flatMap(y => y.items.map(it => it.g)));
+      await E.readNotes(true);
+      const got = doc.pages[0].staves.map(s => s.syllables.flatMap(y => y.items.map(it => it.g)));
+      // notes read against the notes drawn, over the page
+      const notes = gs => gs.join(' ').replace(/[^a-mA-M]/g, '');
+      const dist = (p, q) => { const d = Array.from({ length: q.length + 1 }, (_, j) => j); for (let i = 1; i <= p.length; i++) { let pr = d[0]; d[0] = i; for (let j = 1; j <= q.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, pr + (p[i - 1] === q[j - 1] ? 0 : 1)); pr = t; } } return d[q.length]; };
+      let errs = 0, total = 0;
+      want.forEach((gs, k) => { errs += dist(notes(got[k]), notes(gs)); total += notes(gs).length; });
+      if (errs > 0.15 * total) bad.push(`notes read: ${errs} wrong of ${total}`);
+      bad.push(...same('every neume has a box and a confidence', got.flat().length > 0 && doc.pages[0].staves.every(s => s.syllables.every(y => y.items.every(it => it.box && it.conf >= 0))), true));
+      // the chant placed on the first staff, one neume altered, then read: the altered one marked, the rest lined up
+      const st = doc.pages[0].staves[0], syls = truth.doc.pages[0].staves[0].syllables;
+      st.syllables = JSON.parse(JSON.stringify(syls)).map(y => { delete y.box; y.items.forEach(it => { delete it.box; delete it.conf; }); return y; });
+      const k = st.syllables.findIndex(y => y.items.some(it => /^[a-l]$/.test(it.g)));
+      const i = st.syllables[k].items.findIndex(it => /^[a-l]$/.test(it.g)), was = st.syllables[k].items[i].g;
+      st.syllables[k].items[i].g = String.fromCharCode(was.charCodeAt(0) + 1);
+      N.place(st);
+      E.selected = st.id;
+      await E.readNotes(false);
+      const it = st.syllables[k].items[i];
+      bad.push(...same('the altered neume: doubtful, with what was read', [it.conf < 0.8, it.read], [true, was]));
+      const sure = st.syllables.flatMap(y => y.items).filter(v => v !== it && v.read === undefined).length;
+      if (sure < 0.8 * st.syllables.flatMap(y => y.items).length) bad.push(`only ${sure} neumes agreed`);
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },
