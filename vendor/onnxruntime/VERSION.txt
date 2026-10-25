@@ -1,0 +1,1 @@
+onnxruntime-web 1.27.0 (npm), dist/: ort.wasm.min.js, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm. MIT License.

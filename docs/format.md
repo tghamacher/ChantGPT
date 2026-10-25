@@ -106,6 +106,9 @@ is how training data and tests will be made.
   every item a box, spaced along the staff.
 - `conf`: the recognizer's confidence, from 0 to 1 (optional; absent for what a person entered). The app marks items
   under 0.8 that haven't been checked.
+- `read` (optional): what the recognizer read here, in GABC, when it differs from `g` (for an item placed from GABC
+  and then compared with the page); `""` if it saw nothing here. Such an item's `conf` is under 0.8, so it is
+  marked to be looked at.
 - `checked`: how a person confirmed the item (optional; absent: not yet). `"item"`: looked at alone and accepted;
   `"edited"`: changed by hand (moved, or its notes changed), which counts as looked at; `"staff"`: accepted with its
   whole staff. For training, the first two can be trusted fully, the third a little less.

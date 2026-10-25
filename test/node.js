@@ -6,6 +6,7 @@ require('../js/greciliae.js');
 require('../js/neumes.js');
 require('../js/checks.js');
 require('../js/export.js');
+require('../js/recognizer.js');
 require('./cases.js');
 const only = process.argv[2];
 let failed = 0, run = 0;

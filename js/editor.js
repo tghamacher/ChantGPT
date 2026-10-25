@@ -9,7 +9,7 @@
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
-  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant, K = global.CGChecks, X = global.CGExport;
+  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant, K = global.CGChecks, X = global.CGExport, R = global.CGRecognizer;
   const SVG = 'http://www.w3.org/2000/svg';
   const HANDLE = 6, MIN_DRAG = 6;   // in screen pixels
 
@@ -532,6 +532,87 @@
     ctx.say(`Its line breaks read from the page${new Set(list.map(v => v.page)).size > 1 ? ', over the page turn' : ''}. Check them; [ and ] move one.`);
   }
 
+  // ---------------------------------------------------------------- the recognizer
+  // The notes read off a staff (recognizer.js). On a staff without chant, they are put on it, a neume to a syllable,
+  // each where it was seen. On a staff with chant (placed from GABC), what was read is lined up with what is there,
+  // neume by neume: each neume moved to where it was seen; where the two differ, the neume is marked doubtful and
+  // what was read kept with it (read), to be looked at. Returns what it did, or null (and says why).
+  async function readStaff(st, pg = ctx.state.page) {
+    let px, got;
+    try { px = await ctx.pixels(pg); got = await R.read(px, st.lines); }
+    catch (e) { ctx.say(`Couldn't read the notes: ${e.message || e}`, true); return null; }
+    const items = st.syllables.flatMap((syl, s) => syl.items.map((it, i) => ({ it, s, i })));
+    let same = 0, differ = 0, unseen = 0, extra = 0;
+    if (!items.length) {
+      st.syllables = got.map(v => ({ text: '', items: [{ g: v.g, box: [v.x0, 0, v.x1 - v.x0, 0], conf: v.conf }] }));
+      for (const syl of st.syllables) N.fitBox(st, syl.items[0]);
+      return { put: got.length };
+    }
+    const pairs = lineUp(items.map(v => v.it.g), got.map(v => v.g));
+    for (const [a, b] of pairs) {
+      if (a === null) { extra++; continue; }
+      const it = items[a].it;
+      if (b === null) { it.conf = 0.3; it.read = ''; unseen++; continue; }
+      const v = got[b];
+      if (it.box) { it.box[0] = v.x0; N.fitBox(st, it); }
+      if (notesOf(it.g) === notesOf(v.g)) { it.conf = v.conf; delete it.read; same++; }
+      else { it.conf = Math.min(0.4, v.conf); it.read = v.g; differ++; }
+    }
+    return { same, differ, unseen, extra };
+  }
+  // a group's notes, for comparing: letters, shapes and accidentals, without the breaks between glyphs and the marks
+  const notesOf = g => String(g).replace(/[\/! .'_0-9]/g, '');
+  // two lists of GABC groups lined up (global alignment): [[i or null, j or null], ...]; groups pair the more
+  // readily the more of their notes agree
+  function lineUp(a, b) {
+    const n = a.length, m = b.length, gap = 1;
+    const cost = (x, y) => { const p = notesOf(x), q = notesOf(y); if (p === q) return 0; const d = editDistance(p, q); return Math.min(2 * gap - 0.01, 0.2 + d / Math.max(p.length, q.length, 1) * 1.6); };
+    const D = Array.from({ length: n + 1 }, (_, i) => new Float64Array(m + 1).fill(0).map((_, j) => i === 0 ? j * gap : j === 0 ? i * gap : 0));
+    for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) D[i][j] = Math.min(D[i - 1][j] + gap, D[i][j - 1] + gap, D[i - 1][j - 1] + cost(a[i - 1], b[j - 1]));
+    const out = [];
+    let i = n, j = m;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && Math.abs(D[i][j] - (D[i - 1][j - 1] + cost(a[i - 1], b[j - 1]))) < 1e-9) { out.push([i - 1, j - 1]); i--; j--; }
+      else if (i > 0 && Math.abs(D[i][j] - (D[i - 1][j] + gap)) < 1e-9) { out.push([i - 1, null]); i--; }
+      else { out.push([null, j - 1]); j--; }
+    }
+    return out.reverse();
+  }
+  function editDistance(p, q) {
+    const d = Array.from({ length: q.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= p.length; i++) {
+      let prev = d[0]; d[0] = i;
+      for (let j = 1; j <= q.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (p[i - 1] === q[j - 1] ? 0 : 1)); prev = t; }
+    }
+    return d[q.length];
+  }
+  // the selected staff, or every staff on the page, read; one undo
+  async function readNotes(all) {
+    const list = all ? page().staves.slice() : [staffOf(selected)].filter(Boolean);
+    if (!list.length) { ctx.say(all ? 'No staves on this page: find them first.' : 'Select a staff first.', true); return; }
+    if (busy) return;
+    busy = true;
+    ctx.say('Reading the notes … (the first time, the recognizer is loaded)');
+    const before = snapshot(), pg = ctx.state.page, tally = { put: 0, same: 0, differ: 0, unseen: 0, extra: 0 };
+    let ok = 0;
+    for (const st of list) {
+      const r = await readStaff(st, pg);
+      if (!r) break;
+      ok++;
+      for (const k in r) tally[k] += r[k];
+    }
+    busy = false;
+    if (!ok) { info(); return; }
+    commit(before);
+    letGo();
+    draw();
+    const parts = [];
+    if (tally.put) parts.push(`${tally.put} neumes read onto ${list.length === 1 ? 'the staff' : 'staves without chant'}`);
+    if (tally.same + tally.differ + tally.unseen) parts.push(`of the chant's neumes, ${tally.same} read as written, ${tally.differ} read otherwise, ${tally.unseen} not seen`);
+    if (tally.extra) parts.push(`${tally.extra} more seen on the page than the chant has`);
+    ctx.say(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.`);
+  }
+
   // ---------------------------------------------------------------- a book's chants, from its index
   // The book's index (GregoBase's, made by training/gregobase.py book): its pages, as numbered, and the chants on
   // each in order, with how many pages each runs over. doc.book.first: the scan's page (from 0) that is the index's
@@ -1012,6 +1093,8 @@
     if (place) {
       place.disabled = !st;
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
+      document.getElementById('readStaff').disabled = !st || busy;
+      document.getElementById('readPage').disabled = !list.length || busy;
       document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
       document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length;
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
@@ -1119,13 +1202,14 @@
     const clef = (C.withClefs(st).find(v => v.syllable === item.s && v.item === item.i) || {}).clef;
     const names = kind === 'neume' || kind === 'custos' ? C.notes(it.g).filter(n => !n.acc).map(n => { const q = C.pitch(n.p, clef); return q ? q.step + q.octave : n.p; }).join(' ') : '';
     const how = { item: 'checked', edited: 'changed by you (so checked)', staff: 'checked with its staff' }[it.checked] || 'not checked yet';
-    return `(${it.g})` + (syl.text ? ` over "${syl.text.replace(/<[^>]*>/g, '')}"` : '') + (names ? `: ${names}` : '') + `. ${how[0].toUpperCase() + how.slice(1)}.` +
+    const read = it.read === undefined ? '' : it.read ? ` The recognizer reads (${it.read}) here.` : ' The recognizer saw nothing here.';
+    return `(${it.g})` + (syl.text ? ` over "${syl.text.replace(/<[^>]*>/g, '')}"` : '') + (names ? `: ${names}` : '') + `. ${how[0].toUpperCase() + how.slice(1)}.` + read +
       ' Drag it, or use the arrow keys; Shift-drag moves one note; Enter accepts it and goes on; Tab skips; Delete takes it out.';
   }
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks,
+    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

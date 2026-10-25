@@ -137,8 +137,10 @@
   // the groups of one pair of parentheses: clefs, bars, custos and breaks each their own item, neume material
   // between them kept whole with its spacing (fg gf stays one item), and a bar written straight after notes (f.;)
   // split off.
+  const SIGNS = /([a-mA-M]\+|::|:'?|;[0-9]?|,[0-9]?|`)/;
   function groups(s) {
-    const out = [], chunks = s.trim().split(/\s+/).filter(Boolean);
+    // (a custos, a bar or a clef written up against other signs, f+::c4, is split off them)
+    const out = [], chunks = s.trim().split(/\s+/).filter(Boolean).flatMap(c => kind(c) !== 'neume' ? [c] : c.split(SIGNS).filter(Boolean));
     let run = [];
     const flush = () => { if (run.length) out.push(run.join(' ')); run = []; };
     for (const c of chunks) {
@@ -232,6 +234,7 @@
           (syl.items || []).forEach(it => {
             if (typeof it.g !== 'string' || !it.g.trim()) bad.push(`${name}, syllable ${yi + 1}: an item has no GABC.`);
             else if (/[()]/.test(it.g)) bad.push(`${name}, syllable ${yi + 1}: "${it.g}" has parentheses; give the GABC inside them.`);
+            if (it.read !== undefined && typeof it.read !== 'string') bad.push(`${name}, syllable ${yi + 1}: what the recognizer read is GABC text.`);
             if (it.box !== undefined && !(box4(it.box) && inside(it.box))) bad.push(`${name}, syllable ${yi + 1}: the box of "${it.g}" is not on the page.`);
             if (it.conf !== undefined && !(it.conf >= 0 && it.conf <= 1)) bad.push(`${name}, syllable ${yi + 1}: the confidence of "${it.g}" is not between 0 and 1.`);
             if (it.checked !== undefined && !CHECKED.includes(it.checked)) bad.push(`${name}, syllable ${yi + 1}: "${it.g}" is checked as "${it.checked}"; it can be ${CHECKED.join(', ')}.`);

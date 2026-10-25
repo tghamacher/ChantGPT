@@ -253,6 +253,24 @@
       });
     } },
 
+    { name: 'recognizer: the model\'s scores read as tokens, then as neumes, each with where it lies and how sure', unit: () => {
+      const R = CGRecognizer, bad = [];
+      const vocab = ['c4', 'f', 'g', 'h', '|', '/', ';', 'g+'];
+      // steps: c4 c4 _ | f g _ / h | ; | g+   (blank 0; token k is vocab[k - 1])
+      const best = [1, 1, 0, 5, 2, 3, 0, 6, 4, 5, 7, 5, 8], T = best.length, C = vocab.length + 1;
+      const scores = new Float32Array(C * T);
+      best.forEach((c, t) => { for (let k = 0; k < C; k++) scores[k * T + t] = k === c ? (t === 4 ? 1 : 5) : 0; });
+      const read = R.decode(scores, T, vocab);
+      bad.push(...same('tokens', read.map(r => r.t), ['c4', '|', 'f', 'g', '/', 'h', '|', ';', '|', 'g+']));
+      bad.push(...same('repeats merged: the clef spans steps 0 to 1', [read[0].from, read[0].to], [0, 1]));
+      bad.push(...same('a less sure step', read[2].p < 0.5 && read[3].p > 0.9, true));
+      const gs = R.groups(read);
+      bad.push(...same('neumes', gs.map(v => v.g), ['c4', 'fg/h', ';', 'g+']));
+      bad.push(...same('their steps', gs.map(v => [v.from, v.to]), [[0, 1], [4, 8], [10, 10], [12, 12]]));
+      bad.push(...same('a neume as sure as its least sure note', gs[1].conf === read[2].p, true));
+      bad.push(...same('a bar is its own neume, | or not', R.groups(R.decode(scores, T, vocab).filter(r => r.t !== '|')).map(v => v.g), ['c4', 'fg/h', ';', 'g+']));
+      return bad;
+    } },
     { name: 'neumes: line breaks chosen by what each staff carries; a custos settles a tie; gathered back from the staves', unit: () => {
       const N = CGNeumes, C = CGChant, bad = [];
       const syls = C.fromGabc('(c4) a(f) b(gh) c(h) d(g) (;) e(f) f(gfg) g(h) h(j) (::)').staves[0].syllables;

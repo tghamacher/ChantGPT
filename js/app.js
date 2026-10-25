@@ -200,6 +200,8 @@
   $('beginsHere').addEventListener('change', e => E.toggleBegins(e.target.checked));
   $('clearChant').addEventListener('click', () => E.clearChant());
   $('readBreaks').addEventListener('click', () => E.readBreaks());
+  $('readStaff').addEventListener('click', () => E.readNotes(false));
+  $('readPage').addEventListener('click', () => E.readNotes(true));
   $('showVolpiano').addEventListener('click', () => {
     const v = E.volpiano();
     if (!v) return;
