@@ -78,9 +78,54 @@ Each `synth-NNNNNN.jpg` comes with `synth-NNNNNN.json`, the answers:
 The pages are drawn in a browser, Chromium through Playwright, so that the layout is the app's own. The training
 itself (step 4) will be Python.
 
-## Still to come in step 3
+Some pages have heavier notes (the glyphs outlined, as the Vatican edition's notes nearly fill a space), and some are
+black and white only, as the CMAA's scan of the Graduale is.
 
-- Aligning real scans with GregoBase. The corpus gives the book and page of each chant, so a scan of the Liber Usualis
-  or a Graduale can be given its chants page by page, placed by the app, and corrected by hand. That gives real pages
-  with answers.
+## 3. Real staves: a book aligned with GregoBase
+
+```
+node training/align.js --pdf training/data/scans/gr1908.pdf --book training/data/gregobase-1.book.json \
+  --at 25 --label 1 [--from 25] [--to 948] [--out training/data/real]
+```
+
+This drives the app over a scanned book GregoBase has indexed, page by page: it finds the staves, marks where chants
+begin, places the chants GregoBase lists for the page, and reads their line breaks from the page. It keeps the staves of
+chants whose every custos, read on the page, agrees with the next line's first note, a sign the breaks are right. Each
+is saved straightened, with its GABC (`labels.jsonl`: `file`, `items`, `page`, `chant`, `staff`).
+
+These answers are not checked by hand. What GregoBase has and what the page prints can differ, and breaks can still be
+wrong where no custos says otherwise. On the first pages of the 1908 Graduale about 57% of staves are kept.
+
+The scan: `curl -L -o training/data/scans/gr1908.pdf https://archive.org/download/graduale-romanum-1908/graduale-romanum-1908.pdf`.
+
+## 4. The recognizer
+
+```
+python -I training/staffdata.py synth                   # the synthetic pages' staves -> training/data/staves
+python -I training/recognizer.py train [--epochs 20]    # -> training/data/model/best.pt
+python -I training/recognizer.py export --model training/data/model/best.pt    # -> models/chant.onnx, chant.json
+```
+
+`staffdata.py` cuts each staff out and straightens it along its lines. Every staff comes out 64 pixels high, with 8
+pixels to a space: the top line at row 20 and the bottom line at row 44, the same scale along the staff. It writes the
+staff's tokens:
+- a note: its letter (upper case for an inclinatum), then its shape (`v`, `V`, `o`, `O`, `w`, `s`, `r`) and its
+  liquescence (`~`, `<`, `>`);
+- an accidental (`ix`), a mora (`.`), an episema (`_`), an ictus (`'`);
+- a clef (`c4`), a bar (`,` `;` `:` `::` `` ` ``), a custos (`g+`);
+- `/` between glyphs and `|` between neumes.
+
+`js/recognizer.js` straightens a staff the same way in the browser; checked to agree within one grey level.
+
+`recognizer.py` is a small convolutional network: about 780,000 weights. It folds the staff's 64 rows away, then reads
+along it, one output step to two columns, with 1-D convolutions wide enough to see a whole neume. It is trained with
+CTC, which needs only each staff's tokens, not where each note is. Training adds variety: shifts, stretching, blur,
+heavier or lighter ink, black and white, noise. It uses a GPU if there is one (CUDA, or ROCm for an AMD card).
+Exported to ONNX, it runs in the app with ONNX Runtime Web (`vendor/onnxruntime`), on the CPU, in WebAssembly.
+
+Python packages: `pip install torch numpy pillow onnx` (for an AMD card, torch from the ROCm index).
+
+## Still to come
+
 - A second engraver for variety: Gregorio itself, and exsurge.
+- Training on the real staves, and on pages corrected by hand.

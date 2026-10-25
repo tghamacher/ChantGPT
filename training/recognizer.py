@@ -41,7 +41,17 @@ class Reader(nn.Module):
 
 
 def load(data):
-    rows = [json.loads(l) for l in open(os.path.join(data, 'labels.jsonl'), encoding='utf-8')]
+    """A folder's staves: labels.jsonl with tokens (staffdata.py), or with GABC items (align.js), tokenized here."""
+    sys.path.insert(0, HERE)
+    import staffdata
+    rows = []
+    for l in open(os.path.join(data, 'labels.jsonl'), encoding='utf-8'):
+        r = json.loads(l)
+        if 'tokens' not in r: r['tokens'] = staffdata.tokens(r['items'])
+        if 'width' not in r:
+            with Image.open(os.path.join(data, r['file'])) as im: r['width'] = im.width
+        r['dir'] = data
+        rows.append(r)
     return rows
 
 
@@ -50,8 +60,7 @@ def vocab_of(rows):
 
 
 def image(data, file):
-    a = np.asarray(Image.open(os.path.join(data, file)).convert('L'), dtype=np.uint8)
-    return a
+    return np.asarray(Image.open(os.path.join(data, file)).convert('L'), dtype=np.uint8)
 
 
 def ink(a):
@@ -128,7 +137,7 @@ def evaluate(model, rows, data, vocab, device, size=16, limit=None):
     notes_err = notes = 0
     with torch.no_grad():
         for group in batches(rows, size, random.Random(0), shuffle=False):
-            x, lens = collate([ink(image(data, rows[i]['file'])) for i in group])
+            x, lens = collate([ink(image(rows[i]['dir'], rows[i]['file'])) for i in group])
             for (seq, _), i in zip(greedy(model(x.to(device)), lens, vocab), group):
                 want = rows[i]['tokens']
                 errs += edits(seq, want); toks += len(want)
@@ -138,25 +147,35 @@ def evaluate(model, rows, data, vocab, device, size=16, limit=None):
     return errs / max(1, toks), notes_err / max(1, notes)
 
 
-def train(o):
-    rows = load(o.data)
-    vocab = vocab_of(rows)
-    index = {t: k + 1 for k, t in enumerate(vocab)}
-    rng = random.Random(1)
+def split(rows, every):
+    """Every so many pages kept out of training, to test on."""
     pages = sorted({r['file'].rsplit('-', 1)[0] for r in rows})
-    held = set(pages[::33])                                  # about 3% of the pages, kept out of training
-    test = [r for r in rows if r['file'].rsplit('-', 1)[0] in held]
-    rows = [r for r in rows if r['file'].rsplit('-', 1)[0] not in held]
+    held = set(pages[::every])
+    return [r for r in rows if r['file'].rsplit('-', 1)[0] not in held], [r for r in rows if r['file'].rsplit('-', 1)[0] in held]
+
+
+def train(o):
+    rows, test = split(load(o.data), 33) if o.data else ([], [])
+    real, real_test = split(load(o.real), 10) if o.real else ([], [])
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    old = torch.load(o.resume, map_location=device) if o.resume else None
+    vocab = old['vocab'] if old else vocab_of(rows + real)
+    index = {t: k + 1 for k, t in enumerate(vocab)}
+    known = lambda r: all(t in index for t in r['tokens'])
+    unknown = sum(not known(r) for r in rows + real)
+    rows, test, real, real_test = ([r for r in x if known(r)] for x in (rows, test, real, real_test))
+    rows = rows + real * o.real_weight                       # the real staves count for more: they are few
+    rng = random.Random(1)
     model = Reader(len(vocab), o.width).to(device)
-    if o.resume: model.load_state_dict(torch.load(o.resume, map_location=device)['model'])
+    if old: model.load_state_dict(old['model'])
     opt = torch.optim.AdamW(model.parameters(), lr=o.lr, weight_decay=1e-4)
     steps = o.epochs * math.ceil(len(rows) / o.batch)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=o.lr, total_steps=steps, pct_start=0.1)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
     os.makedirs(o.out, exist_ok=True)
     with open(os.path.join(o.out, 'vocab.json'), 'w', encoding='utf-8') as f: json.dump(vocab, f, ensure_ascii=False)
-    print(f'{len(rows)} staves to learn from, {len(test)} to test on; {len(vocab)} tokens; '
+    print(f'{len(rows)} staves to learn from ({len(real)} real, each {o.real_weight} times), {len(test)} synthetic and '
+          f'{len(real_test)} real to test on; {unknown} left out for tokens the model hasn\'t; {len(vocab)} tokens; '
           f'{sum(p.numel() for p in model.parameters()):,} weights; on {device}', flush=True)
     cache = {}
     best, step, t0 = 9, 0, time.time()
@@ -165,9 +184,9 @@ def train(o):
         for n, group in enumerate(batches(rows, o.batch, rng)):
             arrays = []
             for i in group:
-                f = rows[i]['file']
-                if f not in cache: cache[f] = image(o.data, f)
-                arrays.append(augment(cache[f], rng))
+                key = (rows[i]['dir'], rows[i]['file'])
+                if key not in cache: cache[key] = image(*key)
+                arrays.append(augment(cache[key], rng))
             x, lens = collate(arrays)
             targets = [torch.tensor([index[t] for t in rows[i]['tokens']]) for i in group]
             logp = F.log_softmax(model(x.to(device)), 1).permute(2, 0, 1)          # (steps, batch, tokens)
@@ -178,12 +197,16 @@ def train(o):
             total += loss.item()
             if n % 100 == 0:
                 print(f'epoch {epoch + 1} batch {n}: loss {total / (n + 1):.3f} ({time.time() - t0:.0f} s)', flush=True)
-        ter, ner = evaluate(model, test, o.data, vocab, device, limit=o.test_limit)
-        print(f'epoch {epoch + 1}: loss {total / (n + 1):.3f}; on the test staves: token errors {ter:.2%}, note errors {ner:.2%} ({time.time() - t0:.0f} s)', flush=True)
-        state = {'model': model.state_dict(), 'vocab': vocab, 'width': o.width, 'epoch': epoch + 1, 'ter': ter, 'ner': ner}
+        ter, ner = evaluate(model, test, None, vocab, device, limit=o.test_limit) if test else (None, None)
+        rter, rner = evaluate(model, real_test, None, vocab, device, limit=o.test_limit) if real_test else (None, None)
+        pct = lambda v: '-' if v is None else f'{v:.2%}'
+        print(f'epoch {epoch + 1}: loss {total / (n + 1):.3f}; synthetic test staves: token errors {pct(ter)}, note errors {pct(ner)}; '
+              f'real: token errors {pct(rter)}, note errors {pct(rner)} ({time.time() - t0:.0f} s)', flush=True)
+        state = {'model': model.state_dict(), 'vocab': vocab, 'width': o.width, 'epoch': epoch + 1, 'ter': ter, 'ner': ner, 'real_ter': rter, 'real_ner': rner}
+        score = rter if rter is not None else ter
         torch.save(state, os.path.join(o.out, 'last.pt'))
-        if ter < best:
-            best = ter
+        if score < best:
+            best = score
             torch.save(state, os.path.join(o.out, 'best.pt'))
 
 
@@ -197,7 +220,10 @@ def restore(path):
 def test(o):
     m, s = restore(o.model)
     rows = load(o.data)
-    ter, ner = evaluate(m, rows, o.data, s['vocab'], 'cpu', limit=o.test_limit)
+    if o.held: rows = split(rows, o.held)[1]
+    index = set(s['vocab'])
+    rows = [r for r in rows if all(t in index for t in r['tokens'])]
+    ter, ner = evaluate(m, rows, None, s['vocab'], 'cpu', limit=o.test_limit)
     print(f'{min(len(rows), o.test_limit or len(rows))} staves: token errors {ter:.2%}, note errors {ner:.2%}')
 
 
@@ -208,7 +234,8 @@ def export(o):
     torch.onnx.export(m, x, o.onnx, input_names=['staff'], output_names=['scores'], opset_version=17,
                       dynamic_axes={'staff': {0: 'batch', 3: 'width'}, 'scores': {0: 'batch', 2: 'steps'}}, dynamo=False)
     meta = {'vocab': s['vocab'], 'height': HEIGHT, 'stride': STRIDE, 'space': 8, 'top': 20, 'left': 0.6, 'right': 0.4,
-            'epoch': s.get('epoch'), 'token_errors': s.get('ter'), 'note_errors': s.get('ner')}
+            'epoch': s.get('epoch'), 'token_errors': s.get('ter'), 'note_errors': s.get('ner'),
+            'real_token_errors': s.get('real_ter'), 'real_note_errors': s.get('real_ner')}
     with open(os.path.splitext(o.onnx)[0] + '.json', 'w', encoding='utf-8') as f: json.dump(meta, f, ensure_ascii=False)
     print(f'-> {o.onnx} ({os.path.getsize(o.onnx) / 1e6:.1f} MB)')
 
@@ -219,6 +246,9 @@ if __name__ == '__main__':
     a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'))
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'model'))
     a.add_argument('--model')
+    a.add_argument('--real', help='real staves too (align.js), every tenth page kept out to test on')
+    a.add_argument('--real-weight', type=int, default=3)
+    a.add_argument('--held', type=int, help='test: only the pages kept out (every so many)')
     a.add_argument('--resume')
     a.add_argument('--onnx', default=os.path.join(HERE, '..', 'models', 'chant.onnx'))
     a.add_argument('--epochs', type=int, default=20)

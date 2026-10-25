@@ -73,6 +73,7 @@ function serve() {
         if (agree) out.push(...seen.map(s => Object.assign(s, { chant: ch.headers.gregobase })));
         else out.push({ dropped: seen.length });
       }
+      E.reset();   // (no undo wanted here: every page's undo would keep the whole book's staves)
       return { staves: out, note: status };
     });
     for (const s of res.staves) {

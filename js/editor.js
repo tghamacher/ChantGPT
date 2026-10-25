@@ -672,6 +672,17 @@
           put(starts[i], r, last, r.staves.length === 1 && where.length > 1 ? await seenOf(where) : null);
         } catch (e) { bad.push(`${bp.chants[i].incipit}: ${e.message}`); }
       }
+      // then, if there is a recognizer, the notes read and compared, so the places to look at are marked
+      let compared = null;
+      if (await R.load().then(() => true, () => false)) {
+        compared = { differ: 0, unseen: 0, staves: 0 };
+        ctx.say(`Page ${bp.label}: reading the notes …`);
+        for (const st of doc.pages[pg].staves.filter(t => t.syllables.length)) {
+          const r = await readStaff(st, pg);
+          if (!r) break;
+          compared.staves++; compared.differ += r.differ || 0; compared.unseen += r.unseen || 0;
+        }
+      }
       commit(before);
       if (starts[0]) selected = starts[0].id;
       draw();
@@ -681,6 +692,7 @@
       else if (starts.length > bp.chants.length) msg += ` ${starts.length - bp.chants.length} more ${starts.length - bp.chants.length === 1 ? 'staff is' : 'staves are'} marked where a chant begins than the index has chants: check the marks (B).`;
       else msg += ' Check the line breaks ([ and ]), then the neumes.';
       if (bad.length) msg += ` Couldn't read: ${bad.join('; ')}.`;
+      if (compared) msg += ` The page read: ${compared.differ + compared.unseen ? `${compared.differ + compared.unseen} ${compared.differ + compared.unseen === 1 ? 'neume differs' : 'neumes differ'} from GregoBase, marked in orange` : 'every neume as GregoBase has it'}.`;
       ctx.say(msg, starts.length !== bp.chants.length || bad.length > 0);
     } catch (e) { restore(before); draw(); ctx.say(`Couldn't place the page's chants: ${e.message || e}`, true); }
     busy = false;

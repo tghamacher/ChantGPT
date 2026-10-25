@@ -785,6 +785,37 @@
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },
+    { name: 'app: the recognizer: a synthetic page\'s staves read, onto empty staves and against the chant placed on them', browser: true, unit: async app => {
+      const { w } = await app('test/pages/synth.jpg');
+      if (!(await w.fetch('models/chant.json')).ok) return [];   // (no model in this copy)
+      const truth = await (await w.fetch('test/pages/synth.json')).json(), doc = w.CGApp.state.doc, E = w.CGEditor, N = w.CGNeumes, bad = [];
+      doc.pages[0].staves = truth.doc.pages[0].staves.map(s => ({ id: s.id, lines: s.lines, box: s.box, begins: s.begins, syllables: [] }));
+      const want = truth.doc.pages[0].staves.map(s => s.syllables.flatMap(y => y.items.map(it => it.g)));
+      await E.readNotes(true);
+      const got = doc.pages[0].staves.map(s => s.syllables.flatMap(y => y.items.map(it => it.g)));
+      // notes read against the notes drawn, over the page
+      const notes = gs => gs.join(' ').replace(/[^a-mA-M]/g, '');
+      const dist = (p, q) => { const d = Array.from({ length: q.length + 1 }, (_, j) => j); for (let i = 1; i <= p.length; i++) { let pr = d[0]; d[0] = i; for (let j = 1; j <= q.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, pr + (p[i - 1] === q[j - 1] ? 0 : 1)); pr = t; } } return d[q.length]; };
+      let errs = 0, total = 0;
+      want.forEach((gs, k) => { errs += dist(notes(got[k]), notes(gs)); total += notes(gs).length; });
+      if (errs > 0.15 * total) bad.push(`notes read: ${errs} wrong of ${total}`);
+      bad.push(...same('every neume has a box and a confidence', got.flat().length > 0 && doc.pages[0].staves.every(s => s.syllables.every(y => y.items.every(it => it.box && it.conf >= 0))), true));
+      // the chant placed on the first staff, one neume altered, then read: the altered one marked, the rest lined up
+      const st = doc.pages[0].staves[0], syls = truth.doc.pages[0].staves[0].syllables;
+      st.syllables = JSON.parse(JSON.stringify(syls)).map(y => { delete y.box; y.items.forEach(it => { delete it.box; delete it.conf; }); return y; });
+      const k = st.syllables.findIndex(y => y.items.some(it => /^[a-l]$/.test(it.g)));
+      const i = st.syllables[k].items.findIndex(it => /^[a-l]$/.test(it.g)), was = st.syllables[k].items[i].g;
+      st.syllables[k].items[i].g = String.fromCharCode(was.charCodeAt(0) + 1);
+      N.place(st);
+      E.selected = st.id;
+      await E.readNotes(false);
+      const it = st.syllables[k].items[i];
+      bad.push(...same('the altered neume: doubtful, with what was read', [it.conf < 0.8, it.read], [true, was]));
+      const sure = st.syllables.flatMap(y => y.items).filter(v => v !== it && v.read === undefined).length;
+      if (sure < 0.8 * st.syllables.flatMap(y => y.items).length) bad.push(`only ${sure} neumes agreed`);
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
     { name: 'app: lines found on a PDF page, in points', browser: true, unit: async app => {
       const { w } = await app('test/pages/two-pages.pdf');
       await w.CGEditor.addStaff([20, 45, 380, 65]);
