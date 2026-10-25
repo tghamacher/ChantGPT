@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.6.0** · a working title
+**Version 0.7.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -26,11 +26,14 @@ These are the first steps. You can:
   *Dominus*), drag it into place, split a syllable at a neume or join it to the one before;
 - accept a staff once it's right (Shift+Enter). Places the recognizer will be unsure of must be accepted one by
   one first; what you've checked turns green;
-- save the chant as GABC again, with the page's line breaks;
+- see the checks that need no AI: a custos that doesn't point to the next note, a staff without its clef, leaps of a
+  seventh or more, flats off B, and (when the GABC gives the mode) a final or notes outside the mode's range. They're
+  listed, and marked on the page; click one to go to it;
+- save the chant as GABC again, with the page's line breaks; copy it as Volpiano (for CANTUS); save a page as MEI
+  with neumes, each element tied to its place on the page, as DDMAL's Neon reads it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-Next, the checks that need no AI (does each custos match the next staff's first note?), then finding staves by
-itself, then the training data and recognition.
+Next, finding the staves on a page by itself, then the training data and recognition.
 
 ## Running it on your computer
 
@@ -61,6 +64,7 @@ and open http://localhost:8000.
 - `tools/make-test-scan.js`: makes `test/pages/engraved.jpg`, chant engraved by exsurge and roughened to look like a
   scan, and `warped.jpg`, the same page curling up towards the binding, each with the true position of every line,
   for testing the line finding.
+- `js/checks.js`: the checks that need no AI. `js/export.js`: Volpiano and MEI.
 - `js/chant.js`: the document format (GABC placed on the page), reading and writing GABC, and checks. See
   [docs/format.md](docs/format.md).
 - `HANDOFF.md`: the plan.

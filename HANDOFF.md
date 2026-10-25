@@ -181,7 +181,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
    - repo skeleton and GitHub Pages;
    - pdf.js page viewer (PDFs and page images);
    - the internal format, its GABC export and import, and tests.
-1. **The editing layer, no AI yet** (see "The editing layer"):
+1. **The editing layer, no AI yet** (done, see Done; see "The editing layer"):
    - fitting staff lines by hand (done), and drawing a chant from GABC onto them over the scan: the base everything
      else needs, so first;
    - then dragging and editing neumes, then the text layer (both readings), undo and redo;
@@ -220,7 +220,28 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 1, words and accepting staves** (version 0.6.0, branch `step-1-words`):
+- **Step 1, checks and exports** (version 0.7.0, branch `step-1-checks`). Step 1 is now complete.
+  - `js/checks.js` (no AI): each staff begins with a clef; a custos agrees with the next note (across a line and a
+    clef change); leaps of a seventh or more (not across a bar); flats and naturals only on B (or E); notes over no
+    syllable; with `mode` in the GABC headers, the last note is the mode's final (or its usual transposition: A, B,
+    C, D for modes 1–2, 3–4, 5–6, 7–8) and notes keep to its range (authentic: a step below the final to an octave
+    above; plagal: a fourth below to a sixth above; a step's leeway). `warn` (likely wrong, purple marks) or `note`
+    (worth a look, grey). Listed in the Checks panel and marked on the page; a click goes to the place.
+  - `js/export.js`, Volpiano: the rules music21 (`music21/volpiano.py`) reads and writes (the CANTUS documents
+    couldn't be reached from the session): `9abcdefghjklmnopqrs` G3–D6, capitals liquescent, flats `y w i x z`,
+    `1---` clef, `-`/`--`/`---` between neumes/syllables/words, `---3`/`---4` for `:` `;` and `::` (other bars left
+    out: Volpiano's barlines mark sections), `7` at each staff's end. Put in the octave CANTUS uses: the final
+    between C4 and B4. Notes and accidentals it can't write are left out and named.
+  - `js/export.js`, MEI 5 with neumes, one page, modelled on Neon's own sample files (DDMAL/Neon on GitHub;
+    music-encoding.org couldn't be reached, so it hasn't been checked against the schema): facsimile zones for staves
+    (with `rotate`), clefs, notes (placed along their glyphs), custos, accidentals, bars, syllables; `sb` per staff;
+    `clef`, `divLine` (minima, minor, maior, finalis, virgula), `custos`, `accid`, `syllable`/`syl` (`wordpos`,
+    `con`), `neume`/`nc` (`pname`, `oct` as Neon writes them: a C clef's line is C3, an octave below the app's own
+    pitch names), `tilt` s/n/se for virga, reversed virga, inclinatum, `curve` and `<liquescent/>`, `<quilisma/>`,
+    `<oriscus/>`. Zones are in the page's units: image pixels, or PDF points for a PDF (Neon will want the page as
+    an image of the same size). To try: open an exported page in Neon with its image.
+  - Pitch names in the app: GABC's C clef names middle C (C4), so a mode 1 final under c4 is D3.
+- **Step 1, words and accepting staves** (version 0.6.0, merged):
   - Syllables: click the words to select (side panel: Text, As written, Begins a word); drag them, or arrow keys,
     to move them (they get a `box`); Enter accepts and goes on, Tab skips. `dipl` holds the reading as written when
     it differs from `text`. "New syllable here" splits a syllable at the selected neume (the new one takes that

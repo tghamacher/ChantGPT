@@ -8,7 +8,7 @@
   --panel: #fffdf8; --field: #fff; --accent: #8a2a1b; --accent-ink: #fff; --focus: #b5542f;
   --err-bg: #fbe4df; --err-rule: #e6a99c;
   --staff: rgba(31, 94, 168, .9); --staff-fill: rgba(31, 94, 168, .07); --doubt: #c2410c;
-  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1); --notation-ink: #c0261b; --checked: #1d6b3a;
+  --sel: #b5542f; --sel-fill: rgba(181, 84, 47, .1); --notation-ink: #c0261b; --checked: #1d6b3a; --mark: #7c3aed; --mark-note: #8b8fa3;
   --page-shadow: 0 2px 12px rgba(0,0,0,.22);
   --textfont: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --ui: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -21,7 +21,7 @@
     --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
     --err-bg: #34201b; --err-rule: #6e3529;
     --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a; --mark: #a78bfa; --mark-note: #8b8fa3;
     --page-shadow: 0 2px 16px rgba(0,0,0,.7);
   }
 }
@@ -31,7 +31,7 @@
   --panel: #1d1a17; --field: #26221e; --accent: #df7a62; --accent-ink: #1b1712; --focus: #e98f68;
   --err-bg: #34201b; --err-rule: #6e3529;
   --staff: rgba(110, 168, 240, .95); --staff-fill: rgba(110, 168, 240, .1); --doubt: #fb923c;
-    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a;
+    --sel: #e98f68; --sel-fill: rgba(233, 143, 104, .14); --notation-ink: #ff4d3d; --checked: #4fbf7a; --mark: #a78bfa; --mark-note: #8b8fa3;
   --page-shadow: 0 2px 16px rgba(0,0,0,.7);
 }
 * { box-sizing: border-box; }
@@ -95,6 +95,17 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .glyph.ok, .cg-overlay .syl.ok { fill: var(--checked); }
 .cg-overlay .glyph.on { fill: var(--sel); }
 .cg-overlay .chant .syl { pointer-events: auto; cursor: grab; }
+.cg-overlay .mark { cursor: pointer; }
+.cg-overlay .mark circle { fill: var(--mark); stroke: var(--panel); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cg-overlay .mark.note circle { fill: var(--mark-note); }
+.cg-overlay .mark text { fill: #fff; font-family: var(--ui); font-weight: bold; text-anchor: middle; pointer-events: none; }
+.cg-count { color: var(--accent); }
+.cg-checks { margin: 0; padding-left: 20px; }
+.cg-checks li { margin-bottom: 6px; }
+.cg-link { background: none; border: 0; padding: 0; text-align: left; color: var(--ink); cursor: pointer; font-size: 13px; }
+.cg-link:hover { color: var(--accent); text-decoration: underline; }
+.cg-link.warn::before { content: "● "; color: var(--mark); }
+.cg-link.note::before { content: "● "; color: var(--mark-note); }
 .cg-overlay .syl.doubt { fill: var(--doubt); }
 .cg-overlay .syl.on { fill: var(--sel); text-decoration: underline; }
 .cg-overlay .neume { fill: transparent; cursor: grab; }

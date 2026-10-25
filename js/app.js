@@ -41,7 +41,7 @@
       say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
       $('pageCount').textContent = src.count;
       $('pageNo').max = src.count;
-      for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'docGroup']) $(id).hidden = false;
+      for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'docGroup']) $(id).hidden = false;
       $('empty').hidden = true;
       $('page').hidden = false;
     }
@@ -158,6 +158,21 @@
   $('save').addEventListener('click', save);
   $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
   $('clearChant').addEventListener('click', () => E.clearChant());
+  $('showVolpiano').addEventListener('click', () => {
+    const v = E.volpiano();
+    if (!v) return;
+    $('volpianoBox').hidden = false;
+    $('volpianoText').value = v.text;
+    $('volpianoNote').textContent = v.problems.join(' ');
+  });
+  $('copyVolpiano').addEventListener('click', async () => {
+    $('volpianoText').select();
+    try { await navigator.clipboard.writeText($('volpianoText').value); say('Volpiano copied.'); } catch (e) { document.execCommand('copy'); }
+  });
+  $('downloadMei').addEventListener('click', () => {
+    const m = E.mei();
+    if (m) download(new Blob([m.text], { type: 'application/xml' }), m.name);
+  });
   $('sylText').addEventListener('change', e => E.setText(e.target.value));
   $('sylDipl').addEventListener('change', e => E.setDipl(e.target.value));
   $('sylStart').addEventListener('change', e => E.setWordStart(e.target.checked));

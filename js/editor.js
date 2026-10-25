@@ -9,7 +9,7 @@
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
-  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant;
+  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant, K = global.CGChecks, X = global.CGExport;
   const SVG = 'http://www.w3.org/2000/svg';
   const HANDLE = 6, MIN_DRAG = 6;   // in screen pixels
 
@@ -17,6 +17,7 @@
   let selected = null;       // the selected staff's id
   let item = null;           // the selected neume (an item of the selected staff): { s: syllable, i: item }, by index
   let word = null;           // or the selected syllable's words: the syllable's index on the selected staff
+  let alerts = [];           // what the checks found (checks.js), as of the last full drawing
   let drag = null;           // what the pointer is doing
   const history = { undo: [], redo: [] };
 
@@ -424,6 +425,16 @@
     draw();
   }
 
+  // the chant the selected staff belongs to (or the first), in Volpiano; the page as MEI
+  const chantHere = () => ctx.state.doc.chants.find(c => c.staves.includes(selected)) || ctx.state.doc.chants[0];
+  function volpiano() { const c = chantHere(); return c ? X.volpiano(ctx.state.doc, c) : null; }
+  function mei() {
+    const doc = ctx.state.doc, pg = page();
+    if (!pg.staves.length) { ctx.say('Mark the staves on this page first.', true); return null; }
+    const base = (doc.source.name || 'chant').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
+    return { name: `${base}, page ${pg.n}.mei`, text: X.mei(doc, ctx.state.page) };
+  }
+
   // the chant the selected staff belongs to (or the first), as GABC with the source's line breaks
   function gabc() {
     const doc = ctx.state.doc;
@@ -454,6 +465,7 @@
     e.preventDefault();
     try { ctx.svg.setPointerCapture(e.pointerId); } catch (err) { }
     if (act === 'new') { drag = { act, from: p, to: p }; return; }
+    if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
     const id = t.dataset.staff;
     if (act === 'syl') {
       selected = id; word = +t.dataset.s; item = null;
@@ -666,6 +678,19 @@
         l.forEach((ln, i) => el('circle', { cx: ln[xi], cy: ln[xi + 1], r: rr, class: 'handle', 'data-act': 'point', 'data-staff': st.id, 'data-knot': k, 'data-line': i }, g));
       }
     }
+    // the checks' findings on this page: a mark over each place (a whole staff's at its start), to click
+    if (!fast) alerts = K.check(ctx.state.doc);
+    for (const [k, a] of alerts.entries()) {
+      if (a.page !== ctx.state.page) continue;
+      const st = pg.staves.find(v => v.id === a.staff), it = st && a.i !== null && st.syllables[a.s] && st.syllables[a.s].items[a.i];
+      if (!st) continue;
+      const x = it && it.box ? it.box[0] + it.box[2] / 2 : S.xsOf(st.lines[0])[0], top = S.yAt(st.lines[0], x) - 2.2 * S.spacing(st.lines);
+      const r2 = 0.55 * S.spacing(st.lines), m = el('g', { class: 'mark ' + a.level, 'data-act': 'alert', 'data-k': k });
+      el('circle', { cx: x, cy: top, r: r2 }, m);
+      const t = el('text', { x, y: top + 0.35 * r2 * 2, 'font-size': 1.3 * r2 }, m);
+      t.textContent = '!';
+      el('title', {}, m).textContent = a.text;
+    }
     if (drag && drag.act === 'new' && drag.moved) {
       const [a, b] = [drag.from, drag.to];
       el('rect', { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), width: Math.abs(b[0] - a[0]), height: Math.abs(b[1] - a[1]), class: 'band' });
@@ -686,6 +711,7 @@
         (bends ? `, bent at ${bends} ${bends === 1 ? 'point' : 'points'} (up to ${S.bend(st.lines).toFixed(1)} spaces off straight).` : '.');
     }
     out.textContent = text;
+    checkList();
     for (const id of ['refit', 'evenly', 'remove']) document.getElementById(id).disabled = !st;
     const place = document.getElementById('placeChant');
     if (place) {
@@ -703,6 +729,35 @@
     }
     document.getElementById('undo').disabled = !history.undo.length;
     document.getElementById('redo').disabled = !history.redo.length;
+  }
+
+  // a finding gone to: its page, its staff, and its neume or syllable
+  function goTo(a) {
+    if (!a) return;
+    const show = a.page !== ctx.state.page;
+    selected = a.staff; letGo();
+    const st = ctx.state.doc.pages[a.page].staves.find(v => v.id === a.staff);
+    if (a.i !== null && st && st.syllables[a.s] && st.syllables[a.s].items[a.i]) item = { s: a.s, i: a.i };
+    if (show) ctx.show(a.page); else draw();
+    ctx.say(a.text, a.level === 'warn');
+  }
+
+  // the findings listed in the side panel, page by page
+  function checkList() {
+    const list = document.getElementById('checkList');
+    if (!list) return;
+    list.replaceChildren();
+    const doc = ctx.state.doc;
+    alerts.forEach(a => {
+      const li = document.createElement('li'), b = document.createElement('button');
+      const pg = doc.pages[a.page], n = pg.staves.findIndex(v => v.id === a.staff) + 1;
+      b.type = 'button'; b.className = 'cg-link ' + a.level;
+      b.textContent = `Page ${pg.n}, staff ${n}: ${a.text}`;
+      b.addEventListener('click', () => goTo(a));
+      li.appendChild(b); list.appendChild(li);
+    });
+    document.getElementById('checkCount').textContent = alerts.length ? `(${alerts.length})` : '';
+    if (!alerts.length) { const li = document.createElement('li'); li.className = 'cg-hint'; li.textContent = doc.chants.length ? 'Nothing found.' : 'Place a chant on the staves to check it.'; list.appendChild(li); }
   }
 
   // how far a staff has been checked
@@ -741,7 +796,8 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc,
-    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord,
+    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei,
+    get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
     get neume() { return item && Object.assign({}, item); }, selectNeume(id, s, i) { selected = id; item = { s, i }; word = null; draw(); },

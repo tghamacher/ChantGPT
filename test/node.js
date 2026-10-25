@@ -4,6 +4,8 @@ require('../js/chant.js');
 require('../js/staves.js');
 require('../js/greciliae.js');
 require('../js/neumes.js');
+require('../js/checks.js');
+require('../js/export.js');
 require('./cases.js');
 const only = process.argv[2];
 let failed = 0, run = 0;

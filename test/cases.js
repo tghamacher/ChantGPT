@@ -8,10 +8,16 @@
   const same = (what, got, want) => JSON.stringify(got) === JSON.stringify(want) ? [] : [`${what}: ${JSON.stringify(got)}, expected ${JSON.stringify(want)}`];
   const body = gabc => gabc.slice(gabc.indexOf('%%') + 2).trim();
   // a document holding one GABC chant, its staves on page 1
-  function docOf(src) {
+  // (mode: put in its headers; the staves get lines, one under another, and their chant is placed on them)
+  function docOf(src, mode) {
     const r = C().fromGabc(src), doc = C().newDocument({ name: 'test', type: 'images', sizes: [[1000, 1400]] });
     doc.pages[0].staves = r.staves.map((s, i) => Object.assign({ id: 'p1s' + (i + 1) }, s));
-    doc.chants = [{ headers: r.headers, staves: doc.pages[0].staves.map(s => s.id) }];
+    doc.chants = [{ headers: Object.assign(r.headers, mode ? { mode } : {}), staves: doc.pages[0].staves.map(s => s.id) }];
+    return doc;
+  }
+  function placed(src) {
+    const doc = docOf(src);
+    doc.pages[0].staves.forEach((st, i) => { st.lines = S().even([100, 200 + 200 * i, 800, 48]); global.CGNeumes.place(st); });
     return doc;
   }
 
@@ -214,6 +220,42 @@
         const want = N.yOf(lines, v.x + 83 * sc, 5), got = v.y - N.MIDDLE * sc;
         return Math.abs(got - want) < 0.5 ? [] : [`a note at x ${v.x.toFixed(0)} is at ${got.toFixed(1)}, its line at ${want.toFixed(1)}`];
       });
+    } },
+
+    // ---- the checks that need no AI
+    { name: 'checks: custos, clef, leaps, accidentals, notes over no syllable', unit: () => {
+      const K = global.CGChecks, found = (src, mode) => K.check(docOf(src, mode)).map(a => [a.kind, a.level, a.s, a.i]);
+      return [].concat(
+        same('all well', found('(c4) Gló(f)ri(gh)a(h) Pa(h)tri.(h.) (::)'), []),
+        same('a custos that agrees, across a clef change', found('(c4) A(f)ve(g) (j+) (z) (c3) Ma(h)ri(h)a(h) (::)'), []),
+        same('a custos that doesn\'t', found('(c4) A(f)ve(g) (h+) (z) (c4) Ma(g)ri(h)a(h) (::)'), [['custos', 'warn', 3, 0]]),
+        same('a staff without its clef', found('(c4) A(f)ve(g) (z) Ma(g)ri(h)a(h) (::)'), [['clef', 'note', 0, 0]]),
+        same('no clef at all', found('A(f)ve(g)'), [['clef', 'warn', 0, 0]]),
+        same('a leap of an octave', found('(c4) A(d)ve(k) (::)'), [['leap', 'note', 2, 0]]),
+        same('no leap across a bar', found('(c4) A(d) (:) ve(k) (::)'), []),
+        same('a flat on F', found('(c4) A(fxf)ve(g) (::)'), [['accidental', 'warn', 1, 0]]),
+        same('a flat on B is fine', found('(c4) A(ixi)ve(h) (::)'), []),
+        same('notes over no syllable', found('(c4) A(f) (g) ve(h) (::)'), [['text', 'note', 2, 0]]));
+    } },
+    { name: 'checks: a mode\'s final and range', unit: () => {
+      const K = global.CGChecks, found = (src, mode) => K.check(docOf(src, mode)).map(a => [a.kind, a.s]);
+      return [].concat(
+        same('mode 1, all within', found('(c4) A(d)ve(c)Ma(f)ri(h)a(k)a(l)a(h)A(d) (::)', '1'), []),
+        same('mode 1 ending on E', found('(c4) A(d)ve(f)Ma(h)ri(e) (::)', '1'), [['final', 4]]),
+        same('mode 1 transposed to A', found('(c4) A(h)ve(i)a(h) (::)', '1'), []),
+        same('mode 2, too high', found('(c4) A(d)ve(f)Ma(h)ri(k)a(i)a(h)a(f)a(d) (::)', '2'), [['range', 4]]),
+        same('mode 2, a fourth below is fine', found('(c4) A(d)ve(a)Ma(d) (::)', '2'), []),
+        same('no mode: no final, no range', found('(c4) A(d)ve(f)Ma(h)ri(e) (::)'), []));
+    } },
+
+    // ---- writing it out: Volpiano, MEI
+    { name: 'export: Volpiano, in the octave CANTUS writes it', unit: () => {
+      const X = global.CGExport, v = src => { const d = docOf(src); return X.volpiano(d, d.chants[0]); };
+      return [].concat(
+        same('Gloria Patri over two lines', v('(c4) Gló(f)ri(gh)a(h) Pa(h)tri,(h.) (:) et(h) Fí(h)li(g)o,(f.) (z) (c4) et(f) San(g)cto.(f.) (::)').text, '1---f--gh--h---h--h---3---h---h--g--f7---f---g--f---4'),
+        same('neumes, a liquescent, a flat on B', v('(c4) Ky(hixi)ri(h/ih~)e(ivHG) (::)').text, '1---hij--h-jH--jhg---4'),
+        same('a flat it can\'t write', v('(c3) Ky(ixhi)e(f) (::)').problems, ["A flat Volpiano can't write was left out."]),
+        same('C1 clef (C on the bottom line): its final E put in octave 4', v('(c1) A(d)ve(e)Ma(f) (::)').text, '1---c--d--e---4'));
     } },
 
     // ---- the app, in the browser: each loads index.html with test scans in the frame (run.js gives app())
@@ -490,6 +532,42 @@
       bad.push(...same('how', st().syllables[0].items[0].checked, 'staff'));
       bad.push(...same('on to the next staff', w.CGEditor.selected, doc.pages[0].staves[1].id));
       bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
+    { name: 'app: MEI for a page, as Neon reads it: well-formed, every note and syllable tied to the page', browser: true, unit: async app => {
+      const { w } = await app();
+      const doc = placed('name: Gloria;\n%%\n(c4) Gló(f)ri(gh)a(h) Pa(h)tri,(h.) (:) et(ixhi) Fí(hvGF)li(g~)o.(f.) (::) (z) (f3) et(f) San(g)cto.(f.) (::)');
+      const xml = new w.DOMParser().parseFromString(w.CGExport.mei(doc, 0), 'application/xml'), bad = [];
+      if (xml.querySelector('parsererror')) return ['Not well-formed XML: ' + xml.querySelector('parsererror').textContent.slice(0, 200)];
+      const all = sel => [...xml.getElementsByTagName(sel)];
+      bad.push(...same('notes', all('nc').length, 16), ...same('syllables', all('syllable').length, 12), ...same('staves (system breaks)', all('sb').length, 2));
+      bad.push(...same('clefs', all('clef').map(c => c.getAttribute('shape') + c.getAttribute('line')), ['C4', 'F3']));
+      bad.push(...same('bars', all('divLine').map(d => d.getAttribute('form')), ['maior', 'finalis', 'finalis']));
+      bad.push(...same('Gló: F2, as Neon has it', [all('nc')[0].getAttribute('pname'), all('nc')[0].getAttribute('oct')], ['f', '2']));
+      bad.push(...same('a flat', all('accid').map(a => a.getAttribute('accid')), ['f']));
+      bad.push(...same('virga and inclinata', all('nc').filter(n => n.getAttribute('tilt')).map(n => n.getAttribute('tilt')), ['s', 'se', 'se']));
+      bad.push(...same('a liquescent', all('liquescent').length, 1));
+      bad.push(...same('words', all('syl').map(s => s.getAttribute('wordpos')).join(' '), 'i m t i t s i m t s i t'));
+      const ids = new Set(all('zone').map(z => z.getAttribute('xml:id')));
+      const facs = [...xml.querySelectorAll('[facs]')].map(e => e.getAttribute('facs').slice(1));
+      if (facs.some(f => !ids.has(f))) bad.push('An element points to a zone that isn\'t there.');
+      if (!all('nc').every(n => n.getAttribute('facs'))) bad.push('A note without its place on the page.');
+      return bad;
+    } },
+    { name: 'app: the checks listed and marked on the page; one clicked goes to it', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      await w.CGEditor.addStaff([70, 545, 1060, 95]);
+      w.CGEditor.selected = w.CGApp.state.doc.pages[0].staves[0].id;
+      w.CGEditor.placeChant('name: Test;\nmode: 1;\n%%\n(f3) Al(f)le(gh)lú(hj)ia.(f) (j+) (z) (c4) Gló(f)ri(gh)a(c) Pa(j)tri,(e.) (::)');
+      await new Promise(r => setTimeout(r, 30));
+      const items = [...w.document.querySelectorAll('#checkList li button')].map(b => b.textContent), bad = [];
+      bad.push(...same('found', items.length, 3));
+      if (!/custos points to A3, but the next note is F3/.test(items[0] || '')) bad.push('No custos finding: ' + items[0]);
+      bad.push(...same('marked on the page', w.document.querySelectorAll('#overlay .mark').length, 3));
+      w.document.querySelectorAll('#overlay .mark')[0].dispatchEvent(new w.PointerEvent('pointerdown', { button: 0, bubbles: true, cancelable: true }));
+      bad.push(...same('clicked: the custos selected', w.CGEditor.neume, { s: 5, i: 0 }));
+      bad.push(...same('the count', w.document.getElementById('checkCount').textContent, '(3)'));
       return bad;
     } },
     { name: 'app: GABC with more lines than staves says so', browser: true, unit: async app => {
