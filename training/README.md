@@ -22,6 +22,17 @@ more, fetched one by one by `update`.
 
 `gregobase-sources.json` lists the books by GregoBase's source numbers.
 
+```
+python -I training/gregobase.py book --source 1      # the Graduale Romanum of 1908
+```
+
+This writes `training/data/gregobase-1.book.json`, a book's index for the app:
+- its pages as the book numbers them, in order (the 1908 Graduale has 940, from I to 156*);
+- the chants on each page, in order, with how many pages each runs over and its GABC.
+
+GregoBase sends no CORS headers, so the app can't fetch from it directly; the index is made here and opened in the app
+with the scan.
+
 Test: `python -I training/test_gregobase.py`.
 
 ## 2. Synthetic pages

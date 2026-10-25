@@ -5,6 +5,7 @@ GregoBase (https://gregobase.selapa.net) keeps a dump of its database in its Git
 
     python training/gregobase.py build [--dump gregobase_online.sql] [--out training/data/gregobase.jsonl]
     python training/gregobase.py update [--out ...] [--wait 1.0]   # the chants added on the site since the dump
+    python training/gregobase.py book --source 1 [--book gr1908.book.json]   # one book's index, for the app
 
 Each line: {id, incipit, office_part, mode, version, cantusid, transcriber, gabc: [the GABC bodies],
 gabc_verses, headers, sources: [{source, book, year, editor, page, sequence, extent}], tags, copyrighted,
@@ -83,7 +84,29 @@ def tables(sql):
 
 
 def sources(t):
-    return {s['id']: {'title': s['title'], 'year': s['year'], 'editor': s['editor']} for s in t.get('sources', [])}
+    def pages(v):
+        try: return json.loads(v) if v else None
+        except ValueError: return None
+    return {s['id']: {'title': s['title'], 'year': s['year'], 'editor': s['editor'], 'pages': pages(s.get('pages'))}
+            for s in t.get('sources', [])}
+
+
+def book(rows, src, sid):
+    """A book's index, for the app: its pages (as numbered in the book, in order) and the chants on each, in order,
+    with their GABC: what to place on a scan of it, page by page."""
+    pages = src.get('pages') or []
+    at = {p: i for i, p in enumerate(pages)}
+    out = []
+    for r in rows:
+        if r.get('duplicateof') or not r['gabc']: continue
+        for w in r['sources']:
+            if w.get('source') != sid: continue
+            out.append({'id': r['id'], 'page': w['page'], 'sequence': w.get('sequence') or 1, 'extent': w.get('extent') or 1,
+                        'incipit': r['incipit'], 'office_part': r['office_part'], 'mode': r['mode'], 'gabc': r['gabc'][0]})
+    out.sort(key=lambda c: (at.get(c['page'], 1e9), c['sequence']))
+    return {'format': 'chantgpt-book', 'version': 1, 'from': 'GregoBase (gregobase.selapa.net)',
+            'source': {'gregobase': sid, 'title': src['title'], 'year': src['year'], 'editor': src['editor']},
+            'pages': pages, 'chants': out}
 
 
 def chants(t):
@@ -157,12 +180,20 @@ def newest(wait):
 
 def main():
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['build', 'update'])
+    a.add_argument('what', choices=['build', 'update', 'book'])
+    a.add_argument('--source', type=int, help='for book: its GregoBase source number (1: the Graduale Romanum of 1908)')
+    a.add_argument('--book', help='for book: where to write its index')
     a.add_argument('--dump')
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'gregobase.jsonl'))
     a.add_argument('--wait', type=float, default=1.0, help='seconds between requests to the site')
     o = a.parse_args()
-    if o.what == 'build':
+    if o.what == 'book':
+        with open(dump_path(o.dump), encoding='utf-8') as f: src = sources(tables(f.read()))[o.source]
+        b = book(read(o.out), src, o.source)
+        dest = o.book or os.path.join(os.path.dirname(o.out), f'gregobase-{o.source}.book.json')
+        with open(dest, 'w', encoding='utf-8') as f: json.dump(b, f, ensure_ascii=False)
+        print(f"{src['title']} ({src['year']}): {len(b['pages'])} pages, {len(b['chants'])} chants -> {dest}")
+    elif o.what == 'build':
         with open(dump_path(o.dump), encoding='utf-8') as f: t = tables(f.read())
         rows = list(chants(t))
         write(o.out, rows)
