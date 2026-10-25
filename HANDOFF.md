@@ -210,8 +210,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   - The scan: archive.org `graduale-romanum-1908` (the CMAA's PDF, the scan GregoBase's index was made from): 948
     pages, 1-bit CCITT at 300 dpi. Scan page 25 is printed page 1; the offset holds to the end (100, 500 and 100*
     checked). Its first 24 pages are an article from *Sacred Music* and the preface. Downloads come from
-    `*.archive.org` (now allowed; `archive.org` itself was refused after that change, so fetch from the file server's
-    host, e.g. `dn720004.ca.archive.org/0/items/...`).
+    `*.archive.org`; both it and `archive.org` are allowed.
   - `training/gregobase.py book --source N`: a book's index (`format: chantgpt-book`): its pages as numbered, the
     chants on each in order with `sequence`, `extent` (pages it runs over) and GABC. GregoBase sends no CORS headers,
     so the app takes the index as a file.
