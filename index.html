@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.11.0">
+<link rel="stylesheet" href="css/site.css?v=0.12.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.11.0">version 0.11.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.12.0">version 0.12.0</span>
   <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
   <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
 </header>
@@ -93,13 +93,14 @@
       <div class="cg-row">
         <button type="button" id="placeChant" title="Place the GABC on the selected staff and the ones below it">Place on this staff</button>
         <button type="button" id="clearChant" title="Take the chant off the selected staff">Take it off</button>
+        <button type="button" id="readBreaks" title="Break the selected staff's chant into lines where the page breaks them, read from the ink along its staves and the custos at their ends">Read the line breaks from the page</button>
       </div>
       <ul class="cg-keys">
         <li>Drag a neume up or down to move it by steps (its GABC changes with it), or along the staff to line it up with the page.</li>
         <li>Shift-drag to move just the note under the pointer.</li>
         <li>With a neume selected: arrow keys move it, Enter accepts it and goes on to the next, Tab skips to the next, Delete takes it out, Esc lets go of it.</li>
         <li>Click the words under a neume to correct them, or drag them into place.</li>
-        <li>If a line breaks in a different place from the page, select the syllable it should break at and move it to the next line (]) or the line before ([).</li>
+        <li>A chant without line breaks is broken where the page seems to break it: from how much ink each staff carries (notes and words) and the custos at its end. If a line still breaks in a different place from the page, select the syllable it should break at and move it to the next line (]) or the line before ([).</li>
         <li>When a staff looks right, accept it (Shift+Enter): its unchecked neumes and words are checked with it. Doubtful ones, in orange, must be accepted one by one first.</li>
       </ul>
       <p class="cg-hint" id="chantInfo"></p>
@@ -164,14 +165,14 @@
   </section>
 </main>
 
-<script src="js/chant.js?v=0.11.0"></script>
-<script src="js/staves.js?v=0.11.0"></script>
-<script src="js/greciliae.js?v=0.11.0"></script>
-<script src="js/neumes.js?v=0.11.0"></script>
-<script src="js/checks.js?v=0.11.0"></script>
-<script src="js/export.js?v=0.11.0"></script>
-<script src="js/viewer.js?v=0.11.0"></script>
-<script src="js/editor.js?v=0.11.0"></script>
-<script src="js/app.js?v=0.11.0"></script>
+<script src="js/chant.js?v=0.12.0"></script>
+<script src="js/staves.js?v=0.12.0"></script>
+<script src="js/greciliae.js?v=0.12.0"></script>
+<script src="js/neumes.js?v=0.12.0"></script>
+<script src="js/checks.js?v=0.12.0"></script>
+<script src="js/export.js?v=0.12.0"></script>
+<script src="js/viewer.js?v=0.12.0"></script>
+<script src="js/editor.js?v=0.12.0"></script>
+<script src="js/app.js?v=0.12.0"></script>
 </body>
 </html>

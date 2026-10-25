@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.11.0** · a working title
+**Version 0.12.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -22,7 +22,9 @@ These are the first steps. You can:
   confirm or correct each (B);
 - place a chant's GABC (from GregoBase, say) on its staves: GABC without line breaks is spread over all the chant's
   staves, down to where the next chant begins, even over a page turn, with a clef at each line's start and a custos
-  at its end, as printed; if a line breaks elsewhere on the page, move a syllable to the next line or the one before.
+  at its end, as printed. Its lines are broken where the page seems to break them, read from how much ink each staff
+  carries (its notes, and its words underneath) and from the custos at its end; if a line still breaks elsewhere on
+  the page, move a syllable to the next line or the one before.
   It is drawn in square notation over the page, in
   Gregorio's own font, each note at its pitch on the staff, bent with the staff if it bends, so you can see where the
   page and the GABC differ. Hold H to see the page alone; make the notation more or less see-through;

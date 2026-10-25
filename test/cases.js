@@ -253,6 +253,23 @@
       });
     } },
 
+    { name: 'neumes: line breaks chosen by what each staff carries; a custos settles a tie; gathered back from the staves', unit: () => {
+      const N = CGNeumes, C = CGChant, bad = [];
+      const syls = C.fromGabc('(c4) a(f) b(gh) c(h) d(g) (;) e(f) f(gfg) g(h) h(j) (::)').staves[0].syllables;
+      // notes: clef 0 | a 1, b 2, c 1, d 1, bar, e 1, f 3, g 1, h 1, bar
+      const at = (seen, want, what) => bad.push(...same(what, N.breaks(syls, seen), want));
+      at([{ mass: 5.6, words: 0 }, { mass: 6.2, words: 0 }], [0, 6], 'by the notes alone: the bar ends the first line');
+      at([{ mass: 4, words: 4 }, { mass: 4, words: 4 }, { mass: 3, words: 2 }], [0, 4, 8], 'three lines');
+      at([{ mass: 6, custos: 5 }, { mass: 6 }], [0, 6], 'a custos on f (5): the next line begins with e(f)');
+      at([{ mass: 6, custos: 7 }, { mass: 6 }], [0, 8], 'a custos on h (7): the next line begins with g(h)');
+      bad.push(...same('one staff', N.breaks(syls, [{ mass: 3 }]), [0]));
+      bad.push(...same('nothing read', N.breaks(syls, [null, { mass: 2 }]), null));
+      const lines = [[0, 100, 500, 100], [0, 110, 500, 110], [0, 120, 500, 120], [0, 130, 500, 130]];
+      const parts = N.spread(syls, [lines, lines], [0, 6]);
+      bad.push(...same('spread at the breaks given: the custos, then the clef', [parts[0][parts[0].length - 1].items[0].g, parts[1][0].items[0].g], ['f+', 'c4']));
+      bad.push(...same('gathered back', N.gather(parts).map(y => y.items.map(it => it.g).join(' ')), syls.map(y => y.items.map(it => it.g).join(' '))));
+      return bad;
+    } },
     { name: 'neumes: a chant spread over its staves: breaks between syllables, a clef to begin each, a custos to end it', unit: () => {
       const N = global.CGNeumes, syl = C().fromGabc(GLORIA + ' Sic(f)ut(g) e(h)rat(h) in(g) prin(f)ci(gh)pi(h)o,(h.) (:) et(h) nunc(h) et(g) sem(f)per,(f.) (;) et(f) in(g) sǽ(h)cu(h)la(g) (::)').staves[0].syllables;
       const lines = [S().even([300, 100, 700, 48]), S().even([100, 300, 900, 48]), S().even([100, 500, 500, 48])];
@@ -485,7 +502,7 @@
       const staves = w.CGApp.state.doc.pages[0].staves;
       w.CGEditor.selected = staves[0].id;
       const src = 'name: Two lines;\n%%\n(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (z) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)';
-      if (!w.CGEditor.placeChant(src)) return ['Not placed: ' + w.document.getElementById('status').textContent];
+      if (!(await w.CGEditor.placeChant(src))) return ['Not placed: ' + w.document.getElementById('status').textContent];
       bad.push(...same('on both staves', staves.map(s => s.syllables.length > 0), [true, true]));
       bad.push(...same('one chant, over both', w.CGApp.state.doc.chants.map(c => [c.headers.name, c.staves.length]), [['Two lines', 2]]));
       await new Promise(r => setTimeout(r, 50));
@@ -515,7 +532,7 @@
       await new Promise(res => setTimeout(res, 50));
       const st = () => w.CGApp.state.doc.pages[0].staves[0], bad = [];
       w.CGEditor.selected = st().id;
-      w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::)');
+      await w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::)');
       const it = () => st().syllables[2].items[0], box = it().box.slice(), step = (st().lines[3][1] - st().lines[0][1]) / 6;
       // dragged down two steps and along
       await drag(w, [box[0] + box[2] / 2, box[1] + box[3] / 2], [box[0] + box[2] / 2 + 20, box[1] + box[3] / 2 + 2 * step]);
@@ -553,7 +570,7 @@
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
       const [a] = w.CGApp.state.doc.pages[0].staves, bad = [], doc = w.CGApp.state.doc;
       w.CGEditor.selected = a.id;
-      w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::) (z) (c4) Gló(f)ri(gh)a(h) (:)');
+      await w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::) (z) (c4) Gló(f)ri(gh)a(h) (:)');
       const st = () => doc.pages[0].staves[0];
       st().syllables[2].items[0].conf = 0.5; st().syllables[3].conf = 0.4;   // as if the recognizer doubted them
       w.CGEditor.selected = st().id;
@@ -615,7 +632,7 @@
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
       await w.CGEditor.addStaff([70, 545, 1060, 95]);
       w.CGEditor.selected = w.CGApp.state.doc.pages[0].staves[0].id;
-      w.CGEditor.placeChant('name: Test;\nmode: 1;\n%%\n(f3) Al(f)le(gh)lú(hj)ia.(f) (j+) (z) (c4) Gló(f)ri(gh)a(c) Pa(j)tri,(e.) (::)');
+      await w.CGEditor.placeChant('name: Test;\nmode: 1;\n%%\n(f3) Al(f)le(gh)lú(hj)ia.(f) (j+) (z) (c4) Gló(f)ri(gh)a(c) Pa(j)tri,(e.) (::)');
       await new Promise(r => setTimeout(r, 30));
       const items = [...w.document.querySelectorAll('#checkList li button')].map(b => b.textContent), bad = [];
       bad.push(...same('found', items.length, 3));
@@ -630,7 +647,7 @@
       const { w } = await app('test/pages/page2.png');
       await drag(w, [20, 265], [400, 330]);
       await until(() => w.CGApp.state.doc.pages[0].staves.length === 1);
-      w.CGEditor.placeChant('(c4) a(f) (z) b(g) (z) c(h)');
+      await w.CGEditor.placeChant('(c4) a(f) (z) b(g) (z) c(h)');
       return /2 had no staff below/.test(w.document.getElementById('status').textContent) ? [] : ['No word of the lines left over: ' + w.document.getElementById('status').textContent];
     } },
     { name: 'app: every staff found on a page, on the engraved and the warped page alike', browser: true, unit: async app => {
@@ -674,7 +691,7 @@
       bad.push(...same('where chants begin', doc.pages.map(p => p.staves.map(s => s.begins === true)), book.pages.map(p => p.staves.map(s => s.begins))));
       await w.CGApp.show(0);
       E.selected = doc.pages[0].staves[3].id;
-      E.placeChant(book.chants[1]);
+      await E.placeChant(book.chants[1]);
       const kyrie = doc.chants[doc.chants.length - 1];
       bad.push(...same('the Kyrie on its three staves, over both pages', kyrie.staves, [doc.pages[0].staves[3].id, doc.pages[0].staves[4].id, doc.pages[1].staves[0].id]));
       const texts = () => kyrie.staves.map(id => doc.pages.flatMap(p => p.staves).find(s => s.id === id).syllables.filter(y => y.text).map(y => y.text));
@@ -716,6 +733,37 @@
       bad.push(...same('marked placed', [...d.querySelectorAll('#bookChants .placed')].length, 1));
       E.undo();
       bad.push(...same('one undo takes the page\'s chants off', [!!where(9003), doc.pages[1].staves[1].syllables.length, !!where(9002)], [false, 0, true]));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
+    { name: 'app: line breaks read from the page: a synthetic page\'s chants placed on its staves, broken where it breaks them', browser: true, unit: async app => {
+      const { w } = await app('test/pages/synth.jpg');
+      const truth = await (await w.fetch('test/pages/synth.json')).json(), doc = w.CGApp.state.doc, E = w.CGEditor, N = w.CGNeumes, bad = [];
+      // the page's staves as they are, without their chants
+      doc.pages[0].staves = truth.doc.pages[0].staves.map(s => ({ id: s.id, lines: s.lines, box: s.box, begins: s.begins, syllables: [] }));
+      const byId = new Map(truth.doc.pages[0].staves.map(s => [s.id, s]));
+      const gabc = syls => syls.map((y, i) => (i && !y.join ? ' ' : '') + y.text + '(' + y.items.map(it => it.g).join(' ') + ')').join('');
+      let exact = 0, err = 0, n = 0, chants = 0;
+      for (const ch of truth.doc.chants.filter(c => c.staves.length > 1 && !c.runsOn)) {
+        const want = ch.staves.map((id, k) => N.gather([byId.get(id).syllables]).length - (k && w.CGChant.kind(byId.get(id).syllables[0].items[0].g) === 'clef' ? 1 : 0));
+        E.selected = ch.staves[0];
+        await E.placeChant('%%\n' + gabc(N.gather(ch.staves.map(id => byId.get(id).syllables))));
+        const got = ch.staves.map((id, k) => { const st = doc.pages[0].staves.find(s => s.id === id); return N.gather([st.syllables]).length - (k && st.syllables[0] && w.CGChant.kind(st.syllables[0].items[0].g) === 'clef' ? 1 : 0); });
+        let a = 0, b = 0;
+        for (let k = 0; k < want.length - 1; k++) { a += want[k]; b += got[k]; n++; if (a === b) exact++; err += Math.abs(a - b); }
+        chants++;
+      }
+      bad.push(...same('chants placed', chants, 4));
+      if (exact < 0.7 * n || err > 0.6 * n) bad.push(`breaks: ${exact} of ${n} exact, ${err} syllables off in all`);
+      // a chant's breaks spoilt by hand, then read again from the page: back where they were
+      const ch = truth.doc.chants.find(c => c.staves.length > 2), list = () => ch.staves.map(id => doc.pages[0].staves.find(s => s.id === id).syllables.length);
+      E.selected = ch.staves[0];
+      const read = list();
+      E.selectWord(ch.staves[1], 2); E.moveLine(-1);
+      bad.push(...same('spoilt', JSON.stringify(list()) !== JSON.stringify(read), true));
+      E.selected = ch.staves[0];
+      await E.readBreaks();
+      bad.push(...same('read again', list(), read));
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },

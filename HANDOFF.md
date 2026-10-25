@@ -205,6 +205,24 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **Step 3, line breaks read from the page** (version 0.12.0, branch `step-3-breaks`):
+  - `carries()` in `js/staves.js`: what a staff carries, from the ink along it: `mass` (its notes' ink beyond the
+    lines', each column less a bare column's, the clef left out, in squared spaces), `words` (the ink in the band of
+    its words, 1 to 2.9 spaces below the bottom line) and `custos` (a narrow last run of ink, set apart from the rest
+    by a tenth of a space or more, with most of its ink in a head half a space high, so not a bar: its staff
+    position). On 30 synthetic pages: 167 of 201 custos read right, 6 found where there were none (last staves).
+  - `breaks()` in `js/neumes.js`: the chant's syllables weighed (notes; a bar 0.6, a double bar 1.2, an accidental
+    0.5, a clef change 1.5) and their letters counted; each staff's mass and words scaled to the chant's totals; the
+    breaks (dynamic programming over syllables) that make each line's weight and letters nearest what its staff
+    carries (errors weighted as 20% and 8% of the expected), a custos disagreeing with the next line's first note
+    costing 8, no line begun by a bar. `spread()` takes the breaks it is given; `gather()` takes a chant back off its
+    staves (custos off, repeated clefs at line starts off).
+  - Measured against the true breaks of synthetic pages: 69–78% of breaks exact (mean error 0.4–0.5 syllables),
+    where the proportional spread had 6–8% (2.8–3.1 syllables). On the 1908 Graduale, pages 2 and 3: every break as
+    printed but one at the page turn (Gloria Patri began two syllables early).
+  - The app: placing a chant without line breaks reads them from the page (placing is now async); "Read the line
+    breaks from the page" does it again for the selected staff's chant. Tests: the search itself (Node), and a
+    synthetic page (`test/pages/synth.jpg`, its answers `synth.json`) placed and its breaks checked.
 - **Step 3, aligning a book with GregoBase** (version 0.11.0, branch `step-3-align`). The user chose the 1908
   *Graduale Romanum* to start.
   - The scan: archive.org `graduale-romanum-1908` (the CMAA's PDF, the scan GregoBase's index was made from): 948
