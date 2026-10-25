@@ -83,6 +83,18 @@
       return same('body', body(C().toGabc(doc)), '(c4) Glo(f)ri(g)a(h) Pa(h)tri(h) (::)');
     } },
 
+    // ---- moving GABC up and down, as a drag does
+    { name: 'gabc: moved up and down by steps, all of it or one note', unit: () => [].concat(
+      same('a torculus up a step', C().transpose('fgf', 1), 'ghg'),
+      same('a climacus down, inclinata kept', C().transpose('ivHG', -1), 'hvGF'),
+      same('its flat goes with it', C().transpose('ixhi', 1), 'jxij'),
+      same('one note only (the second)', C().transpose('ixhi', 2, 1), 'ixhk'),
+      same('attributes untouched', C().transpose('f[ob:1;6mm]g', 1), 'g[ob:1;6mm]h'),
+      same('a custos', C().transpose('g+', 2), 'i+'),
+      same('a clef by whole lines', [C().transpose('c4', -2), C().transpose('c4', -1), C().transpose('c3', 3)], ['c3', 'c4', 'c4']),
+      same('off the staff', [C().transpose('m', 1), C().transpose('a', -1), C().transpose('c4', 2), C().transpose('c1', -2)], [null, null, null, null]),
+      same('a bar stays', C().transpose(';', 3), ';')) },
+
     // ---- documents
     { name: 'document: a new one is empty and passes its checks', unit: () => {
       const doc = C().newDocument({ name: 'Graduale.pdf', type: 'pdf', sizes: [[612, 792], [612, 792]] });
@@ -98,9 +110,10 @@
       st.lines = [[0, 0, 1, 1]];
       st.syllables[1].items[0].conf = 1.5;
       st.syllables[2].items.push({ g: '(f)' });
+      st.syllables[3].items[0].checked = 'maybe';
       doc.pages[0].staves.push({ id: 'p1s1', syllables: [] });
       doc.chants.push({ headers: { name: 'Lost' }, staves: ['p9s1'] });
-      const bad = C().check(doc), want = [/box is not on the page/, /four lines/, /confidence/, /parentheses/, /used twice/, /isn't there: p9s1/];
+      const bad = C().check(doc), want = [/box is not on the page/, /four lines/, /confidence/, /parentheses/, /checked as "maybe"/, /used twice/, /isn't there: p9s1/];
       return want.filter(re => !bad.some(b => re.test(b))).map(re => `No complaint matching ${re}; got: ${bad.join(' | ')}`)
         .concat(bad.length === want.length ? [] : [`${bad.length} complaints, expected ${want.length}: ${bad.join(' | ')}`]);
     } },
@@ -393,6 +406,48 @@
       bad.push(...same('undone', w.CGApp.state.doc.pages[0].staves.map(s => s.syllables.length), [0, 0]));
       return bad;
     } },
+    { name: 'app: a neume dragged up and along, a note of it alone, by keys; accepted, deleted, undone', browser: true, unit: async app => {
+      const { w, shown } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      // zoomed in, as for fine work: a step is then more than the few pixels a press may wander before it's a drag
+      for (let i = 0; i < 3; i++) { w.document.getElementById('zoomIn').click(); await shown(0); }
+      const stage = w.document.getElementById('stage'), m = w.document.getElementById('overlay').getScreenCTM(), r = stage.getBoundingClientRect();
+      stage.scrollTop += m.d * 400 + m.f - r.top; stage.scrollLeft += m.a * 120 + m.e - r.left;
+      await new Promise(res => setTimeout(res, 50));
+      const st = () => w.CGApp.state.doc.pages[0].staves[0], bad = [];
+      w.CGEditor.selected = st().id;
+      w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::)');
+      const it = () => st().syllables[2].items[0], box = it().box.slice(), step = (st().lines[3][1] - st().lines[0][1]) / 6;
+      // dragged down two steps and along
+      await drag(w, [box[0] + box[2] / 2, box[1] + box[3] / 2], [box[0] + box[2] / 2 + 20, box[1] + box[3] / 2 + 2 * step]);
+      bad.push(...same('down two steps', it().g, 'ef'), ...same('marked', it().checked, 'edited'));
+      if (Math.abs(it().box[0] - box[0] - 20) > 1) bad.push(`moved along by ${(it().box[0] - box[0]).toFixed(1)}, not 20`);
+      bad.push(...same('selected', w.CGEditor.neume, { s: 2, i: 0 }));
+      if (!/C3 D3/.test(w.document.getElementById('chantInfo').textContent)) bad.push('No note names: ' + w.document.getElementById('chantInfo').textContent);
+      const key = (k, o = {}) => w.document.dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, o)));
+      key('ArrowUp');
+      bad.push(...same('up a step by key', it().g, 'fg'));
+      key('Enter');
+      bad.push(...same('Enter goes on to the next', w.CGEditor.neume, { s: 3, i: 0 }));
+      key('Enter');
+      bad.push(...same('accepted alone', st().syllables[3].items[0].checked, 'item'));
+      // Shift-drag on the top note of hj: that note alone
+      const b3 = st().syllables[3].items[0].box, x3 = b3[0] + b3[2] / 2, yTop = w.CGNeumes.yOf(st().lines, x3, 9);
+      await drag(w, [x3, yTop], [x3, yTop + step], { shiftKey: true });
+      bad.push(...same('one note moved', st().syllables[3].items[0].g, 'hi'));
+      // a drag that comes back where it began changes nothing
+      const b1 = st().syllables[1].items[0].box.slice();
+      await drag(w, [b1[0] + b1[2] / 2, b1[1] + b1[3] / 2], [b1[0] + b1[2] / 2 + 15, b1[1] + b1[3] / 2], { back: true });
+      bad.push(...same('put back: not marked', st().syllables[1].items[0].checked, undefined));
+      w.CGEditor.selectNeume(st().id, 4, 0);
+      key('Delete');
+      bad.push(...same('deleted', st().syllables[4].items.map(i => i.g), []));
+      // five changes: the drag, the key, the acceptance, the note, the deletion (the first Enter changed nothing)
+      for (let i = 0; i < 5; i++) w.CGEditor.undo();
+      bad.push(...same('all undone', [st().syllables[2].items[0].g, st().syllables[3].items[0].g, st().syllables[4].items[0].g], ['gh', 'hj', 'h.']));
+      bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
+      return bad;
+    } },
     { name: 'app: GABC with more lines than staves says so', browser: true, unit: async app => {
       const { w } = await app('test/pages/page2.png');
       await drag(w, [20, 265], [400, 330]);
@@ -470,15 +525,17 @@
   }
 
   // a drag with the mouse in the app's overlay, between two points in page units
-  async function drag(w, from, to) {
+  // (shiftKey: with Shift held; back: there and back again, ending where it began)
+  async function drag(w, from, to, { shiftKey = false, back = false } = {}) {
     const svg = w.document.getElementById('overlay'), m = svg.getScreenCTM();
     const client = p => [m.a * p[0] + m.e, m.d * p[1] + m.f];
     const fire = (type, p) => {
       const [x, y] = client(p), t = type === 'pointerdown' ? w.document.elementFromPoint(x, y) : svg;
-      t.dispatchEvent(new w.PointerEvent(type, { clientX: x, clientY: y, button: 0, buttons: type === 'pointerup' ? 0 : 1, pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }));
+      t.dispatchEvent(new w.PointerEvent(type, { clientX: x, clientY: y, button: 0, buttons: type === 'pointerup' ? 0 : 1, pointerId: 1, isPrimary: true, shiftKey, bubbles: true, cancelable: true }));
     };
     fire('pointerdown', from);
     for (let i = 1; i <= 5; i++) fire('pointermove', [from[0] + (to[0] - from[0]) * i / 5, from[1] + (to[1] - from[1]) * i / 5]);
+    if (back) { for (let i = 4; i >= 0; i--) fire('pointermove', [from[0] + (to[0] - from[0]) * i / 5, from[1] + (to[1] - from[1]) * i / 5]); to = from; }
     fire('pointerup', to);
     await new Promise(r => setTimeout(r, 30));
   }

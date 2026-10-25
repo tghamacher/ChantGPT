@@ -93,7 +93,10 @@ is how training data and tests will be made.
   follow the item's notes, and the app sets them. An item without a box isn't drawn: placing GABC on a staff gives
   every item a box, spaced along the staff.
 - `conf`: the recognizer's confidence, from 0 to 1 (optional; absent for what a person entered). The app marks items
-  under 0.8.
+  under 0.8 that haven't been checked.
+- `checked`: how a person confirmed the item (optional; absent: not yet). `"item"`: looked at alone and accepted;
+  `"edited"`: changed by hand (moved, or its notes changed), which counts as looked at; `"staff"`: accepted with its
+  whole staff. For training, the first two can be trusted fully, the third a little less.
 
 A neume item may hold several neumes over one syllable (`fg gf`): a box goes around them all. Splitting them so each
 has its own box may come with the editor.

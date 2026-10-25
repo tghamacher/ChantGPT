@@ -171,10 +171,9 @@ and dragging, and as the record of where the model looked), but what the user se
 - A record of corrections: each one is a labelled training example (this region shows this neume, or these letters,
   not those). The editing layer is also how training data is gathered for step 4.
 
-**Decisions still open (the user's)** (the font is settled: greciliae, see Done)
-
-- What a drag moves by default: a whole neume (suggested) or single notes.
-- What "accept" means: every item checked one by one, or accepting a staff confirms all on it.
+**Decisions** (all settled now): the font is greciliae; a drag moves a whole neume, Shift-drag one note; accepting
+is the middle way: per staff for speed, but doubtful neumes must be checked one by one first, editing a neume counts
+as checking it, and the app records how each was confirmed (alone, edited, or with its staff).
 
 ## Plan
 
@@ -221,7 +220,20 @@ and dragging, and as the record of where the model looked), but what the user se
   - `tools/make-test-scan.js`: makes the engraved test scan with exsurge; the truth is in `engraved-lines.json`.
   - Not yet: finding all the staves on a page at once (step 2 will start from `fitStaff()`), and the touch screen
     (dragging on the page doesn't scroll it).
-- **Step 1, the notation drawn** (version 0.4.0, branch `step-1-notation`):
+- **Step 1, dragging neumes** (version 0.5.0, branch `step-1-dragging`). Decided with the user: a drag moves a
+  whole neume; accepting is the "middle way" (below).
+  - A neume here is an item: one GABC group, all that stands over a syllable in it (a climacus `hvGF` moves as one).
+    Click to select (its staff is selected too; the staff's handles hide). Drag up or down: snaps by steps and
+    rewrites its letters (`CGChant.transpose`: notes, inclinata, accidentals, custos; a clef by whole lines; bars
+    don't move; refused off the staff). Drag along: moves its box. Shift-drag: only the note nearest the pointer.
+    Keys: arrows (up and down by a step, along by a pixel, Shift ten), Enter accepts and goes on, Tab skips, Delete
+    takes it out (its syllable too if left empty), Esc lets go. The side panel gives its GABC, syllable, note names.
+  - `checked` on items: `"item"` (accepted alone), `"edited"` (changed: counts as looked at), `"staff"` (to come).
+    A drag that ends where it began changes nothing, not even `checked`.
+  - Not yet: accepting a staff (the middle way: Accept staff refuses while doubtful neumes, conf < 0.8, are
+    unchecked, and takes you to the first; the rest become `"staff"`); a neume dragged past its neighbour doesn't
+    change their order yet (GABC order stands); syllables (dragging, typing, splitting).
+- **Step 1, the notation drawn** (version 0.4.0, merged):
   - The font is **greciliae** (the user's choice): built unchanged from Gregorio 6.2.0's sources by
     `tools/build-greciliae.sh` (FontForge), in `fonts/` with its licence (OFL 1.1, Reserved Font Names "Caeciliae"
     and "Greciliae": not to be subset or converted without renaming). `js/greciliae.js`: its glyph table (name ->

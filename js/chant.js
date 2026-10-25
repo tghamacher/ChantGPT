@@ -20,6 +20,8 @@
     ['accidental', /^[a-m][xy#]$/]
   ];
   const kind = g => (KINDS.find(([, re]) => re.test(g)) || ['neume'])[0];
+  // how a person confirmed an item: looked at it alone, changed it, or accepted its staff with it
+  const CHECKED = ['item', 'edited', 'staff'];
   const TRAILING_BAR = /^(.*[^:;,`])(::|:|;[1-8]?|,[0-7]?|`)$/;
 
   // ---------------------------------------------------------------- pitch
@@ -63,6 +65,37 @@
       if (/[~<>]/.test(n.signs)) n.liquescent = true;
     }
     return out;
+  }
+
+  // A GABC group moved up or down by k steps, as a drag on the page moves it: every note (and accidental) in it, or
+  // only its note number `only` (counting notes, not accidentals, from 0). A clef moves by lines: k is cut to
+  // whole lines (two steps). A bar doesn't move. Null if a note would go off the staff (above m or below a), or a clef
+  // off its four lines.
+  function transpose(g, k, only = null) {
+    const kd = kind(g);
+    if (kd === 'bar' || kd === 'break' || !k) return g;
+    if (kd === 'clef') {
+      const m = /^([cf])(b?)([1-5])$/.exec(g), line = +m[3] + Math.trunc(k / 2);
+      return line >= 1 && line <= 4 ? m[1] + m[2] + line : null;
+    }
+    let out = '', note = -1, ok = true;
+    for (let i = 0; i < g.length; i++) {
+      const ch = g[i];
+      if (ch === '[') { const j = g.indexOf(']', i); out += g.slice(i, j < 0 ? g.length : j + 1); i = j < 0 ? g.length : j; continue; }
+      if (/[a-m]/i.test(ch)) {
+        const isAcc = /[xy#]/.test(g[i + 1] || '');
+        if (!isAcc) note++;
+        if (only === null || (!isAcc && note === only)) {
+          const p = posOf(ch) + k;
+          if (p < 0 || p > 12) ok = false;
+          const moved = String.fromCharCode(97 + Math.max(0, Math.min(12, p)));
+          out += ch === ch.toUpperCase() ? moved.toUpperCase() : moved;
+          continue;
+        }
+      }
+      out += ch;
+    }
+    return ok ? out : null;
   }
 
   // ---------------------------------------------------------------- GABC in
@@ -196,6 +229,7 @@
             else if (/[()]/.test(it.g)) bad.push(`${name}, syllable ${yi + 1}: "${it.g}" has parentheses; give the GABC inside them.`);
             if (it.box !== undefined && !(box4(it.box) && inside(it.box))) bad.push(`${name}, syllable ${yi + 1}: the box of "${it.g}" is not on the page.`);
             if (it.conf !== undefined && !(it.conf >= 0 && it.conf <= 1)) bad.push(`${name}, syllable ${yi + 1}: the confidence of "${it.g}" is not between 0 and 1.`);
+            if (it.checked !== undefined && !CHECKED.includes(it.checked)) bad.push(`${name}, syllable ${yi + 1}: "${it.g}" is checked as "${it.checked}"; it can be ${CHECKED.join(', ')}.`);
           });
         });
       });
@@ -206,7 +240,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, kind, pitch, notes, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

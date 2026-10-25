@@ -298,7 +298,7 @@
           const x = it.box[0] + v.dx * sc, ym = yOf(staff.lines, x + v.w * sc / 2, v.p);
           const slope = (yOf(staff.lines, x + v.w * sc, v.p) - yOf(staff.lines, x, v.p)) / Math.max(1e-6, v.w * sc);
           const g = F().glyphs[v.name];
-          out.glyphs.push({ name: v.name, ch: g ? String.fromCodePoint(g[0]) : '', x, y: ym + MIDDLE * sc, angle: Math.atan(slope) * 180 / Math.PI, syllable: si, item: ii, bar: !!v.bar, conf: it.conf });
+          out.glyphs.push({ name: v.name, ch: g ? String.fromCodePoint(g[0]) : '', x, y: ym + MIDDLE * sc, angle: Math.atan(slope) * 180 / Math.PI, syllable: si, item: ii, bar: !!v.bar, conf: it.conf, checked: it.checked });
           if (textAt === null && v.notes.length) textAt = x + Math.min(v.w, 166) * sc / 2;
         }
       });

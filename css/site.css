@@ -92,6 +92,9 @@ button, select, input { font: inherit; color: inherit; }
 .cg-overlay .chant { opacity: var(--notation, .7); pointer-events: none; }
 .cg-overlay .glyph { font-family: "greciliae"; fill: var(--notation-ink); }
 .cg-overlay .glyph.doubt { fill: var(--doubt); }
+.cg-overlay .glyph.on { fill: var(--sel); }
+.cg-overlay .neume { fill: transparent; cursor: grab; }
+.cg-overlay .neume.on { fill: var(--sel-fill); stroke: var(--sel); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .syl { font-family: var(--textfont); fill: var(--notation-ink); text-anchor: middle; }
 .cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .cg-overlay .item.doubt { stroke: var(--doubt); stroke-width: 2; }
