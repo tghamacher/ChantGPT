@@ -526,7 +526,8 @@
       await new Promise(r => setTimeout(r, 50));
       const glyphs = w.document.querySelectorAll('#overlay .glyph');
       if (glyphs.length < 20) bad.push(`${glyphs.length} glyphs drawn`);
-      if (!(await w.document.fonts.check('20px greciliae'))) bad.push('The chant font did not load.');
+      // (waited for: from a server further off, the font can still be on its way)
+      if (!(await w.document.fonts.load('20px greciliae')).length) bad.push('The chant font did not load.');
       bad.push(...same('words drawn (the * too)', w.document.querySelectorAll('#overlay .syl').length, 13));
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
       const out = w.CGEditor.gabc();
