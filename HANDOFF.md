@@ -205,8 +205,13 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
-- **Step 4, the recognizer** (in progress, branch `step-4-recognizer`; the user is away and asked for work to go
-  on without files from them). See `training/README.md`.
+- **Step 4, the recognizer** (branch `step-4-recognizer`, merged into `main` with the model: the user is happy to
+  publish it, GregoBase's transcriptions being there for anyone to use). See `training/README.md`.
+  - The model in `models/`: trained on 14,442 synthetic staves, then with the Graduale's real staves (3 times over),
+    then once more with only the real staves it agreed with (`labels-clean.jsonl`, 1,817 of 2,253). On 180 clean
+    Graduale staves from pages it never learnt from: 7.2% of notes wrong (8.0% of tokens); synthetic: 5.8%. (Flattering:
+    the model itself chose which labels count as clean.)
+  - Training here is often cut short when the container restarts: run a pass at a time (`--epochs 1 --resume`).
   - The container: 4 CPUs, 15 GB, no GPU; PyTorch 2.14 (CPU) in `/home/user/venv`. Training here is slow (a pass
     over 14,000 staves about 50 minutes), enough to prove the pipeline; the real training is for the user's RX 6700 XT
     (ROCm).

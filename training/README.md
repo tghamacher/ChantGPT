@@ -117,13 +117,16 @@ staff's tokens:
 
 `js/recognizer.js` straightens a staff the same way in the browser; checked to agree within one grey level.
 
-`recognizer.py` is a small convolutional network: about 780,000 weights. It folds the staff's 64 rows away, then reads
+`recognizer.py` is a small convolutional network: about 800,000 weights. It folds the staff's 64 rows away, then reads
 along it, one output step to two columns, with 1-D convolutions wide enough to see a whole neume. It is trained with
 CTC, which needs only each staff's tokens, not where each note is. Training adds variety: shifts, stretching, blur,
 heavier or lighter ink, black and white, noise. It uses a GPU if there is one (CUDA, or ROCm for an AMD card).
 Exported to ONNX, it runs in the app with ONNX Runtime Web (`vendor/onnxruntime`), on the CPU, in WebAssembly.
 
 Python packages: `pip install torch numpy pillow onnx` (for an AMD card, torch from the ROCm index).
+
+The model in `models/` reads about 7% of the notes wrong on Graduale staves it never learnt from (by the labels it
+agrees with; `recognizer.py clean` writes those), and about 6% on synthetic ones.
 
 ## Still to come
 
