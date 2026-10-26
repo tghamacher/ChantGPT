@@ -126,7 +126,7 @@ Exported to ONNX, it runs in the app with ONNX Runtime Web (`vendor/onnxruntime`
 Python packages: `pip install torch numpy pillow onnx` (for an AMD card, torch from the ROCm index).
 
 The model in `models/` reads about 7% of the notes wrong on Graduale staves it never learnt from (by the labels it
-agrees with; `recognizer.py clean` writes those), and about 6% on synthetic ones.
+agrees with; `recognizer.py clean` writes those), and about 5% on synthetic ones.
 
 ## 5. Training on your own GPU (Windows, an AMD card)
 

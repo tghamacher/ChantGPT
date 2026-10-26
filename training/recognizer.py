@@ -173,7 +173,7 @@ def train(o):
     real, real_test = split(load(o.real, o.real_labels), 10) if o.real else ([], [])
     device = device_of(o.device)
     dml = device.type == 'privateuseone'                     # DirectML
-    old = torch.load(o.resume, map_location='cpu') if o.resume else None
+    old = torch.load(o.resume, map_location='cpu', weights_only=True) if o.resume else None
     vocab = old['vocab'] if old else vocab_of(rows + real)
     index = {t: k + 1 for k, t in enumerate(vocab)}
     known = lambda r: all(t in index for t in r['tokens'])
@@ -227,7 +227,7 @@ def train(o):
 
 
 def restore(path):
-    s = torch.load(path, map_location='cpu')
+    s = torch.load(path, map_location='cpu', weights_only=True)
     m = Reader(len(s['vocab']), s.get('width', 128))
     m.load_state_dict(s['model']); m.eval()
     return m, s
