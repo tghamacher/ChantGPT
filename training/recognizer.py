@@ -7,7 +7,8 @@ note is); exported to ONNX for the app, which runs it in the browser.
     python -I training/recognizer.py test --model training/data/model/best.pt [--data ...]
     python -I training/recognizer.py export --model training/data/model/best.pt [--onnx models/chant.onnx]
 
-Needs torch, numpy, pillow (and onnx to export). On a GPU it uses it (CUDA, or ROCm for an AMD card).
+Needs torch, numpy, pillow (and onnx to export). On a GPU it uses it: CUDA, ROCm (an AMD card, on Linux) or, with
+torch-directml installed, DirectML (any card, on Windows). --device chooses.
 """
 import argparse, json, math, os, random, sys, time
 import numpy as np
@@ -38,6 +39,19 @@ class Reader(nn.Module):
     def forward(self, x):                 # x: (batch, 1, 64, W), ink 1, paper 0
         y = self.fold(self.see(x)).squeeze(2)
         return self.out(self.along(y))    # (batch, tokens + 1, W / 2)
+
+
+def device_of(name):
+    """auto: CUDA (or ROCm) if there is one, else DirectML if torch-directml is installed, else the CPU."""
+    if name in ('auto', 'dml'):
+        if name == 'auto' and torch.cuda.is_available(): return torch.device('cuda')
+        try:
+            import torch_directml
+            return torch_directml.device()
+        except (ImportError, OSError) as e:            # (not installed, or no DirectX 12 here)
+            if name == 'dml': raise SystemExit(f'DirectML wanted, but it can\'t be had: {e} (pip install torch-directml)')
+        return torch.device('cpu')
+    return torch.device(name)
 
 
 def load(data, labels='labels.jsonl'):
@@ -157,8 +171,9 @@ def split(rows, every):
 def train(o):
     rows, test = split(load(o.data), 33) if o.data else ([], [])
     real, real_test = split(load(o.real, o.real_labels), 10) if o.real else ([], [])
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    old = torch.load(o.resume, map_location=device) if o.resume else None
+    device = device_of(o.device)
+    dml = device.type == 'privateuseone'                     # DirectML
+    old = torch.load(o.resume, map_location='cpu') if o.resume else None
     vocab = old['vocab'] if old else vocab_of(rows + real)
     index = {t: k + 1 for k, t in enumerate(vocab)}
     known = lambda r: all(t in index for t in r['tokens'])
@@ -168,7 +183,7 @@ def train(o):
     rng = random.Random(1)
     model = Reader(len(vocab), o.width).to(device)
     if old: model.load_state_dict(old['model'])
-    opt = torch.optim.AdamW(model.parameters(), lr=o.lr, weight_decay=1e-4)
+    opt = torch.optim.AdamW(model.parameters(), lr=o.lr, weight_decay=1e-4, foreach=False if dml else None)
     steps = o.epochs * math.ceil(len(rows) / o.batch)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=o.lr, total_steps=steps, pct_start=0.1)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
@@ -190,9 +205,10 @@ def train(o):
             x, lens = collate(arrays)
             targets = [torch.tensor([index[t] for t in rows[i]['tokens']]) for i in group]
             logp = F.log_softmax(model(x.to(device)), 1).permute(2, 0, 1)          # (steps, batch, tokens)
-            loss = ctc(logp, torch.cat(targets).to(device), lens.to(device), torch.tensor([len(t) for t in targets]).to(device))
+            at = 'cpu' if dml else device                     # (DirectML hasn't CTC: the loss on the CPU, its gradient back)
+            loss = ctc(logp.to(at), torch.cat(targets).to(at), lens.to(at), torch.tensor([len(t) for t in targets]).to(at))
             opt.zero_grad(); loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), 5)
+            nn.utils.clip_grad_norm_(model.parameters(), 5, foreach=False if dml else None)
             opt.step(); sched.step(); step += 1
             total += loss.item()
             if n % 100 == 0:
@@ -202,7 +218,7 @@ def train(o):
         pct = lambda v: '-' if v is None else f'{v:.2%}'
         print(f'epoch {epoch + 1}: loss {total / (n + 1):.3f}; synthetic test staves: token errors {pct(ter)}, note errors {pct(ner)}; '
               f'real: token errors {pct(rter)}, note errors {pct(rner)} ({time.time() - t0:.0f} s)', flush=True)
-        state = {'model': model.state_dict(), 'vocab': vocab, 'width': o.width, 'epoch': epoch + 1, 'ter': ter, 'ner': ner, 'real_ter': rter, 'real_ner': rner}
+        state = {'model': {k: v.cpu() for k, v in model.state_dict().items()}, 'vocab': vocab, 'width': o.width, 'epoch': epoch + 1, 'ter': ter, 'ner': ner, 'real_ter': rter, 'real_ner': rner}
         score = rter if rter is not None else ter
         torch.save(state, os.path.join(o.out, 'last.pt'))
         if score < best:
@@ -275,5 +291,6 @@ if __name__ == '__main__':
     a.add_argument('--lr', type=float, default=2e-3)
     a.add_argument('--width', type=int, default=128)
     a.add_argument('--test-limit', type=int, default=400)
+    a.add_argument('--device', default='auto', help='auto, cpu, cuda or dml (DirectML)')
     o = a.parse_args()
     {'train': train, 'test': test, 'export': export, 'clean': clean}[o.what](o)

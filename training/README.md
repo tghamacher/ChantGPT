@@ -128,6 +128,48 @@ Python packages: `pip install torch numpy pillow onnx` (for an AMD card, torch f
 The model in `models/` reads about 7% of the notes wrong on Graduale staves it never learnt from (by the labels it
 agrees with; `recognizer.py clean` writes those), and about 6% on synthetic ones.
 
+## 5. Training on your own GPU (Windows, an AMD card)
+
+AMD's PyTorch for Windows doesn't take an RX 6000 card (only RX 7000 and 9000), so on Windows the GPU is used through
+DirectML: Microsoft's torch-directml, which runs on any DirectX 12 card. It needs Python 3.8 to 3.12 (it brings
+torch 2.4.1 with it). `recognizer.py` finds it by itself (`--device auto`; `--device dml` to insist).
+
+The staves already made (synthetic and the Graduale's) and the latest checkpoint are on the branch `training-data`,
+as zips, so they needn't be made again. In PowerShell, with Python 3.12 (python.org, "Add to PATH") and Git installed:
+
+```
+git clone https://github.com/tghamacher/ChantGPT
+cd ChantGPT
+git clone --depth 1 --single-branch -b training-data https://github.com/tghamacher/ChantGPT ..\chantgpt-data
+Get-ChildItem ..\chantgpt-data\*.zip | ForEach-Object { tar -xf $_.FullName }    # into training\data\
+py -3.12 -m venv venv
+Set-ExecutionPolicy -Scope Process Bypass                                          # (lets the next line run)
+.\venv\Scripts\Activate.ps1
+pip install torch-directml "numpy<2" pillow onnx
+python -c "import torch_directml as d; print(d.device_name(0))"                    # the card's name
+```
+
+Then train, starting from the checkpoint (a pass over the 18,920 staves took 13 minutes on the CPUs here):
+
+```
+python -I training\recognizer.py train --resume training\data\model2\best.pt --real training\data\real --real-labels labels-clean.jsonl --epochs 5 --lr 5e-4 --out training\data\model3
+```
+
+The first lines say `on privateuseone:0` (DirectML) and how long each 100 batches takes. Each pass ends with the
+error rates on the synthetic and real staves kept out, and saves `best.pt` and `last.pt` in `--out`. A larger
+`--batch` (32, 64) may use the card better. Then:
+
+```
+python -I training\recognizer.py test --model training\data\model3\best.pt --data training\data\real --real-labels labels-clean.jsonl --held 10
+python -I training\recognizer.py export --model training\data\model3\best.pt
+git add models
+git commit -m "Recognizer: trained on the GPU"
+git push
+```
+
+(`export` writes `models\chant.onnx` and `chant.json`; the app picks them up.) The CTC loss is worked out on the
+CPU (DirectML hasn't it), the rest on the card.
+
 ## Still to come
 
 - A second engraver for variety: Gregorio itself, and exsurge.
