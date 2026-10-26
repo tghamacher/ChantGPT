@@ -246,11 +246,12 @@ def test(o):
 def clean(o):
     """The real staves whose answers the model can believe: those it reads with fewer than half their notes wrong.
     An answer it reads far off is mostly not this staff's (the alignment broke the chant in the wrong place, or GregoBase
-    has another version). Writes labels-clean.jsonl beside labels.jsonl."""
+    has another version). Writes labels-clean.jsonl beside labels.jsonl (from --real-labels X.jsonl, X-clean.jsonl)."""
     m, s = restore(o.model)
-    rows = load(o.data)
+    rows = load(o.data, o.real_labels)
     kept = dropped = 0
-    with open(os.path.join(o.data, 'labels-clean.jsonl'), 'w', encoding='utf-8') as out:
+    name = os.path.splitext(o.real_labels)[0] + '-clean.jsonl'
+    with open(os.path.join(o.data, name), 'w', encoding='utf-8') as out:
         for r in rows:
             x, l = collate([ink(image(r['dir'], r['file']))])
             with torch.no_grad(): seq, _ = greedy(m(x), l, s['vocab'])[0]
@@ -258,7 +259,74 @@ def clean(o):
             if edits(a, b) < 0.5 * max(1, len(b)):
                 out.write(json.dumps({k: v for k, v in r.items() if k != 'dir'}, ensure_ascii=False) + '\n'); kept += 1
             else: dropped += 1
-    print(f'{kept} staves kept, {dropped} dropped -> {os.path.join(o.data, "labels-clean.jsonl")}')
+    print(f'{kept} staves kept, {dropped} dropped -> {os.path.join(o.data, name)}')
+
+
+def rebreak(o):
+    """The real staves' line breaks, put where the model sees them. align.js breaks each chant's GABC into lines from
+    what the page shows, and can put a neume or two on the wrong staff: the label then lacks them on one staff and has
+    them extra on the next. Here a chant's neumes are lined up with what the model reads along all its staves at once
+    (notes matched by an edit distance), and each goes to the staff it was read on; the chant's GABC is not changed,
+    only where it breaks (each staff keeps its clef; a custos, the next staff's first note). Writes
+    labels-rebroken.jsonl beside the labels."""
+    sys.path.insert(0, HERE)
+    import staffdata
+    m, s = restore(o.model)
+    rows, seen = [], set()
+    for r in load(o.data, o.real_labels):
+        if r['file'] not in seen: seen.add(r['file']); rows.append(r)
+    chants = {}
+    for r in rows: chants.setdefault(r['chant'], []).append(r)
+    num = lambda r: (r['page'], int(r['staff'].rsplit('s', 1)[1]))
+    notes = lambda ts: [t for t in ts if t not in '|/']
+    moved = staves = 0
+    for ch in chants.values():
+        ch.sort(key=num)
+        heads, tails, items, reads = [], [], [], []           # each staff's clef and custos; the items between, the notes read
+        for k, r in enumerate(ch):
+            it = list(r['items'])
+            head = [it.pop(0)] if it and staffdata.kind(it[0]) == 'clef' else []
+            tail = [it.pop()] if it and staffdata.kind(it[-1]) == 'custos' else []
+            heads.append(head); tails.append(tail); items += [(g, k) for g in it]
+            x, l = collate([ink(image(r['dir'], r['file']))])
+            with torch.no_grad(): seq, _ = greedy(m(x), l, s['vocab'])[0]
+            if seq and staffdata.kind(seq[0]) == 'clef': seq = seq[1:]
+            if seq and staffdata.kind(seq[-1]) == 'custos': seq = seq[:-1]
+            reads += [(t, k) for t in notes(seq)]
+        if len(ch) < 2: continue
+        truth = [(t, n) for n, (g, _) in enumerate(items) for t in notes(staffdata.tokens([g]))]
+        a, b = [t for t, _ in truth], [t for t, _ in reads]
+        d = np.zeros((len(a) + 1, len(b) + 1), np.int32)
+        d[:, 0] = np.arange(len(a) + 1); d[0, :] = np.arange(len(b) + 1)
+        for i in range(1, len(a) + 1):
+            for j in range(1, len(b) + 1):
+                d[i, j] = min(d[i - 1, j] + 1, d[i, j - 1] + 1, d[i - 1, j - 1] + (a[i - 1] != b[j - 1]))
+        votes = {}                                              # each item: the staves its notes were read on
+        i, j = len(a), len(b)
+        while i and j:
+            if d[i, j] == d[i - 1, j - 1] + (a[i - 1] != b[j - 1]):
+                votes.setdefault(truth[i - 1][1], []).append(reads[j - 1][1]); i, j = i - 1, j - 1
+            elif d[i, j] == d[i - 1, j] + 1: i -= 1
+            else: j -= 1
+        where, at = [], 0
+        for n, (g, k) in enumerate(items):                      # (an item not matched, a bar: where the one before is)
+            v = votes.get(n)
+            at = max(at, sorted(v)[len(v) // 2] if v else at)
+            where.append(at)
+        per = [[g for (g, _), w in zip(items, where) if w == k] for k in range(len(ch))]
+        for k, r in enumerate(ch):
+            tail = tails[k]
+            if tail and k + 1 < len(ch):                        # the custos: the next staff's first note
+                first = next((t for g in per[k + 1] for t in notes(staffdata.tokens([g])) if t[0].lower() in staffdata.LETTERS), None)
+                if first: tail = [first[0].lower() + '+']
+            new = heads[k] + per[k] + tail
+            if new != r['items']: moved += 1
+            r['items'] = new; r['tokens'] = staffdata.tokens(new)
+        staves += len(ch)
+    out = os.path.join(o.data, 'labels-rebroken.jsonl')
+    with open(out, 'w', encoding='utf-8') as f:
+        for r in rows: f.write(json.dumps({k: v for k, v in r.items() if k not in ('dir', 'tokens', 'width')}, ensure_ascii=False) + '\n')
+    print(f'{moved} of {staves} staves of chants on more than one staff broken elsewhere -> {out}')
 
 
 def export(o):
@@ -276,7 +344,7 @@ def export(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['train', 'test', 'export', 'clean'])
+    a.add_argument('what', choices=['train', 'test', 'export', 'clean', 'rebreak'])
     a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'))
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'model'))
     a.add_argument('--model')
@@ -293,4 +361,4 @@ if __name__ == '__main__':
     a.add_argument('--test-limit', type=int, default=400)
     a.add_argument('--device', default='auto', help='auto, cpu, cuda or dml (DirectML)')
     o = a.parse_args()
-    {'train': train, 'test': test, 'export': export, 'clean': clean}[o.what](o)
+    {'train': train, 'test': test, 'export': export, 'clean': clean, 'rebreak': rebreak}[o.what](o)
