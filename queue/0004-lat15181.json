@@ -1,0 +1,9 @@
+{"id": "0004-lat15181",
+ "about": "The manuscript model (0003) trained on Paris lat. 15181's own staves (2,595 paired with Cantus), with the synthetic staves and the Graduale's; tested on held-out folios of both, and exported",
+ "data": ["staves-ms-1.zip", "staves-ms-2.zip", "staves-ms-3.zip", "staves-ms-4.zip", "real-labels.zip", "real-2.zip", "ms-123631-1.zip"],
+ "steps": [["recognizer.py", "train", "--data", "training/data/staves,training/data/staves-ms", "--real", "training/data/real,training/data/ms-123631-all", "--real-labels", "labels-rebroken-clean.jsonl,labels-fit.jsonl", "--resume", "training/data/j0003/best.pt", "--width", "192", "--epochs", "10", "--lr", "1e-3", "--batch", "32", "--out", "training/data/j0004"],
+           ["recognizer.py", "test", "--model", "training/data/j0004/best.pt", "--data", "training/data/ms-123631-all", "--real-labels", "labels-fit.jsonl", "--held", "10"],
+           ["recognizer.py", "test", "--model", "training/data/j0003/best.pt", "--data", "training/data/ms-123631-all", "--real-labels", "labels-fit.jsonl", "--held", "10"],
+           ["recognizer.py", "test", "--model", "training/data/j0004/best.pt", "--data", "training/data/real", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "export", "--model", "training/data/j0004/best.pt", "--onnx", "OUT/chant.onnx"]],
+ "keep": ["training/data/j0004/best.pt"]}
