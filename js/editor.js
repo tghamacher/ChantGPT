@@ -83,7 +83,7 @@
     st.lines = S.roundLines(st.lines);
     st.box = S.box(st.lines, pg.size);
     for (const syl of st.syllables) for (const it of syl.items) if (it.box) N.fitBox(st, it);
-    pg.staves.sort((a, b) => S.middle(a.lines) - S.middle(b.lines));
+    pg.staves.splice(0, pg.staves.length, ...S.order(pg.staves));   // (down each column)
   }
 
   function newId(pg = page()) {
