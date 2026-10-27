@@ -1,0 +1,20 @@
+job 0003-wide-plus-ms: The wide model (0001) trained on: printed and manuscript-style synthetic staves together, with the Graduale's; then tested on the Graduale's held-out staves and on manuscript-style ones, and exported
+code: e1b53e9
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms --real training/data/real --real-labels labels-rebroken-clean.jsonl --resume training/data/j0001/best.pt --width 192 --epochs 10 --lr 1e-3 --batch 32 --out training/data/j0003
+45166 staves to learn from (1720 real, each 3 times), 1177 synthetic and 194 real to test on; 5 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.268 (1 s)
+epoch 1 batch 100: loss 0.280 (28 s)
+epoch 1 batch 200: loss 0.250 (55 s)
+epoch 1 batch 300: loss 0.235 (81 s)
+epoch 1 batch 400: loss 0.227 (107 s)
+epoch 1 batch 500: loss 0.222 (134 s)
+epoch 1 batch 600: loss 0.236 (160 s)
+epoch 1 batch 700: loss 0.233 (185 s)
+epoch 1 batch 800: loss 0.228 (211 s)
+epoch 1 batch 900: loss 0.225 (236 s)
+epoch 1 batch 1000: loss 0.222 (261 s)
+epoch 1 batch 1100: loss 0.220 (288 s)
+epoch 1 batch 1200: loss 0.217 (314 s)
