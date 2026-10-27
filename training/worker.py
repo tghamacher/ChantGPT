@@ -15,7 +15,8 @@ queue/<id>.json on that branch:
 
 Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
-the clone of training-data (to share pages to).
+the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
+app's zips from (--downloads), which it only reads.
 Before each job the repository is brought up to date with main. The results go to results/<id>/ on the jobs
 branch: log.txt (pushed every few minutes while it runs), the kept files, and done.json.
 """
@@ -45,7 +46,10 @@ def checked(step, out, data=None):
     if what not in ALLOWED.get(script, ()):
         raise ValueError(f'not allowed: {script} {what}')
     args = []
-    for s in step[2:]:
+    for k, s in enumerate(step[2:]):
+        if script == 'cantus.py' and k and step[2:][k - 1] == '--downloads':
+            if not os.path.isdir(s): raise ValueError(f'no folder {s}')
+            args.append(s); continue
         s = s.replace('OUT', out)
         if data and s == 'DATA': args.append(os.path.realpath(data)); continue
         if s.startswith('-'): args.append(s); continue
