@@ -214,7 +214,34 @@ ${body.join('\n')}
 `;
   }
 
-  const api = { volpiano, mei };
+  // ---------------------------------------------------------------- zip
+  // Files in a zip, stored as they are (page images are compressed already): files [{ name, data: Uint8Array }].
+  // Returns a Blob.
+  let crcTable = null;
+  function crc32(data) {
+    if (!crcTable) crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < data.length; i++) c = crcTable[(c ^ data[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function zip(files) {
+    const parts = [], central = [];
+    let offset = 0;
+    const header = (size, f) => { const b = new DataView(new ArrayBuffer(size)); f(b); return new Uint8Array(b.buffer); };
+    for (const f of files) {
+      const name = new TextEncoder().encode(f.name), crc = crc32(f.data), n = f.data.length;
+      // (version 2.0, UTF-8 names, stored, dated 1 January 1980)
+      const local = header(30, b => { b.setUint32(0, 0x04034b50, true); b.setUint16(4, 20, true); b.setUint16(6, 0x800, true); b.setUint16(12, 0x21, true); b.setUint32(14, crc, true); b.setUint32(18, n, true); b.setUint32(22, n, true); b.setUint16(26, name.length, true); });
+      central.push(header(46, b => { b.setUint32(0, 0x02014b50, true); b.setUint16(4, 20, true); b.setUint16(6, 20, true); b.setUint16(8, 0x800, true); b.setUint16(14, 0x21, true); b.setUint32(16, crc, true); b.setUint32(20, n, true); b.setUint32(24, n, true); b.setUint16(28, name.length, true); b.setUint32(42, offset, true); }), name);
+      parts.push(local, name, f.data);
+      offset += 30 + name.length + n;
+    }
+    const size = central.reduce((s, c) => s + c.length, 0);
+    const end = header(22, b => { b.setUint32(0, 0x06054b50, true); b.setUint16(8, files.length, true); b.setUint16(10, files.length, true); b.setUint32(12, size, true); b.setUint32(16, offset, true); });
+    return new Blob([...parts, ...central, end], { type: 'application/zip' });
+  }
+
+  const api = { volpiano, mei, zip, crc32 };
   global.CGExport = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -65,6 +65,7 @@ button, select, input { font: inherit; color: inherit; }
 .cg-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
 .cg-row button, .cg-seg button { background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
 .cg-row button:hover { border-color: var(--accent); }
+.cg-num { width: 5em; }
 .cg-iiif label { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; font-size: 0.9em; }
 .cg-iiif input { width: 100%; box-sizing: border-box; }
 .cg-iiif button { align-self: flex-end; }

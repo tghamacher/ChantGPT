@@ -23,6 +23,13 @@
 
   global.CASES = [
     // ---- the kind of a GABC group
+    { name: 'zip: files stored, with their CRC-32, and a central directory', unit: () => {
+      const E = global.CGExport, enc = s => new TextEncoder().encode(s), bad = [];
+      bad.push(...same('crc32 of "hello"', E.crc32(enc('hello')).toString(16), '3610a686'));
+      const z = E.zip([{ name: 'a.txt', data: enc('hello') }, { name: 'b/ö.txt', data: enc('') }]);
+      bad.push(...same('size', z.size, (30 + 5 + 5) + (30 + 8 + 0) + (46 + 5) + (46 + 8) + 22));
+      return bad;
+    } },
     { name: 'kind: clefs, bars, custos, breaks, accidentals, neumes', unit: () => {
       const want = { c4: 'clef', cb3: 'clef', f3: 'clef', ',': 'bar', ';': 'bar', ';3': 'bar', ':': 'bar', '::': 'bar', '`': 'bar',
         'g+': 'custos', z: 'break', 'z-': 'break', Z: 'break', ix: 'accidental', iy: 'accidental', f: 'neume', fgh: 'neume', 'f/gh': 'neume', ivHG: 'neume', 'c': 'neume' };
@@ -800,6 +807,10 @@
       await w.CGEditor.findHere();
       const truth = await (await w.fetch('test/pages/synth.json')).json();
       bad.push(...same('staves found on page 1', doc.pages[0].staves.length, truth.doc.pages[0].staves.length));
+      // a page's image at full size, as the library has it (for saving)
+      const orig = await src.original(0), file = new Uint8Array(await (await w.fetch('test/pages/synth.jpg')).arrayBuffer());
+      bad.push(...same('the original image', [orig.data.length, orig.type], [file.length, 'image/jpeg']));
+      bad.push(...same('page saving offered', w.document.getElementById('saveGroup').hidden, false));
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },

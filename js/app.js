@@ -10,7 +10,7 @@
   // dirty: changed since it was last saved
   // book: a book's index from GregoBase (made by training/gregobase.py book), if one is open
   const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false, book: null };
-  window.CGApp = { state, open, openIiif, show, save };
+  window.CGApp = { state, open, openIiif, savePages, show, save };
 
   // ---------------------------------------------------------------- status
   function say(msg, err) {
@@ -71,7 +71,37 @@
     for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'docGroup']) $(id).hidden = false;
     $('empty').hidden = true;
     $('page').hidden = false;
+    $('saveGroup').hidden = !src.original;
+    $('saveFrom').max = $('saveTo').max = src.count;
     return true;
+  }
+
+  // An online manuscript's pages from … to … (from 1), saved as one zip of their full-size images, a page at a time
+  // with a pause between (the library is kind enough to serve them).
+  let saving = null;
+  async function savePages(from, to) {
+    const src = state.src;
+    if (!src || !src.original) return false;
+    from = Math.max(1, Math.round(from)); to = Math.min(src.count, Math.round(to));
+    if (!(to >= from)) { say('Give the first and last page to save.', true); return false; }
+    if (to - from >= 100) { say('Save up to a hundred pages at a time.', true); return false; }
+    const run = saving = { stop: false }, files = [];
+    $('stopSaving').hidden = false; $('savePages').disabled = true;
+    try {
+      for (let i = from - 1; i < to; i++) {
+        if (run.stop) { say(`Stopped: nothing saved.`); return false; }
+        say(`Fetching page ${i + 1} (${i - from + 2} of ${to - from + 1}) …`);
+        const img = await src.original(i), ext = /png/.test(img.type) ? 'png' : 'jpg';
+        const label = String(src.names[i]).replace(/[^\p{L}\p{N}._-]+/gu, '_').replace(/^_|_$/g, '');
+        files.push({ name: `${String(i + 1).padStart(4, '0')}${label ? ' ' + label : ''}.${ext}`, data: img.data });
+        if (i < to - 1) await new Promise(r => setTimeout(r, 1000));
+      }
+      const base = src.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim().slice(0, 60) || 'pages';
+      download(CGExport.zip(files), `${base} ${from}-${to}.zip`);
+      say(`${files.length} ${files.length === 1 ? 'page' : 'pages'} saved (${Math.round(files.reduce((s, f) => s + f.data.length, 0) / 1e6)} MB).`);
+      return true;
+    } catch (e) { say(e.message || String(e), true); return false; }
+    finally { if (saving === run) saving = null; $('stopSaving').hidden = true; $('savePages').disabled = false; }
   }
 
   // a saved document, for the scan that is open: it must have as many pages, of the same sizes
@@ -195,6 +225,8 @@
 
   // ---------------------------------------------------------------- controls
   E.init({ state, svg: $('overlay'), say, pixels, show, changed: () => { state.dirty = true; } });
+  $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
+  $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
   $('refit').addEventListener('click', () => E.refit());
   $('findStaves').addEventListener('click', () => E.findHere());
