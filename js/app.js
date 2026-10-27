@@ -76,29 +76,47 @@
     return true;
   }
 
-  // An online manuscript's pages from … to … (from 1), saved as one zip of their full-size images, a page at a time
-  // with a pause between (the library is kind enough to serve them).
+  // An online manuscript's pages from … to … (from 1), saved as zips of their full-size images, a hundred pages to a
+  // zip, each zip downloaded as soon as it is full: a page at a time with a pause between, and longer waits when the
+  // library asks for them (429, 503) or a page fails (tried five times, then left out and said so).
   let saving = null;
+  const BATCH = 100;
   async function savePages(from, to) {
     const src = state.src;
     if (!src || !src.original) return false;
     from = Math.max(1, Math.round(from)); to = Math.min(src.count, Math.round(to));
     if (!(to >= from)) { say('Give the first and last page to save.', true); return false; }
-    if (to - from >= 100) { say('Save up to a hundred pages at a time.', true); return false; }
-    const run = saving = { stop: false }, files = [];
+    const run = saving = { stop: false }, missed = [];
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const base = src.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim().slice(0, 60) || 'pages';
     $('stopSaving').hidden = false; $('savePages').disabled = true;
+    let saved = 0, zips = 0;
     try {
-      for (let i = from - 1; i < to; i++) {
-        if (run.stop) { say(`Stopped: nothing saved.`); return false; }
-        say(`Fetching page ${i + 1} (${i - from + 2} of ${to - from + 1}) …`);
-        const img = await src.original(i), ext = /png/.test(img.type) ? 'png' : 'jpg';
-        const label = String(src.names[i]).replace(/[^\p{L}\p{N}._-]+/gu, '_').replace(/^_|_$/g, '');
-        files.push({ name: `${String(i + 1).padStart(4, '0')}${label ? ' ' + label : ''}.${ext}`, data: img.data });
-        if (i < to - 1) await new Promise(r => setTimeout(r, 1000));
+      for (let a = from; a <= to; a += BATCH) {
+        const b = Math.min(to, a + BATCH - 1), files = [];
+        for (let i = a - 1; i < b; i++) {
+          let img = null;
+          for (let k = 0; k < 5 && !img; k++) {
+            if (run.stop) { say(`Stopped after ${saved} pages${zips ? `, in ${zips} zips` : ''}.`); return false; }
+            say(`Fetching page ${i + 1} (${i - from + 2} of ${to - from + 1}) …${k ? ` (try ${k + 1})` : ''}`);
+            try { img = await src.original(i); }
+            catch (e) {
+              const busy = /\((429|503)\)/.test(e.message);
+              say(`${e.message} Waiting ${busy ? 60 * (k + 1) : 10 * (k + 1)} s …`);
+              await wait((busy ? 60 : 10) * (k + 1) * 1000);
+            }
+          }
+          if (!img) { missed.push(i + 1); continue; }
+          const ext = /png/.test(img.type) ? 'png' : 'jpg';
+          const label = String(src.names[i]).replace(/[^\p{L}\p{N}._-]+/gu, '_').replace(/^_|_$/g, '');
+          files.push({ name: `${String(i + 1).padStart(4, '0')}${label ? ' ' + label : ''}.${ext}`, data: img.data });
+          saved++;
+          if (i < to - 1) await wait(1000);
+        }
+        // (with source.txt, the manifest they came from)
+        if (files.length) { files.push({ name: 'source.txt', data: new TextEncoder().encode(src.url + '\n') }); download(CGExport.zip(files), `${base} ${a}-${b}.zip`); zips++; }
       }
-      const base = src.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim().slice(0, 60) || 'pages';
-      download(CGExport.zip(files), `${base} ${from}-${to}.zip`);
-      say(`${files.length} ${files.length === 1 ? 'page' : 'pages'} saved (${Math.round(files.reduce((s, f) => s + f.data.length, 0) / 1e6)} MB).`);
+      say(`${saved} ${saved === 1 ? 'page' : 'pages'} saved, in ${zips} ${zips === 1 ? 'zip' : 'zips'}.` + (missed.length ? ` Not saved (the library wouldn't give them): ${missed.join(', ')}.` : ''), missed.length > 0);
       return true;
     } catch (e) { say(e.message || String(e), true); return false; }
     finally { if (saving === run) saving = null; $('stopSaving').hidden = true; $('savePages').disabled = false; }
@@ -344,5 +362,10 @@
   // (and ?iiif=<manifest> a manuscript online)
   const urls = new URLSearchParams(location.search).getAll('source'), iiif = new URLSearchParams(location.search).get('iiif');
   if (urls.length) V.fetchFiles(urls).then(open, e => say(e.message, true));
-  else if (iiif) { $('iiifUrl').value = iiif; openIiif(iiif); }
+  // (with &save=29-49, those pages saved as soon as it is open)
+  else if (iiif) {
+    $('iiifUrl').value = iiif;
+    const range = (new URLSearchParams(location.search).get('save') || '').match(/^(\d+)-(\d+)$/);
+    openIiif(iiif).then(ok => { if (ok && range) { $('saveFrom').value = range[1]; $('saveTo').value = range[2]; savePages(+range[1], +range[2]); } });
+  }
 })();
