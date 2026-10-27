@@ -1,0 +1,9 @@
+{"id": "0006-lat15181-round2",
+ "about": "Round two on Paris lat. 15181: 0004's model on the labels it made (staves found to their ends: 3,558 paired; line breaks mended and cleaned: 3,524), 12 passes; tested on held-out folios, the Graduale's, and exported",
+ "data": ["staves-ms-1.zip", "staves-ms-2.zip", "staves-ms-3.zip", "staves-ms-4.zip", "real-labels.zip", "real-2.zip", "ms-123631-3.zip"],
+ "steps": [["recognizer.py", "train", "--data", "training/data/staves,training/data/staves-ms", "--real", "training/data/real,training/data/ms-123631-v2", "--real-labels", "labels-rebroken-clean.jsonl,labels-rebroken-clean.jsonl", "--resume", "training/data/j0004/best.pt", "--width", "192", "--epochs", "12", "--lr", "7e-4", "--batch", "32", "--out", "training/data/j0006"],
+           ["recognizer.py", "test", "--model", "training/data/j0006/best.pt", "--data", "training/data/ms-123631-v2", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "test", "--model", "training/data/j0004/best.pt", "--data", "training/data/ms-123631-v2", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "test", "--model", "training/data/j0006/best.pt", "--data", "training/data/real", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "export", "--model", "training/data/j0006/best.pt", "--onnx", "OUT/chant.onnx"]],
+ "keep": ["training/data/j0006/best.pt"]}
