@@ -6,7 +6,9 @@
    "cantus.py",
    "collect",
    "--source",
-   "123631"
+   "123631",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools"
   ]
  ],
  "keep": [
