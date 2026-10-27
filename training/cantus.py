@@ -350,11 +350,31 @@ def staffdata_tokens(items):
     return staffdata.tokens(items)
 
 
+def pair(cost, worth=0.5):
+    """Staves to lines, in order, as well as they fit: cost[k][j], how far staff k's reading is from line j (the share
+    of notes that differ). Each pair is worth (worth - its cost); a staff or a line may go unpaired (a staff the finder
+    missed, a line on a staff it missed, or a staff with no melody in Cantus). Returns [(k, j)], the pairs that add up
+    to the most."""
+    S, L = len(cost), len(cost[0]) if cost else 0
+    best = [[0.0] * (L + 1) for _ in range(S + 1)]
+    for k in range(S - 1, -1, -1):
+        for j in range(L - 1, -1, -1):
+            best[k][j] = max(best[k + 1][j], best[k][j + 1], worth - cost[k][j] + best[k + 1][j + 1])
+    out, k, j = [], 0, 0
+    while k < S and j < L:
+        if best[k][j] == worth - cost[k][j] + best[k + 1][j + 1] and cost[k][j] < worth: out.append((k, j)); k += 1; j += 1
+        elif best[k][j] == best[k + 1][j]: k += 1
+        else: j += 1
+    return out
+
+
 def labels(o):
-    """Each page whose staves (as staves_of.js found them) are as many as its lines (Cantus's 7s), every chant on it
-    with its melody: staff k gets line k, with the clef that best fits what the model reads there and the next line's
-    first note as its custos. Written to <staves>/labels.jsonl ({file, items, page, chant, staff, fit}); a page is its
-    own 'chant', so that recognizer.py rebreak can move a neume from line to line within it."""
+    """Each page's staves (as staves_of.js found them) paired with its lines (Cantus's 7s), in order, as well as they
+    fit (pair()): a staff gets a line's melody with the clef that best fits what the model reads there, and the next
+    line's first note as its custos, if the notes differ from the reading by less than --worth (a share; a page where
+    not every chant has its melody in Cantus, by less than two thirds of that). Written to <staves>/labels.jsonl
+    ({file, items, page, chant, staff, fit}); each run of staves paired with lines one after another is a 'chant'
+    (f<folio>-<n>), so that recognizer.py rebreak can move a neume from line to line within it, and no further."""
     sys.path.insert(0, HERE)
     import recognizer, torch
     m, s = recognizer.restore(o.model)
@@ -364,28 +384,39 @@ def labels(o):
     for l in open(os.path.join(o.staves, 'staves.jsonl'), encoding='utf-8'):
         r = json.loads(l)
         if r.get('file'): found.setdefault(r['page'], []).append(r)
-    kept = skipped = staves = 0
+    kept = staves = missed = 0
     why = {}
     with open(os.path.join(o.staves, 'labels.jsonl'), 'w', encoding='utf-8') as out:
         for f, rows in sorted(found.items(), key=lambda v: folio_key(v[0])):
             p = pages.get(f)
-            if not p: why['not in Cantus'] = why.get('not in Cantus', 0) + 1; continue
-            if not p['complete']: why['a chant without its melody'] = why.get('a chant without its melody', 0) + 1; continue
+            if not p or not p['lines']: why['no melodies in Cantus'] = why.get('no melodies in Cantus', 0) + 1; continue
             rows.sort(key=lambda r: r['k'])
-            if len(rows) != len(p['lines']):
-                why['staves found not as many as lines'] = why.get('staves found not as many as lines', 0) + 1; continue
             nxt = folios[folios.index(f) + 1] if folios.index(f) + 1 < len(folios) else None
-            for k, (r, line) in enumerate(zip(rows, p['lines'])):
-                after = p['lines'][k + 1] if k + 1 < len(p['lines']) else (pages[nxt]['lines'][0] if nxt and pages[nxt]['lines'] else None)
+            custos = [first_step(p['lines'][j + 1]) if j + 1 < len(p['lines']) else
+                      (first_step(pages[nxt]['lines'][0]) if nxt and pages[nxt]['lines'] else None) for j in range(len(p['lines']))]
+            reads = []
+            for r in rows:
                 x, n = recognizer.collate([recognizer.ink(recognizer.image(o.staves, r['file']))])
-                with torch.no_grad(): read, _ = recognizer.greedy(m(x), n, s['vocab'])[0]
-                clef, items, d = fit_clef(read, line, first_step(after) if after else None)
-                if not items: skipped += 1; continue
-                out.write(json.dumps({'file': r['file'], 'items': items, 'page': folios.index(f), 'chant': f,
-                                      'staff': f'f{f}s{k + 1}', 'fit': round(d, 3)}) + '\n')
+                with torch.no_grad(): reads.append(recognizer.greedy(m(x), n, s['vocab'])[0][0])
+            fits = [[fit_clef(rd, line, c) for line, c in zip(p['lines'], custos)] for rd in reads]
+            worth = o.worth if p['complete'] else o.worth * 2 / 3
+            pairs = pair([[v[2] for v in row] for row in fits], worth)
+            run, last = 0, None
+            for k, j in pairs:
+                clef, items, d = fits[k][j]
+                if not items: continue
+                if last is None or (k, j) != (last[0] + 1, last[1] + 1): run += 1
+                last = (k, j)
+                out.write(json.dumps({'file': rows[k]['file'], 'items': items, 'page': folios.index(f), 'chant': f'f{f}-{run}',
+                                      'staff': f'f{f}s{rows[k]["k"]}', 'line': j + 1, 'fit': round(d, 3)}) + '\n')
                 staves += 1
-            kept += 1
-    print(f'{kept} pages paired, {staves} staves -> {os.path.join(o.staves, "labels.jsonl")}; pages left out: {why or "none"}; {skipped} lines off every staff')
+            missed += len(rows) - len(pairs)
+            kept += bool(pairs)
+            if o.verbose:
+                print(f'{f}: {len(rows)} staves, {len(p["lines"])} lines{"" if p["complete"] else " (not every melody)"}; paired',
+                      ' '.join(f'{rows[k]["k"]}-{j + 1}:{fits[k][j][2]:.2f}' for k, j in pairs))
+    print(f'{staves} staves paired, on {kept} pages -> {os.path.join(o.staves, "labels.jsonl")}; {missed} staves unpaired; '
+          f'pages left out: {why or "none"}')
 
 
 def show(o):
@@ -415,5 +446,7 @@ if __name__ == '__main__':
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
+    a.add_argument('--worth', type=float, default=0.4, help='labels: a staff paired with a line only if fewer than this share of notes differ')
+    a.add_argument('--verbose', action='store_true', help='labels: print each page\'s pairs')
     o = a.parse_args()
     {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels}[o.what](o)

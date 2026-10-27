@@ -97,7 +97,7 @@
   // region: [x, y, w, h] in page units. The lines found, in page units, or null.
   async function find(region) {
     const px = await ctx.pixels(ctx.state.page);
-    const r = S.fitStaff(px.gray, px.w, px.h, region.map(v => v * px.scale));
+    const r = (px.lines && S.fitStaff(px.lines, px.w, px.h, region.map(v => v * px.scale), undefined, true)) || S.fitStaff(px.gray, px.w, px.h, region.map(v => v * px.scale));
     return r && r.lines.map(l => l.map(v => v / px.scale));
   }
 
@@ -135,7 +135,7 @@
     const px = await ctx.pixels(pg);
     if (stale()) return null;
     const skip = ctx.state.doc.pages[pg].staves.map(st => st.box.map(v => v * px.scale));
-    const found = S.findStaves(px.gray, px.w, px.h, { skip });
+    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines });
     return stale() ? null : found.map(r => r.lines.map(l => l.map(v => v / px.scale)));
   }
   function addFound(pg, found) {

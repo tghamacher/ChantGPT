@@ -186,6 +186,24 @@ git push
 (`export` writes `models\chant.onnx` and `chant.json`; the app picks them up.) The CTC loss is worked out on the
 CPU (DirectML hasn't it), the rest on the card.
 
+## 6. A manuscript: Paris, BnF lat. 15181
+
+The Cantus Database has the melody of every chant in lat. 15181 (source 123631), with its line breaks. The pages come
+from Gallica through the app (its IIIF save, in your own browser), and `cantus.py collect` files the app's zips by
+folio. Then:
+
+```
+node training/staves_of.js --pages training/data/scans/123631 --out training/data/ms-123631
+python -I training/cantus.py labels --source 123631 --staves training/data/ms-123631 --model training/data/model2/best.pt --worth 0.6
+```
+
+`staves_of.js` finds the staves as the app does. Its staves are ruled in red, by hand, unevenly (a staff's spaces
+can differ by half), and the words and the notes are black: the app looks for the lines in the page's red ink alone
+(`CGStaves.ruling`) and takes them as they come, in fours set apart by the words. `labels` pairs the staves with
+Cantus's lines in order, each with the line that fits what the model reads there best, leaving out a staff the finder
+missed or a line on one: on 13 sample folios, 96 staves found and 54 paired, the pairs looked at by eye right. As the
+model learns the hand, it reads better and more pair.
+
 ## Still to come
 
 - A second engraver for variety: Gregorio itself, and exsurge.

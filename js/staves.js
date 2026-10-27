@@ -94,11 +94,11 @@
   // A region's darkness against its paper, for the searches below: each pixel by how much darker it is than the
   // paper (the median grey); lighter counts against, and very dark counts no more than middling, so notes don't
   // swamp faint lines. dark is W × H, from the region's top left. Null if the region has no ink to speak of.
-  function darkness(gray, w, x0, y0, x1, y1) {
+  function darkness(gray, w, x0, y0, x1, y1, rare = 0.01) {
     const W = x1 - x0, H = y1 - y0, hist = new Float64Array(256);
     for (let y = y0; y < y1; y++) for (let x = x0, o = y * w + x0; x < x1; x++, o++) hist[gray[o]]++;
     const level = q => { let c = 0; for (let i = 0; i < 256; i++) { c += hist[i]; if (c >= q * W * H) return i; } return 255; };
-    const paper = level(0.5), darkest = level(0.01);
+    const paper = level(0.5), darkest = level(rare);
     if (paper - darkest < 20) return null;
     const cap = Math.max(20, (paper - darkest) / 2), dark = new Float32Array(W * H);
     for (let y = 0; y < H; y++) for (let x = 0, o = (y + y0) * w + x0; x < W; x++, o++) dark[y * W + x] = Math.max(-cap, Math.min(cap, paper - gray[o]));
@@ -149,7 +149,7 @@
   // more than middling, so notes don't swamp faint lines). Summed along rows at each small tilt, the tilt that piles
   // the darkness into the sharpest peaks is the staff's. Of the peaks that stand clear of the paper's noise, the four
   // strongest at nearly even spacing are the lines. Each runs as far as at least three of the four are drawn.
-  function fit(gray, w, h, region, { slope: around = 0, trace } = {}) {
+  function fit(gray, w, h, region, { slope: around = 0, trace, loose = false } = {}) {
     const [rx, ry, rw, rh] = region.map(Math.round);
     const x0 = Math.max(0, rx), y0 = Math.max(0, ry), x1 = Math.min(w, rx + rw), y1 = Math.min(h, ry + rh);
     const W = x1 - x0, H = y1 - y0;
@@ -206,7 +206,7 @@
       const g = (q[3].y - q[0].y) / 3;
       if (g < 3) continue;
       const spread = Math.max(...gaps.map(v => Math.abs(v - g))) / g;
-      if (spread > 0.25) continue;
+      if (spread > (loose ? 0.6 : 0.25)) continue;
       const strengths = q.map(v => v.strength);
       if (Math.min(...strengths) < Math.max(...strengths) / 3) continue;
       const score = strengths.reduce((t, v) => t + v, 0) * (1 - spread);
@@ -234,12 +234,12 @@
   // row, or a strip where the lines stop short, and the staff has ended. The points that make no difference are then
   // taken away, and if none is left between the ends (or those left bend it by less than a sixth of a space, as noise
   // can), the staff is straight and fitted again as a whole.
-  function fitStaff(gray, w, h, region, trace) {
+  function fitStaff(gray, w, h, region, trace, loose = false) {
     const [rx, ry, rw, rh] = region;
     const rx0 = Math.max(0, rx), rx1 = Math.min(w, rx + rw);
     if (rx1 - rx0 < 20) return null;
     const cw = Math.min(rx1 - rx0, Math.max((rx1 - rx0) / 3, 200)), mid = (rx0 + rx1) / 2;
-    const start = fit(gray, w, h, [mid - cw / 2, ry, cw, rh]) || fit(gray, w, h, region);
+    const start = fit(gray, w, h, [mid - cw / 2, ry, cw, rh], { loose }) || fit(gray, w, h, region, { loose });
     if (!start) return null;
     const g = start.spacing, sw = Math.max(40, 8 * g), step = sw / 2;
     const s0 = start.lines[0], cx = (s0[0] + s0[2]) / 2;
@@ -258,7 +258,7 @@
         const at = (y, xx) => y + ahead * (xx - prev.x);
         const tops = [sx0, sx1].map(xx => at(prev.ys[0], xx)), bots = [sx0, sx1].map(xx => at(prev.ys[3], xx));
         const top = Math.min(...tops) - 1.3 * g, bot = Math.max(...bots) + 1.3 * g;
-        const r = fit(gray, w, h, [sx0, top, sx1 - sx0, bot - top], { slope: ahead });
+        const r = fit(gray, w, h, [sx0, top, sx1 - sx0, bot - top], { slope: ahead, loose });
         const ok = r && Math.abs(r.spacing - g) < 0.25 * g && Math.abs(yAt(r.lines[0], x) - at(prev.ys[0], x)) < 0.6 * g;
         if (!ok) { misses.push(Math.round(x)); if (++lost >= 3) break; continue; }
         lost = 0;
@@ -287,7 +287,7 @@
       // whole stretch fitted at once is steadier than its ends carried on from strips
       lines = [0, 1, 2, 3].map(i => [lines[i][0], lines[i][1], lines[i][lines[i].length - 2], lines[i][lines[i].length - 1]]);
       const ys = lines.flatMap(l => [l[1], l[3]]);
-      const whole = fit(gray, w, h, [ends[0] - g, Math.min(...ys) - 1.5 * g, ends[1] - ends[0] + 2 * g, Math.max(...ys) - Math.min(...ys) + 3 * g], { slope: ((ys[1] - ys[0]) + (ys[7] - ys[6])) / 2 / Math.max(1, lines[0][2] - lines[0][0]) });
+      const whole = fit(gray, w, h, [ends[0] - g, Math.min(...ys) - 1.5 * g, ends[1] - ends[0] + 2 * g, Math.max(...ys) - Math.min(...ys) + 3 * g], { slope: ((ys[1] - ys[0]) + (ys[7] - ys[6])) / 2 / Math.max(1, lines[0][2] - lines[0][0]), loose });
       if (whole && Math.abs(whole.spacing - g) < 0.15 * g) return { lines: whole.lines, spacing: whole.spacing };
     }
     // bent: the ends found again along the bent lines themselves (near the binding a strip's straight fit drifts
@@ -307,10 +307,13 @@
     return atXs(lines, xs);
   }
 
-  // A page's columns of writing: [[x0, x1], …] in pixels, left to right; one, unless a gutter runs down the middle
+  // A page's columns of writing: [[x0, x1, a, b], …] in pixels, left to right (a to b where the writing runs, if it
+  // could be told); one, unless a gutter runs down the middle
   // (an empty band, a hundredth of the page wide or more, with writing on both sides of it, as a manuscript's two
-  // columns have). From each column's ink (darker than the paper; a staff's lines, however fine, count, so a staff
-  // running across is never taken for a gutter), summed down every fourth row.
+  // columns have). The page is cut into strips a hundredth of its height; for each x, the share of strips with ink
+  // (darker than the paper; a staff's lines, however fine, count, so a staff running across is never taken for a
+  // gutter) within half a hundredth of the width of it. A gutter is where few strips have ink: a big initial
+  // reaching across it fills only a few.
   function columns(gray, w, h) {
     const hist = new Float64Array(256);
     for (let i = 0; i < gray.length; i += 7) hist[gray[i]]++;
@@ -322,26 +325,39 @@
     let ya = 0, yb = h - 1;
     while (ya < h && dark(ya)) ya += 4;
     while (yb > ya && dark(yb)) yb -= 4;
-    const ink = new Float64Array(w);
-    for (let y = ya; y <= yb; y += 4) for (let x = 0, o = y * w; x < w; x++, o++) if (paper - gray[o] > cut) ink[x] += 1;
-    const k = Math.max(1, Math.round(0.005 * w)), sm = new Float64Array(w);
-    for (let x = 0; x < w; x++) { let s = 0, n = 0; for (let j = Math.max(0, x - k); j <= Math.min(w - 1, x + k); j++) { s += ink[j]; n++; } sm[x] = s / n; }
+    const k = Math.max(1, Math.round(0.005 * w)), strip = Math.max(4, Math.round(0.01 * h));
+    const sm = new Float64Array(w), ink = new Float64Array(w), cum = new Float64Array(w + 1);
+    let strips = 0;
+    for (let y0 = ya; y0 + strip <= yb + 1; y0 += strip) {
+      ink.fill(0);
+      for (let y = y0; y < y0 + strip; y += 4) for (let x = 0, o = y * w; x < w; x++, o++) if (paper - gray[o] > cut) ink[x]++;
+      for (let x = 0; x < w; x++) cum[x + 1] = cum[x] + ink[x];
+      const enough = 0.02 * Math.ceil(strip / 4) * (2 * k + 1);
+      for (let x = 0; x < w; x++) if (cum[Math.min(w, x + k + 1)] - cum[Math.max(0, x - k)] > enough) sm[x]++;
+      strips++;
+    }
     const inner = Array.from(sm.slice(Math.round(0.1 * w), Math.round(0.9 * w))).sort((a, b) => a - b);
     const typical = inner[Math.floor(0.6 * inner.length)];
     if (!(typical > 0)) return [[0, w]];
     // the emptiest stretch near the middle
     let best = null;
     for (let x = Math.round(0.3 * w); x < Math.round(0.7 * w); x++) {
-      if (sm[x] > 0.15 * typical) continue;
-      let e = x; while (e + 1 < w && sm[e + 1] <= 0.15 * typical) e++;
+      if (sm[x] > 0.35 * typical) continue;
+      let e = x; while (e + 1 < w && sm[e + 1] <= 0.35 * typical) e++;
       if (!best || e - x > best[1] - best[0]) best = [x, e];
       x = e;
     }
-    if (!best || best[1] - best[0] < 0.01 * w) return [[0, w]];
+    // (each column with where its writing runs: the first and last x where half the usual share of strips have ink)
+    const writing = (a, b) => {
+      let i = a; while (i < b - 1 && sm[i] < 0.5 * typical) i++;
+      let j = b - 1; while (j > i && sm[j] < 0.5 * typical) j--;
+      return j - i > 0.1 * (b - a) ? [a, b, i, j + 1] : [a, b];
+    };
+    if (!best || best[1] - best[0] < 0.01 * w) return [writing(0, w)];
     const mean = (a, b) => { let s = 0; for (let x = a; x < b; x++) s += sm[x]; return s / Math.max(1, b - a); };
-    if (mean(Math.round(0.1 * w), best[0]) < 0.5 * typical || mean(best[1], Math.round(0.9 * w)) < 0.5 * typical) return [[0, w]];
+    if (mean(Math.round(0.1 * w), best[0]) < 0.5 * typical || mean(best[1], Math.round(0.9 * w)) < 0.5 * typical) return [writing(0, w)];
     const mid = Math.round((best[0] + best[1]) / 2);
-    return [[0, mid], [mid, w]];
+    return [writing(0, mid), writing(mid, w)];
   }
 
   // Staves in reading order: down each column, the columns left to right. A staff is in a column with those it
@@ -369,14 +385,26 @@
   // strongest are taken first, none sharing a line or overlapping another. Each staff found is then fitted on its own
   // across the page's whole width with fitStaff(), between the staves above and below it, so its ends, tilt and bends
   // are its own. A page in two columns (columns()) is searched a column at a time.
-  function findStaves(gray, w, h, { skip = [], trace } = {}) {
+  // lines: the page's red ink alone (ruling()), if its staves are ruled in red: the lines are looked for there, where the
+  // notes and the words don't get in the way, and in the grey too. If the red finds staves (half as many as the grey
+  // or more), they are the page's: on a page ruled in red, the grey's others are rows of words, evenly set.
+  function findStaves(gray, w, h, { skip = [], lines = null, trace } = {}) {
     const cols = columns(gray, w, h);
-    if (trace) trace.columns = cols;
-    return cols.flatMap(([xa, xb]) => findIn(gray, w, h, xa, xb, skip, trace));
+    if (trace) Object.assign(trace, { columns: cols, each: cols.map(() => ({})) });
+    const found = cols.map((c, k) => findIn(gray, w, h, c, skip, trace && trace.each[k]));
+    if (lines) {
+      const red = cols.map((c, k) => findIn(lines, w, h, c, skip, trace && (trace.each[k].red = {}), true));
+      const n = a => a.reduce((t, c) => t + c.length, 0);
+      if (n(red) && n(red) >= n(found) / 2) return red.flat();
+    }
+    return found.flat();
   }
-  function findIn(gray, w, h, xa, xb, skip, trace) {
-    const cw = xb - xa, bx0 = Math.round(xa + 0.25 * cw), bx1 = Math.round(xa + 0.62 * cw);
-    const dm = darkness(gray, w, bx0, 0, bx1, h);
+  function findIn(gray, w, h, [xa, xb, ia = xa, ib = xb], skip, trace, loose = false) {
+    // (the band within where the column's writing runs; narrower in a map of hand ruling: each staff was ruled at its
+    // own tilt, and a wide band at any one tilt smears some of their lines in two)
+    const cw = xb - xa, iw = ib - ia, bx0 = Math.round(ia + (loose ? 0.35 : 0.25) * iw), bx1 = Math.round(ia + (loose ? 0.52 : 0.62) * iw);
+    // (in a map of the ruling, a column with only a staff or two has little ink)
+    const dm = darkness(gray, w, bx0, 0, bx1, h, loose ? 0.001 : 0.01);
     if (!dm) return [];
     const { dark, W, H } = dm;
     const noise = Math.max(1, (dm.level(0.75) - dm.paper) / 0.674) * Math.sqrt(W);
@@ -409,24 +437,45 @@
       for (let j = r - 1; j <= r + 1; j++) { const v = Math.max(0, p[j] - base); sum += v; at += v * j; }
       peaks.push({ y: at / sum - pad, strength: sum });
     }
-    // fours evenly spaced: from each line, the next three at the spacing its neighbour sets (within a quarter)
+    // (and in such a map a line still smeared in two, twin peaks closer than a fifth of the usual gap, made one)
+    if (loose && peaks.length > 2) {
+      const gaps = peaks.slice(1).map((v, i) => v.y - peaks[i].y).sort((a, b) => a - b), usual = gaps[gaps.length >> 1];
+      for (let i = peaks.length - 1; i > 0; i--) if (peaks[i].y - peaks[i - 1].y < 0.2 * usual) {
+        const a = peaks[i - 1], b = peaks[i], t = a.strength + b.strength;
+        peaks.splice(i - 1, 2, { y: (a.y * a.strength + b.y * b.strength) / t, strength: t });
+      }
+    }
+    // fours evenly spaced: from each line, the next three at the spacing set so far (each within a quarter of it)
     const cands = [];
     for (let i = 0; i < peaks.length; i++) for (let k = i + 1; k <= i + 4 && k < peaks.length; k++) {
       const g = peaks[k].y - peaks[i].y;
       if (g < 3) continue;
       const q = [peaks[i], peaks[k]];
-      for (const m of [2, 3]) {
+      // (in a map of the ruling alone, the next three lines whatever their spaces, within reason: nothing but staff
+      // lines is there, and a hand-ruled staff's spaces can differ by half)
+      if (loose) {
+        if (k !== i + 1 || i + 3 >= peaks.length) continue;
+        q.push(peaks[i + 2], peaks[i + 3]);
+        const gaps = [1, 2, 3].map(j => q[j].y - q[j - 1].y), mean = (q[3].y - q[0].y) / 3;
+        if (Math.min(...gaps) < 0.4 * mean || Math.max(...gaps) > 1.6 * mean) continue;
+        // set apart from the lines about it (by the words between the staves)
+        const before = i ? q[0].y - peaks[i - 1].y : Infinity, after = i + 4 < peaks.length ? peaks[i + 4].y - q[3].y : Infinity;
+        if (Math.min(before, after) < 1.2 * Math.max(...gaps)) continue;
+      }
+      for (let m = 2; m <= 3 && !loose; m++) {
+        // (from the line before, at the spacing so far: a hand-ruled staff's spaces differ a little)
+        const last = q[q.length - 1].y, gap = (last - q[0].y) / (m - 1);
         let hit = null, off = Infinity;
-        for (let j = k + 1; j < peaks.length && peaks[j].y < peaks[i].y + (m + 0.5) * g; j++) {
-          const d = Math.abs(peaks[j].y - (peaks[i].y + m * g));
-          if (d < 0.25 * g && d < off) { off = d; hit = peaks[j]; }
+        for (let j = k + 1; j < peaks.length && peaks[j].y < last + 1.5 * gap; j++) {
+          const d = Math.abs(peaks[j].y - (last + gap));
+          if (d < 0.25 * gap && d < off) { off = d; hit = peaks[j]; }
         }
         if (!hit) break;
         q.push(hit);
       }
       if (q.length < 4) continue;
       const st = q.map(v => v.strength), weakest = Math.min(...st);
-      if (weakest < Math.max(...st) / 3) continue;
+      if (weakest < Math.max(...st) / (loose ? 5 : 3)) continue;
       // a staff's lines are neighbours: no line between them nearly as strong as theirs (fours made of the lines of
       // several staves have whole staves between; the notes in a staff's spaces make weaker rows)
       if (peaks.some(v => v.y > q[0].y && v.y < q[3].y && !q.includes(v) && v.strength >= 0.8 * weakest)) continue;
@@ -451,7 +500,7 @@
     // spacing far from the rest's (text, or a stray four): dropped
     const gs = found.map(f => f.g).sort((a, b) => a - b), mid = gs[gs.length >> 1];
     const staves = found.filter(f => Math.abs(f.g - mid) < 0.3 * mid).sort((a, b) => a.q[0].y - b.q[0].y);
-    if (trace) Object.assign(trace, { slope, peaks: peaks.length, candidates: cands.length, found: found.length, kept: staves.length, spacing: mid });
+    if (trace) Object.assign(trace, { list: peaks.map(v => [Math.round(v.y), Math.round(v.strength)]), cands: cands.map(c => c.q.map(v => Math.round(v.y))), slope, peaks: peaks.length, candidates: cands.length, found: found.length, kept: staves.length, spacing: mid });
     // each fitted on its own, between its neighbours, across the page; those already marked left alone
     const out = [];
     staves.forEach((f, k) => {
@@ -461,7 +510,7 @@
       const y0 = Math.max(above, top - 2.5 * g), y1 = Math.min(below, bot + 2.5 * g);
       const midY = (top + bot) / 2;
       if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && (bx0 + bx1) / 2 > b[0] && (bx0 + bx1) / 2 < b[0] + b[2])) return;
-      const r = fitStaff(gray, w, h, [xa, y0 - Math.abs(slope) * cw / 2, cw, y1 - y0 + Math.abs(slope) * cw]);
+      const r = fitStaff(gray, w, h, [xa, y0 - Math.abs(slope) * cw / 2, cw, y1 - y0 + Math.abs(slope) * cw], undefined, loose);
       if (r && Math.abs(r.spacing - g) < 0.3 * g) out.push(r);
     });
     return out;
@@ -486,6 +535,21 @@
       first = false;
     }
     return out;
+  }
+
+  // A manuscript's red staff lines: from RGBA pixels, the red ink alone, as grey (0 where it is reddest, 255 where there
+  // is none: black ink and the paper alike). null if there is too little red ink for a page of staves (a few red
+  // initials don't make one), or so much that it is the paper.
+  function ruling(rgba) {
+    const n = rgba.length / 4, out = new Uint8Array(n);
+    let red = 0;
+    for (let i = 0, j = 0; j < n; i += 4, j++) {
+      const r = rgba[i], m = Math.max(rgba[i + 1], rgba[i + 2]);
+      // (reddish paper, and dark ink, are less red than this)
+      const v = r - m - 30;
+      if (v > 0 && r > 90) { out[j] = Math.max(0, 255 - 4 * v); red++; } else out[j] = 255;
+    }
+    return red > 0.004 * n && red < 0.2 * n ? out : null;
   }
 
   // RGBA pixels (from a canvas) to grey, one byte a pixel
@@ -573,7 +637,7 @@
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, columns, order, beginnings, fitStaff, fit, grey };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, columns, order, beginnings, fitStaff, fit, grey, ruling };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
