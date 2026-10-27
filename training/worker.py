@@ -86,9 +86,14 @@ def unpack(data, names):
 
 
 def push(jobs, message):
-    git(jobs, 'add', '-A', 'results')
-    if not git(jobs, 'status', '--porcelain', quiet=True).stdout.strip(): return
-    git(jobs, 'commit', '--quiet', '-m', message)
+    """The results so far, committed and pushed; a failure only said (a job never stops for it)."""
+    try:
+        git(jobs, 'add', '-A', 'results')
+        # (what is staged, not what status shows: on Windows a file can look changed and stage as nothing)
+        if not git(jobs, 'diff', '--cached', '--quiet', check=False, quiet=True).returncode: return
+        git(jobs, 'commit', '--quiet', '-m', message)
+    except RuntimeError as e:
+        say(f'(could not commit the results: {e})'); return
     for k in range(4):
         if not git(jobs, 'push', '--quiet', check=False).returncode: return
         git(jobs, 'pull', '--rebase', '--quiet', check=False)
