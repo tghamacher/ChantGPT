@@ -1,0 +1,253 @@
+"""Manuscripts from the Cantus Database (https://cantusdatabase.org): their chants' melodies, as Cantus transcribes
+them in Volpiano, page by page and line by line; and their pages, from the library's IIIF server.
+
+    python -I training/cantus.py fetch --source 123631                  # the chants (CSV) -> training/data/cantus/
+    python -I training/cantus.py images --source 123631 [--folios 011r-020v] [--wait 2]
+                                                                        # the pages -> training/data/scans/123631/
+    python -I training/cantus.py lines --source 123631 [--folio 015r]   # what each page's lines hold
+
+Volpiano (Cantus's "Volpiano protocols"): 1 the clef; pitches 9 a b … s from the G at the bottom of the gamut up
+(no i), upper case for a liquescent; i, y, z a flat before the B it stands by (I, Y, Z a natural); hyphens between
+neumes (one), syllables (two), words (three); 3 and 4 Cantus's barlines (editorial, not the manuscript's); 7 the end of
+a line in the manuscript, 77 of a page, 777 of a column; 6------6 pitches that can't be read. Cantus gives pitch,
+not the staff: where a line's notes sit depends on its clef, which only the page shows (gabc() takes it).
+"""
+import argparse, csv, io, json, os, re, sys, time, urllib.request
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SITE = 'https://cantusdatabase.org'
+AGENT = 'ChantGPT (chant recognition research; https://github.com/tghamacher/ChantGPT)'
+PITCHES = '9abcdefghjklmnopqrs'                  # steps 0 (the gamut's G) to 18
+FLATS = {'y': 'b', 'i': 'j', 'z': 'q'}           # a flat (natural, upper case) and the B it is for
+
+
+def get(url, tries=4):
+    for k in range(tries):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': AGENT}), timeout=120) as r:
+                return r.read()
+        except Exception as e:
+            if k == tries - 1: raise
+            print(f'  ({e}; again in {5 * 2 ** k} s)', file=sys.stderr); time.sleep(5 * 2 ** k)
+
+
+def csv_path(source): return os.path.join(HERE, 'data', 'cantus', f'{source}.csv')
+
+
+def chants(source):
+    """The source's chants, in its order: Cantus's CSV, as dicts (folio, sequence, incipit, genre, mode, volpiano,
+    fulltext_ms, image_link, …)."""
+    with open(csv_path(source), encoding='utf-8') as f: return list(csv.DictReader(f))
+
+
+def fetch(o):
+    os.makedirs(os.path.dirname(csv_path(o.source)), exist_ok=True)
+    data = get(f'{SITE}/source/{o.source}/csv/')
+    with open(csv_path(o.source), 'wb') as f: f.write(data)
+    rows = chants(o.source)
+    print(f'{len(rows)} chants, {sum(has_melody(r) for r in rows)} with their melody -> {csv_path(o.source)}')
+
+
+def has_melody(r): return len(re.sub(r'[^a-sA-S9]', '', r['volpiano'])) > 2
+
+
+# ---------------------------------------------------------------- pages: IIIF
+def iiif(link):
+    """A Cantus image link as (IIIF image URL of a page n, n): Gallica (…/ark:/12148/<id>/f<n>.item) and the
+    Bayerische Staatsbibliothek (digitale-sammlungen.de/…/view/<id>?page=<n>)."""
+    m = re.search(r'gallica\.bnf\.fr/ark:/12148/(\w+)/f(\d+)', link)
+    if m: return (lambda n, i=m.group(1): f'https://gallica.bnf.fr/iiif/ark:/12148/{i}/f{n}/full/full/0/native.jpg'), int(m.group(2))
+    m = re.search(r'digitale-sammlungen\.de/\w+/view/(bsb\d+)\?page=(\d+)', link)
+    if m: return (lambda n, i=m.group(1): f'https://api.digitale-sammlungen.de/iiif/image/v2/{i}_{n:05d}/full/full/0/default.jpg'), int(m.group(2))
+    return None, None
+
+
+def folio_key(f):
+    m = re.match(r'(\d+)([rv]?)', f)
+    return (int(m.group(1)), m.group(2)) if m else (10 ** 6, f)
+
+
+def page_images(source):
+    """Each folio (side) with chants, and its image URL: from the chants' links; a page the last chant on a folio
+    runs onto (77) is the next image."""
+    out = {}
+    rows = chants(source)
+    folios = sorted({r['folio'] for r in rows if r['folio']}, key=folio_key)
+    for r in rows:
+        url, n = iiif(r['image_link'])
+        if url and r['folio'] not in out: out[r['folio']] = (url, n)
+    for f, g in zip(folios, folios[1:]):                  # (a folio no chant begins on: the one before's next image)
+        if f in out and g not in out: out[g] = (out[f][0], out[f][1] + 1)
+    return {f: url(n) for f, (url, n) in sorted(out.items(), key=lambda v: folio_key(v[0]))}
+
+
+def images(o):
+    out = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
+    os.makedirs(out, exist_ok=True)
+    pages = page_images(o.source)
+    lo, hi = (o.folios.split('-') + [None])[:2] if o.folios else (None, None)
+    hi = hi or lo
+    todo = [f for f in pages if (not lo or folio_key(lo) <= folio_key(f) <= folio_key(hi))]
+    for k, f in enumerate(todo):
+        path = os.path.join(out, f + '.jpg')
+        if os.path.exists(path): continue
+        data = get(pages[f])
+        if not data.startswith(b'\xff\xd8'): raise SystemExit(f'{f}: not an image from {pages[f]} (the library refused?)')
+        with open(path, 'wb') as fh: fh.write(data)
+        print(f'{k + 1}/{len(todo)} {f} ({len(data) // 1024} KB)', flush=True)
+        time.sleep(o.wait)
+    print(f'{len(todo)} pages -> {out}')
+
+
+# ---------------------------------------------------------------- melodies: Volpiano
+def parse(v):
+    """A Volpiano string as events: ('note', step, liquescent), ('flat' | 'natural', step), ('gap', hyphens), ('bar',),
+    ('break', 7 | 77 | 777), ('lost',) (pitches not legible)."""
+    out, i = [], 0
+    while i < len(v):
+        c = v[i]
+        if c == '-':
+            j = i
+            while j < len(v) and v[j] == '-': j += 1
+            out.append(('gap', j - i)); i = j; continue
+        if c == '7':
+            j = i
+            while j < len(v) and v[j] == '7': j += 1
+            out.append(('break', int(v[i:j][:3]))); i = j; continue
+        if c == '6':
+            j = v.find('6', i + 1)
+            out.append(('lost',)); i = (j + 1) if j > 0 else len(v); continue
+        if c in '34': out.append(('bar',))
+        elif c.lower() in FLATS: out.append(('flat' if c.islower() else 'natural', PITCHES.index(FLATS[c.lower()])))
+        elif c.lower() in PITCHES and c != '1': out.append(('note', PITCHES.index(c.lower()), c.isupper()))
+        i += 1
+    return out
+
+
+def syllables(events):
+    """Events as syllables, each a list of neumes, each a list of notes and accidentals ((kind, step, liquescent)):
+    split at two or more hyphens (a syllable), one (a neume); a bar and a break kept as markers between syllables."""
+    out, syl, neume = [], [], []
+    def end_neume():
+        nonlocal neume
+        if neume: syl.append(neume); neume = []
+    def end_syl():
+        nonlocal syl
+        end_neume()
+        if syl: out.append(syl); syl = []
+    for e in events:
+        if e[0] == 'gap':
+            end_neume() if e[1] == 1 else end_syl()
+        elif e[0] in ('bar', 'break', 'lost'):
+            end_syl(); out.append(e)
+        else:
+            neume.append(e if e[0] == 'note' else (e[0], e[1], False))
+    end_syl()
+    return out
+
+
+def lines(source):
+    """Each page's lines, as the manuscript breaks them: {folio: {'lines': [[syllable, …], …], 'complete': every
+    chant on it has its melody, 'chants': [ids]}}. A chant that doesn't end a line runs on in the next one's line;
+    after 77 it goes on on the next folio; 777 begins a column (a line too)."""
+    rows = chants(source)
+    folios = sorted({r['folio'] for r in rows if r['folio']}, key=folio_key)
+    after = dict(zip(folios, folios[1:]))
+    pages = {f: {'lines': [[]], 'complete': True, 'chants': [], 'columns': [0]} for f in folios}
+    for r in rows:
+        if not r['folio']: continue
+        page = pages[r['folio']]
+        if not has_melody(r):
+            page['complete'] = False; continue
+        page['chants'].append(r.get('node_id') or r['incipit'])
+        f = r['folio']
+        for s in syllables(parse(r['volpiano'])):
+            if s[0] == 'break':
+                if s[1] == 77:
+                    f = after.get(f)
+                    if not f: break
+                    page = pages[f]
+                    if page['lines'][-1]: page['lines'].append([])
+                else:
+                    page['lines'].append([])
+                    if s[1] == 777: page['columns'].append(len(page['lines']) - 1)
+            elif s[0] in ('bar', 'lost'):
+                if s[0] == 'lost': page['complete'] = False
+            else:
+                page['lines'][-1].append(s)
+    for p in pages.values():
+        while p['lines'] and not p['lines'][-1]: p['lines'].pop()
+    return pages
+
+
+# ---------------------------------------------------------------- melodies as GABC, on a staff with its clef
+def shift_for(steps, clef):
+    """How many steps up the staff's positions (GABC a = 0 … m = 12) are from Volpiano's: the clef's note (C for a
+    c clef, F for an f clef) on its line, at the octave that keeps the most notes on the staff (then the most central)."""
+    line = int(clef[-1])
+    at = 3 + 2 * (line - 1)                               # the line's position: d, f, h, j, l
+    best = None
+    for base in ((3, 10, 17) if clef[0] == 'c' else (6, 13)):
+        sh = at - base
+        on = sum(0 <= s + sh <= 12 for s in steps)
+        mid = -abs(sum(s + sh for s in steps) / max(1, len(steps)) - 6)
+        if best is None or (on, mid) > best[0]: best = ((on, mid), sh)
+    return best[1]
+
+
+def gabc(line, clef, custos=None):
+    """A line's syllables as GABC groups (one for each syllable; / between neumes), the clef first and the custos (the
+    next line's first note) last; or None when a note falls off the staff."""
+    steps = [n[1] for s in line for neume in s for n in neume]
+    if not steps: return None
+    sh = shift_for(steps + ([custos] if custos is not None else []), clef)
+    pos = lambda st: 'abcdefghijklm'[st + sh] if 0 <= st + sh <= 12 else None
+    items = [clef]
+    for s in line:
+        g = []
+        for neume in s:
+            t = ''
+            for kind, st, liq in neume:
+                p = pos(st)
+                if p is None: return None
+                t += p + ('x' if kind == 'flat' else 'y' if kind == 'natural' else '~' if liq else '')
+            g.append(t)
+        items.append('/'.join(g))
+    if custos is not None:
+        p = pos(custos)
+        if p: items.append(p + '+')
+    return items
+
+
+def first_step(line):
+    for s in line:
+        for neume in s:
+            for kind, st, _ in neume:
+                if kind == 'note': return st
+    return None
+
+
+def show(o):
+    pages = lines(o.source)
+    shown = [o.folio] if o.folio else list(pages)[:3]
+    for f in shown:
+        p = pages[f]
+        print(f'{f}: {len(p["lines"])} lines ({"every chant with its melody" if p["complete"] else "not every chant"}); columns begin at {p["columns"]}')
+        for k, l in enumerate(p['lines']):
+            nxt = first_step(p['lines'][k + 1]) if k + 1 < len(p['lines']) else None
+            print(f'  {k + 1:2d}', ' '.join(gabc(l, 'c4', nxt) or ['(off a c4 staff)']))
+    if not o.folio:
+        n = sum(p['complete'] for p in pages.values())
+        print(f'{len(pages)} folios, {n} with every chant\'s melody; {sum(len(p["lines"]) for p in pages.values() if p["complete"])} lines on those')
+
+
+if __name__ == '__main__':
+    a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    a.add_argument('what', choices=['fetch', 'images', 'lines'])
+    a.add_argument('--source', required=True, help='the Cantus source id (Paris lat. 15181: 123631)')
+    a.add_argument('--folios', help='images: only these, e.g. 011r-020v')
+    a.add_argument('--folio', help='lines: this one')
+    a.add_argument('--out')
+    a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
+    o = a.parse_args()
+    {'fetch': fetch, 'images': images, 'lines': show}[o.what](o)
