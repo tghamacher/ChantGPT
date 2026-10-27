@@ -1,7 +1,7 @@
 // Opens a source, a PDF or a set of page images, and draws one page at a time on a canvas. Everything stays in the
 // browser: pdf.js (vendored in vendor/pdfjs) reads the PDF here, and nothing is sent anywhere.
-// A source: { name, type: 'pdf' | 'images', count, sizes: [[w, h], ...], render(index, canvas, scale), pixels(index),
-// close() }. Sizes are in the page's own units, which the document's boxes use too: PDF points (1/72 inch) or image
+// A source: { name, type: 'pdf' | 'images' | 'iiif', count, sizes: [[w, h], ...], render(index, canvas, scale),
+// pixels(index), close() }; a IIIF one also its url (the manifest's). Sizes are in the page's own units, which the document's boxes use too: PDF points (1/72 inch) or image
 // pixels. pixels() gives a page in grey for finding things in it: { gray, w, h, scale }, scale being pixels per unit.
 (function (global) {
   'use strict';
@@ -108,6 +108,60 @@
     };
   }
 
+  // A manuscript a library puts online with IIIF (Gallica, the Bayerische Staatsbibliothek, e-codices …): its manifest
+  // gives each page (canvas) its label and size, and an image service; a page's image is fetched when it is wanted,
+  // at the size wanted, straight from the library (which must allow it: most IIIF servers do).
+  async function openIiif(url, progress = () => {}) {
+    const r = await fetch(url).catch(() => null);
+    if (!r || !r.ok) throw new Error(`Couldn't load the IIIF manifest ${url}${r ? ` (${r.status})` : ' (the library may not allow it from here)'}.`);
+    const m = await r.json();
+    const text = v => typeof v === 'string' ? v : Array.isArray(v) ? text(v[0]) : v && typeof v === 'object' ? text(v['@value'] || v.none || v.en || Object.values(v)[0]) : '';
+    const serviceOf = s => { s = Array.isArray(s) ? s[0] : s; return s && (s['@id'] || s.id); };
+    const canvases = m.sequences ? m.sequences[0].canvases : (m.items || []);
+    const pages = canvases.map((c, i) => {
+      const body = c.images ? c.images[0].resource : c.items && c.items[0].items[0].body;
+      const service = body && serviceOf(body.service);
+      return { label: text(c.label) || String(i + 1), w: c.width, h: c.height, service: service && service.replace(/\/$/, ''), image: body && (body['@id'] || body.id), v3: !m.sequences };
+    }).filter(p => p.w && p.h && (p.service || p.image));
+    if (!pages.length) throw new Error('That manifest has no pages with images.');
+    progress(pages.length, pages.length);
+    const cache = new Map();                    // the last few images fetched: "page width" -> bitmap
+    async function image(i, width) {
+      const p = pages[i];
+      width = Math.min(p.w, Math.ceil(width / 256) * 256);
+      const key = `${i} ${width}`;
+      if (!cache.has(key)) {
+        const src = p.service ? `${p.service}/full/${width === p.w ? (p.v3 ? 'max' : 'full') : width + ','}/0/default.jpg` : p.image;
+        cache.set(key, (async () => {
+          const res = await fetch(src);
+          if (!res.ok) throw new Error(`Couldn't load page ${p.label} from the library (${res.status}).`);
+          return createImageBitmap(await res.blob());
+        })());
+        cache.get(key).catch(() => cache.delete(key));
+        while (cache.size > 6) { const [k, v] = cache.entries().next().value; cache.delete(k); v.then(b => b.close(), () => {}); }
+      }
+      return cache.get(key);
+    }
+    return {
+      name: text(m.label) || url, type: 'iiif', url, count: pages.length, names: pages.map(p => p.label),
+      sizes: pages.map(p => [p.w, p.h]),
+      async render(i, canvas, scale) {
+        const b = await image(i, pages[i].w * scale);
+        canvas.width = Math.round(pages[i].w * scale); canvas.height = Math.round(pages[i].h * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(b, 0, 0, canvas.width, canvas.height);
+        return true;
+      },
+      async pixels(i) {
+        const p = pages[i], b = await image(i, p.w * Math.min(1, Math.sqrt(ANALYSIS_PIXELS / (p.w * p.h))));
+        const g = await greyOf(b.width, b.height, (c, ctx) => ctx.drawImage(b, 0, 0));
+        return Object.assign(g, { scale: b.width / p.w });
+      },
+      close() { cache.forEach(v => v.then(b => b.close(), () => {})); cache.clear(); }
+    };
+  }
+
   // files at addresses (for links like ?source=... and for the tests)
   async function fetchFiles(urls) {
     return Promise.all(urls.map(async u => {
@@ -118,5 +172,5 @@
     }));
   }
 
-  global.CGViewer = { open, fetchFiles, isPdf, isImage };
+  global.CGViewer = { open, openIiif, fetchFiles, isPdf, isImage };
 })(window);

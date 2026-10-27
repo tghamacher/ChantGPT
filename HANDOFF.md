@@ -211,7 +211,11 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
     then once more with only the real staves it agreed with (`labels-clean.jsonl`, 1,817 of 2,253), then 4 passes on
     the user's RX 6700 XT through DirectML (about 2 minutes a pass; 13 on the CPUs here). On 180 clean Graduale
     staves from pages it never learnt from: 7.1% of notes wrong (8.0% of tokens); synthetic: 5.4%. (Flattering: the
-    model itself chose which labels count as clean.) More passes no longer help: the real error has levelled off.
+    model itself chose which labels count as clean.) More passes, and a model 1.5 times wider trained from scratch
+    for 30 passes on the user's GPU (4.5% synthetic, 7.3% real), no longer helped: the real error was the labels'.
+  - `recognizer.py rebreak`: the real labels' line breaks moved to where the model reads each neume (align.js put a
+    neume or two on the wrong staff on about half the staves); then `clean` on those: `labels-rebroken-clean.jsonl`
+    (1,868 staves). By them the same model reads 2.4% of the notes wrong on 190 held-out staves (was 7.1%).
   - Training on the user's PC: `training/README.md` section 5 (DirectML; the staves and checkpoint on the branch
     `training-data`; the user's clone is `D:\ChantGPT\changpt-repo`).
   - Training here is often cut short when the container restarts: run a pass at a time (`--epochs 1 --resume`).

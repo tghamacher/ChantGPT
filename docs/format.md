@@ -47,8 +47,8 @@ is how training data and tests will be made.
 **Document**
 
 - `format`: always `"chantgpt"`; `version`: `1`.
-- `source`: the file's `name`, its `type` (`"pdf"` or `"images"`), and the number of `pages`. The file itself is not
-  kept in the document.
+- `source`: the file's `name`, its `type` (`"pdf"`, `"images"`, or `"iiif"` for a manuscript a library puts online,
+  with its manifest's `url`), and the number of `pages`. The file itself is not kept in the document.
 - `pages`: one for each page of the source, in order.
 - `chants`: the pieces found in the source. Each has GABC `headers` (`name`, `mode`, `office-part` and so on, as
   GregoBase uses them) and the `staves` it runs over, by id, in order. A chant can run over several pages. A chant

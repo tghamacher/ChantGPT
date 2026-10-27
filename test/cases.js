@@ -786,6 +786,23 @@
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },
+    { name: 'app: a manuscript online (IIIF): its pages from the manifest, labelled, drawn and searched for staves', browser: true, unit: async app => {
+      const { w } = await app();
+      const bad = [];
+      if (!(await w.CGApp.openIiif('test/pages/iiif.json'))) return ['Not opened: ' + w.document.getElementById('status').textContent];
+      const src = w.CGApp.state.src, doc = w.CGApp.state.doc;
+      bad.push(...same('pages', [src.type, src.count, src.names, doc.source.type, /test\/pages\/iiif\.json$/.test(doc.source.url)], ['iiif', 2, ['1r', '1v'], 'iiif', true]));
+      bad.push(...same('sizes (the canvases\')', doc.pages.map(p => p.size), [[1240, 1754], [2480, 3508]]));
+      // the second canvas twice the image's size: its pixels scaled to it
+      const px = await src.pixels(1);
+      bad.push(...same('pixels per unit on page 2', [px.w, Math.round(px.scale * 100) / 100], [1240, 0.5]));
+      await w.CGApp.show(0);
+      await w.CGEditor.findHere();
+      const truth = await (await w.fetch('test/pages/synth.json')).json();
+      bad.push(...same('staves found on page 1', doc.pages[0].staves.length, truth.doc.pages[0].staves.length));
+      bad.push(...same('checks', w.CGChant.check(doc), []));
+      return bad;
+    } },
     { name: 'app: the recognizer: a synthetic page\'s staves read, onto empty staves and against the chant placed on them', browser: true, unit: async app => {
       const { w } = await app('test/pages/synth.jpg');
       if (!(await w.fetch('models/chant.json')).ok) return [];   // (no model in this copy)

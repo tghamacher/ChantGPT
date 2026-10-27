@@ -125,8 +125,24 @@ Exported to ONNX, it runs in the app with ONNX Runtime Web (`vendor/onnxruntime`
 
 Python packages: `pip install torch numpy pillow onnx` (for an AMD card, torch from the ROCm index).
 
-The model in `models/` reads about 7% of the notes wrong on Graduale staves it never learnt from (by the labels it
-agrees with; `recognizer.py clean` writes those), and about 5% on synthetic ones.
+The real staves' labels are not checked by hand, and two things go wrong in them; both are mended with a model:
+
+```
+python -I training/recognizer.py rebreak --model training/data/model2/best.pt --data training/data/real
+python -I training/recognizer.py clean --model training/data/model2/best.pt --data training/data/real --real-labels labels-rebroken.jsonl
+```
+
+- `rebreak`: align.js can break a chant's lines a neume or two off, so that a staff's label lacks what it ends with
+  and the next one's has it extra. Each chant's neumes are lined up with what the model reads along all its staves,
+  and go to the staff they're read on (the GABC itself unchanged); a custos becomes the next staff's first note.
+  Writes `labels-rebroken.jsonl`. On the Graduale it moved neumes on 989 of 2,150 staves.
+- `clean`: of those, the staves the model reads with fewer than half their notes wrong (the rest are mostly another
+  version of the chant than the page's): `labels-rebroken-clean.jsonl`, 1,868 of 2,211.
+
+By these labels the model in `models/` reads 2.4% of the notes wrong on Graduale staves it never learnt from (190 of
+them; flattering, as the same model mended the labels, though it only moved whole neumes from staff to staff). By the
+old breaks it was 7.1%: most of that was the labels'. What it still gets wrong: mostly whether glyphs are joined or
+spaced (`/`), a quilisma read as a plain note, a bar's kind. On synthetic staves, about 5%.
 
 ## 5. Training on your own GPU (Windows, an AMD card)
 

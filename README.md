@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.12.0** · a working title
+**Version 0.13.0** · a working title
 
 ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -12,7 +12,9 @@ Everything runs in your browser. Your scans are never uploaded.
 
 These are the first steps. You can:
 
-- open a PDF of a chant book, or photographs or scans of its pages (JPEG, PNG, WebP);
+- open a PDF of a chant book, or photographs or scans of its pages (JPEG, PNG, WebP), or a manuscript a library
+  puts online with IIIF (Gallica, the Bayerische Staatsbibliothek, e-codices …): give its manifest's address, and the
+  pages come from the library as you turn to them;
 - page through it and zoom;
 - find its staves: on a page, or on every page of a book, ChantGPT finds each staff's four lines in the ink, tilt and
   all, and bent where the page couldn't be scanned flat. Or drag a box around a staff to mark it yourself. If a line

@@ -10,7 +10,7 @@
   // dirty: changed since it was last saved
   // book: a book's index from GregoBase (made by training/gregobase.py book), if one is open
   const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false, book: null };
-  window.CGApp = { state, open, show, save };
+  window.CGApp = { state, open, openIiif, show, save };
 
   // ---------------------------------------------------------------- status
   function say(msg, err) {
@@ -31,33 +31,46 @@
     if (books.length) { if (!(await openBook(books[0]))) return false; if (!files.length) { if (state.src) await show(state.page); return true; } }
     const docs = files.filter(isDoc), scans = files.filter(f => !isDoc(f));
     if (docs.length > 1) { say('Open one document at a time.', true); return false; }
-    if (scans.length) {
-      if (state.dirty && !confirm('The staves you have marked on this scan aren\'t saved. Open another anyway?')) return false;
-      say('Opening …');
-      let src;
-      try { src = await V.open(scans, (done, total) => say(`Reading page ${done} of ${total} …`)); }
-      catch (e) { say(e.message || String(e), true); return false; }
-      if (state.src) state.src.close();
-      state.src = src;
-      pixelCache = null;
-      state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes });
-      if (state.book) state.doc.book = bookOf(state.book);
-      state.page = 0;
-      state.dirty = false;
-      E.reset();
-      say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
-      $('pageCount').textContent = src.count;
-      $('pageNo').max = src.count;
-      for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'docGroup']) $(id).hidden = false;
-      $('empty').hidden = true;
-      $('page').hidden = false;
-    }
+    if (scans.length && !(await useScan(progress => V.open(scans, progress)))) return false;
     if (docs.length) {
       if (!state.src) { say('Open the scan first, then its document (or choose both together).', true); return false; }
       if (!scans.length && state.dirty && !confirm('Your changes to this document aren\'t saved. Open the other one anyway?')) return false;
       if (!(await openDoc(docs[0]))) return false;
     }
     await show(docs.length ? state.page : 0);
+    return true;
+  }
+
+  // a manuscript online: its IIIF manifest's address
+  async function openIiif(url) {
+    try { url = new URL(url.trim(), document.baseURI).href; } catch (e) { url = ''; }
+    if (!/^https?:\/\//.test(url)) { say('Give the address of a IIIF manifest (https://…/manifest.json).', true); return false; }
+    if (!(await useScan(progress => V.openIiif(url, progress)))) return false;
+    await show(0);
+    return true;
+  }
+
+  // a scan to work on (load(progress) opens it): a new, empty document for it
+  async function useScan(load) {
+    if (state.dirty && !confirm('The staves you have marked on this scan aren\'t saved. Open another anyway?')) return false;
+    say('Opening …');
+    let src;
+    try { src = await load((done, total) => say(`Reading page ${done} of ${total} …`)); }
+    catch (e) { say(e.message || String(e), true); return false; }
+    if (state.src) state.src.close();
+    state.src = src;
+    pixelCache = null;
+    state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes, url: src.url });
+    if (state.book) state.doc.book = bookOf(state.book);
+    state.page = 0;
+    state.dirty = false;
+    E.reset();
+    say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
+    $('pageCount').textContent = src.count;
+    $('pageNo').max = src.count;
+    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'docGroup']) $(id).hidden = false;
+    $('empty').hidden = true;
+    $('page').hidden = false;
     return true;
   }
 
@@ -182,6 +195,7 @@
 
   // ---------------------------------------------------------------- controls
   E.init({ state, svg: $('overlay'), say, pixels, show, changed: () => { state.dirty = true; } });
+  $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
   $('refit').addEventListener('click', () => E.refit());
   $('findStaves').addEventListener('click', () => E.findHere());
   $('findEverywhere').addEventListener('click', () => E.findEverywhere());
@@ -295,6 +309,8 @@
   });
 
   // a link like index.html?source=scans/p1.png&source=scans/p2.png opens those files
-  const urls = new URLSearchParams(location.search).getAll('source');
+  // (and ?iiif=<manifest> a manuscript online)
+  const urls = new URLSearchParams(location.search).getAll('source'), iiif = new URLSearchParams(location.search).get('iiif');
   if (urls.length) V.fetchFiles(urls).then(open, e => say(e.message, true));
+  else if (iiif) { $('iiifUrl').value = iiif; openIiif(iiif); }
 })();

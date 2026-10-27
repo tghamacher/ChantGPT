@@ -176,12 +176,12 @@
   }
 
   // ---------------------------------------------------------------- documents
-  // A new, empty document for a source: its name, its type ('pdf' or 'images'), and each page's size in the units
-  // its boxes will use (PDF points for a PDF, pixels for an image).
+  // A new, empty document for a source: its name, its type ('pdf', 'images' or 'iiif', with its manifest's url), and
+  // each page's size in the units its boxes will use (PDF points for a PDF, pixels for an image).
   function newDocument(source) {
     return {
       format: FORMAT, version: VERSION,
-      source: { name: source.name || '', type: source.type || 'images', pages: source.sizes.length },
+      source: Object.assign({ name: source.name || '', type: source.type || 'images', pages: source.sizes.length }, source.url ? { url: source.url } : {}),
       pages: source.sizes.map((size, i) => ({ n: i + 1, size: [size[0], size[1]], staves: [] })),
       chants: []
     };
