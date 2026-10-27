@@ -172,7 +172,11 @@ def train(o):
     rows, test = [], []
     for d in (o.data.split(',') if o.data else []):            # (synthetic staves from more than one folder: printed, manuscript)
         a, b = split(load(d), 33); rows += a; test += b
-    real, real_test = split(load(o.real, o.real_labels), 10) if o.real else ([], [])
+    real, real_test = [], []
+    if o.real:                                                  # (more than one folder: commas, each with its labels)
+        dirs, names = o.real.split(','), o.real_labels.split(',')
+        for k, d in enumerate(dirs):
+            a, b = split(load(d, names[min(k, len(names) - 1)]), 10); real += a; real_test += b
     device = device_of(o.device)
     dml = device.type == 'privateuseone'                     # DirectML
     old = torch.load(o.resume, map_location='cpu', weights_only=True) if o.resume else None
@@ -350,9 +354,9 @@ if __name__ == '__main__':
     a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'), help='the staves (train: synthetic ones, folders separated by commas)')
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'model'))
     a.add_argument('--model')
-    a.add_argument('--real', help='real staves too (align.js), every tenth page kept out to test on')
+    a.add_argument('--real', help='real staves too (align.js, cantus.py labels), every tenth page kept out to test on; folders separated by commas')
     a.add_argument('--real-weight', type=int, default=3)
-    a.add_argument('--real-labels', default='labels.jsonl', help='the real staves\' labels (clean: those the model agrees with)')
+    a.add_argument('--real-labels', default='labels.jsonl', help='the real staves\' labels (clean: those the model agrees with); one for each --real folder, by commas, or one for all')
     a.add_argument('--held', type=int, help='test: only the pages kept out (every so many)')
     a.add_argument('--resume')
     a.add_argument('--onnx', default=os.path.join(HERE, '..', 'models', 'chant.onnx'))
