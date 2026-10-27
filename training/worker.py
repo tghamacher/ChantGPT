@@ -14,7 +14,8 @@ queue/<id>.json on that branch:
      "keep": ["training/data/model6/best.pt"]}         # files copied back with the log
 
 Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect),
-with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder.
+with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
+the clone of training-data (to share pages to).
 Before each job the repository is brought up to date with main. The results go to results/<id>/ on the jobs
 branch: log.txt (pushed every few minutes while it runs), the kept files, and done.json.
 """
@@ -36,7 +37,7 @@ def git(where, *args, check=True, quiet=False):
 def say(*a): print(time.strftime('%H:%M:%S'), *a, flush=True)
 
 
-def checked(step, out):
+def checked(step, out, data=None):
     """A step as the command to run, or an error: the script and subcommand allowed, every argument inside here."""
     if not isinstance(step, list) or len(step) < 2 or not all(isinstance(s, str) for s in step):
         raise ValueError(f'not a step: {step!r}')
@@ -46,6 +47,7 @@ def checked(step, out):
     args = []
     for s in step[2:]:
         s = s.replace('OUT', out)
+        if data and s == 'DATA': args.append(os.path.realpath(data)); continue
         if s.startswith('-'): args.append(s); continue
         if re.search(r'[\0\n]', s): raise ValueError(f'not allowed: {s!r}')
         if re.search(r'[\\/]', s) or s.startswith('.'):     # a path: it must stay inside the repository (or OUT)
@@ -107,7 +109,7 @@ def run(job, jobs, data):
             note(f'job {jid}: {job.get("about", "")}\ncode: {git(REPO, "rev-parse", "--short", "HEAD", quiet=True).stdout.strip()}')
             unpack(data, job.get('data', []))
             for k, step in enumerate(job.get('steps', [])):
-                cmd = checked(step, out)
+                cmd = checked(step, out, data)
                 note(f'\n$ {" ".join(step)}')
                 p = subprocess.Popen(cmd, cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
                 last = time.time()
