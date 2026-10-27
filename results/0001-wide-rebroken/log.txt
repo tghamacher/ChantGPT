@@ -1,0 +1,28 @@
+job 0001-wide-rebroken: A model 1.5 times wider, from scratch, 30 passes, on the synthetic staves and the Graduale's with mended line breaks; then tested on the held-out Graduale staves and exported
+code: 1f5b590
+
+$ recognizer.py train --real training/data/real --real-labels labels-rebroken-clean.jsonl --width 192 --epochs 30 --lr 2e-3 --batch 32 --out training/data/j0001
+19169 staves to learn from (1720 real, each 3 times), 423 synthetic and 194 real to test on; 0 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 17.543 (1 s)
+epoch 1 batch 100: loss 11.510 (19 s)
+epoch 1 batch 200: loss 8.690 (35 s)
+epoch 1 batch 300: loss 6.934 (52 s)
+epoch 1 batch 400: loss 5.824 (70 s)
+epoch 1 batch 500: loss 5.010 (87 s)
+epoch 1: loss 4.355; synthetic test staves: token errors 26.18%, note errors 30.90%; real: token errors 25.17%, note errors 26.19% (105 s)
+epoch 2 batch 0: loss 0.738 (105 s)
+epoch 2 batch 100: loss 0.709 (121 s)
+epoch 2 batch 200: loss 0.713 (137 s)
+epoch 2 batch 300: loss 0.634 (153 s)
+epoch 2 batch 400: loss 0.581 (169 s)
+epoch 2 batch 500: loss 0.542 (185 s)
+epoch 2: loss 0.513; synthetic test staves: token errors 9.86%, note errors 11.58%; real: token errors 6.53%, note errors 5.75% (202 s)
+epoch 3 batch 0: loss 0.310 (202 s)
+epoch 3 batch 100: loss 0.314 (218 s)
+epoch 3 batch 200: loss 0.341 (234 s)
+epoch 3 batch 300: loss 0.330 (250 s)
+epoch 3 batch 400: loss 0.326 (266 s)
+epoch 3 batch 500: loss 0.316 (282 s)
+epoch 3: loss 0.323; synthetic test staves: token errors 6.51%, note errors 7.65%; real: token errors 4.09%, note errors 3.36% (299 s)
