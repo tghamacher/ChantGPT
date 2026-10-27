@@ -1,0 +1,27 @@
+{
+ "id": "0000-lat15181-samples",
+ "about": "Paris lat. 15181: the pages the app saved (in Downloads) filed by folio; folios 11r-21r sent back to work on",
+ "steps": [
+  [
+   "cantus.py",
+   "collect",
+   "--source",
+   "123631"
+  ]
+ ],
+ "keep": [
+  "training/data/scans/123631/011r.jpg",
+  "training/data/scans/123631/012v.jpg",
+  "training/data/scans/123631/013r.jpg",
+  "training/data/scans/123631/015r.jpg",
+  "training/data/scans/123631/016r.jpg",
+  "training/data/scans/123631/016v.jpg",
+  "training/data/scans/123631/017r.jpg",
+  "training/data/scans/123631/017v.jpg",
+  "training/data/scans/123631/019r.jpg",
+  "training/data/scans/123631/019v.jpg",
+  "training/data/scans/123631/020r.jpg",
+  "training/data/scans/123631/020v.jpg",
+  "training/data/scans/123631/021r.jpg"
+ ]
+}
