@@ -1,0 +1,51 @@
+{
+ "@context": "http://iiif.io/api/presentation/2/context.json",
+ "@id": "test/pages/iiif.json",
+ "@type": "sc:Manifest",
+ "label": "A test manuscript",
+ "sequences": [
+  {
+   "@type": "sc:Sequence",
+   "canvases": [
+    {
+     "@id": "c1",
+     "@type": "sc:Canvas",
+     "label": "1r",
+     "width": 1240,
+     "height": 1754,
+     "images": [
+      {
+       "@type": "oa:Annotation",
+       "motivation": "sc:painting",
+       "resource": {
+        "@id": "test/pages/synth.jpg",
+        "@type": "dctypes:Image",
+        "format": "image/jpeg"
+       },
+       "on": "c1"
+      }
+     ]
+    },
+    {
+     "@id": "c2",
+     "@type": "sc:Canvas",
+     "label": "1v",
+     "width": 2480,
+     "height": 3508,
+     "images": [
+      {
+       "@type": "oa:Annotation",
+       "motivation": "sc:painting",
+       "resource": {
+        "@id": "test/pages/synth.jpg",
+        "@type": "dctypes:Image",
+        "format": "image/jpeg"
+       },
+       "on": "c2"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
