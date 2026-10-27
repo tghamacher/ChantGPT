@@ -307,8 +307,60 @@
     return atXs(lines, xs);
   }
 
-  // Finds every staff on a page: [{ lines, spacing }] in the image's pixels, top to bottom. skip: boxes [x, y, w, h]
-  // (in pixels) of staves already marked, left alone.
+  // A page's columns of writing: [[x0, x1], …] in pixels, left to right; one, unless a gutter runs down the middle
+  // (an empty band, a hundredth of the page wide or more, with writing on both sides of it, as a manuscript's two
+  // columns have). From each column's ink (darker than the paper; a staff's lines, however fine, count, so a staff
+  // running across is never taken for a gutter), summed down every fourth row.
+  function columns(gray, w, h) {
+    const hist = new Float64Array(256);
+    for (let i = 0; i < gray.length; i += 7) hist[gray[i]]++;
+    const total = hist.reduce((t, v) => t + v, 0);
+    const level = q => { let c = 0; for (let i = 0; i < 256; i++) { c += hist[i]; if (c >= q * total) return i; } return 255; };
+    const paper = level(0.5), cut = 30;
+    // (the rows mostly dark from the top and the bottom edge in: the ground round a photographed leaf, left out)
+    const dark = y => { let n = 0; for (let x = 0, o = y * w; x < w; x++, o++) if (paper - gray[o] > cut) n++; return n > 0.6 * w; };
+    let ya = 0, yb = h - 1;
+    while (ya < h && dark(ya)) ya += 4;
+    while (yb > ya && dark(yb)) yb -= 4;
+    const ink = new Float64Array(w);
+    for (let y = ya; y <= yb; y += 4) for (let x = 0, o = y * w; x < w; x++, o++) if (paper - gray[o] > cut) ink[x] += 1;
+    const k = Math.max(1, Math.round(0.005 * w)), sm = new Float64Array(w);
+    for (let x = 0; x < w; x++) { let s = 0, n = 0; for (let j = Math.max(0, x - k); j <= Math.min(w - 1, x + k); j++) { s += ink[j]; n++; } sm[x] = s / n; }
+    const inner = Array.from(sm.slice(Math.round(0.1 * w), Math.round(0.9 * w))).sort((a, b) => a - b);
+    const typical = inner[Math.floor(0.6 * inner.length)];
+    if (!(typical > 0)) return [[0, w]];
+    // the emptiest stretch near the middle
+    let best = null;
+    for (let x = Math.round(0.3 * w); x < Math.round(0.7 * w); x++) {
+      if (sm[x] > 0.15 * typical) continue;
+      let e = x; while (e + 1 < w && sm[e + 1] <= 0.15 * typical) e++;
+      if (!best || e - x > best[1] - best[0]) best = [x, e];
+      x = e;
+    }
+    if (!best || best[1] - best[0] < 0.01 * w) return [[0, w]];
+    const mean = (a, b) => { let s = 0; for (let x = a; x < b; x++) s += sm[x]; return s / Math.max(1, b - a); };
+    if (mean(Math.round(0.1 * w), best[0]) < 0.5 * typical || mean(best[1], Math.round(0.9 * w)) < 0.5 * typical) return [[0, w]];
+    const mid = Math.round((best[0] + best[1]) / 2);
+    return [[0, mid], [mid, w]];
+  }
+
+  // Staves in reading order: down each column, the columns left to right. A staff is in a column with those it
+  // overlaps across by half its length or more.
+  function order(staves) {
+    const span = st => { const xs = xsOf(st.lines[0]); return [xs[0], xs[xs.length - 1]]; };
+    const cols = [];
+    for (const st of [...staves].sort((a, b) => span(a)[0] - span(b)[0])) {
+      const [a, b] = span(st);
+      const col = cols.find(c => Math.min(b, c.x1) - Math.max(a, c.x0) >= 0.5 * Math.min(b - a, c.x1 - c.x0));
+      if (col) { col.list.push(st); col.x0 = Math.min(col.x0, a); col.x1 = Math.max(col.x1, b); }
+      else cols.push({ x0: a, x1: b, list: [st] });
+    }
+    cols.sort((p, q) => p.x0 - q.x0);
+    return cols.flatMap(c => c.list.sort((p, q) => middle(p.lines) - middle(q.lines)));
+  }
+
+  // Finds every staff on a page: [{ lines, spacing }] in the image's pixels, in reading order (down each column).
+  // skip: boxes [x, y, w, h] (in pixels) of staves already marked, left alone.
   //
   // How: first where the staves are. In a band across the middle of the page (where staves run, past any drop cap or
   // margin note), darkness is summed along rows at the page's tilt (as fit() does for one staff); the rows that stand
@@ -316,9 +368,14 @@
   // spacing most of those agree on is the staves' (rows of text can fall evenly too); of the fours near it the
   // strongest are taken first, none sharing a line or overlapping another. Each staff found is then fitted on its own
   // across the page's whole width with fitStaff(), between the staves above and below it, so its ends, tilt and bends
-  // are its own.
+  // are its own. A page in two columns (columns()) is searched a column at a time.
   function findStaves(gray, w, h, { skip = [], trace } = {}) {
-    const bx0 = Math.round(0.25 * w), bx1 = Math.round(0.62 * w);
+    const cols = columns(gray, w, h);
+    if (trace) trace.columns = cols;
+    return cols.flatMap(([xa, xb]) => findIn(gray, w, h, xa, xb, skip, trace));
+  }
+  function findIn(gray, w, h, xa, xb, skip, trace) {
+    const cw = xb - xa, bx0 = Math.round(xa + 0.25 * cw), bx1 = Math.round(xa + 0.62 * cw);
     const dm = darkness(gray, w, bx0, 0, bx1, h);
     if (!dm) return [];
     const { dark, W, H } = dm;
@@ -403,8 +460,8 @@
       const above = k ? (staves[k - 1].q[3].y + top) / 2 : 0, below = k < staves.length - 1 ? (bot + staves[k + 1].q[0].y) / 2 : h;
       const y0 = Math.max(above, top - 2.5 * g), y1 = Math.min(below, bot + 2.5 * g);
       const midY = (top + bot) / 2;
-      if (skip.some(b => midY > b[1] && midY < b[1] + b[3])) return;
-      const r = fitStaff(gray, w, h, [0, y0 - Math.abs(slope) * w / 2, w, y1 - y0 + Math.abs(slope) * w]);
+      if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && (bx0 + bx1) / 2 > b[0] && (bx0 + bx1) / 2 < b[0] + b[2])) return;
+      const r = fitStaff(gray, w, h, [xa, y0 - Math.abs(slope) * cw / 2, cw, y1 - y0 + Math.abs(slope) * cw]);
       if (r && Math.abs(r.spacing - g) < 0.3 * g) out.push(r);
     });
     return out;
@@ -516,7 +573,7 @@
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, beginnings, fitStaff, fit, grey };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, columns, order, beginnings, fitStaff, fit, grey };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

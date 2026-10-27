@@ -793,6 +793,20 @@
       bad.push(...same('checks', w.CGChant.check(doc), []));
       return bad;
     } },
+    { name: 'app: staves found on a manuscript page in two columns (synthetic: red lines, a scribe\'s notes), in reading order', browser: true, unit: async app => {
+      const { w } = await app('test/pages/ms.jpg');
+      const truth = (await (await w.fetch('test/pages/ms.json')).json()).doc.pages[0].staves, doc = w.CGApp.state.doc, bad = [];
+      await w.CGEditor.findHere();
+      const found = doc.pages[0].staves, start = s => [s.lines[0][0], s.lines[0][1]];
+      const near = (a, b) => Math.abs(a[0] - b[0]) < 60 && Math.abs(a[1] - b[1]) < 8;
+      const hit = truth.filter(t => found.some(f => near(start(f), start(t)))).length;
+      if (hit < 0.9 * truth.length) bad.push(`${hit} of ${truth.length} staves found`);
+      if (found.length > truth.length) bad.push(`${found.length - truth.length} found that aren't staves`);
+      // down the left column first, then the right
+      const xs = found.map(s => s.lines[0][0]), turn = xs.findIndex(x => x > 600);
+      bad.push(...same('reading order', turn > 0 && xs.slice(0, turn).every(x => x < 600) && xs.slice(turn).every(x => x > 600), true));
+      return bad;
+    } },
     { name: 'app: a manuscript online (IIIF): its pages from the manifest, labelled, drawn and searched for staves', browser: true, unit: async app => {
       const { w } = await app();
       const bad = [];
