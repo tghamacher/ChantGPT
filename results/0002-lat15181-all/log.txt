@@ -1,0 +1,22 @@
+job 0002-lat15181-all: Paris lat. 15181: every page the app saved, filed by folio, then all of them (1800 pixels wide) zipped onto training-data, for finding their staves
+code: e1b53e9
+
+$ cantus.py collect --source 123631 --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123631/pages-011r-088r-w1800.zip is 85.36 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+352 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123631 (from 5 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 148 pages with no chant left out)
+78 of 352 pages -> pages-011r-088r-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123631/pages-088v-140v-w1800.zip is 85.65 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+157 of 352 pages -> pages-088v-140v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123631/pages-141r-185v-w1800.zip is 85.64 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+234 of 352 pages -> pages-141r-185v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123631/pages-186r-227v-w1800.zip is 85.65 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+314 of 352 pages -> pages-186r-227v-w1800.zip, pushed
+352 of 352 pages -> pages-228r-246v-w1800.zip, pushed
