@@ -1,0 +1,3 @@
+{"id": "0002-lat15181-all",
+ "about": "Paris lat. 15181: every page the app saved, filed by folio, then all of them (1800 pixels wide) zipped onto training-data, for finding their staves",
+ "steps": [["cantus.py", "collect", "--source", "123631", "--share", "DATA", "--folios", "all", "--width", "1800"]]}
