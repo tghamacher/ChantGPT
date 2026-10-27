@@ -111,7 +111,9 @@
   // line); a column is on the staff where three of the four lines are at least half as dark as they usually are.
   // The longest such stretch is the staff, bridging gaps of up to half a space: a drop cap or a word beside the
   // staff is left off.
-  function stretch(dark, W, H, lineYs, g, near) {
+  // loose: a map of the ruling's ink alone, where a note on a line is a gap in it: two lines of four are enough, and
+  // gaps of up to a space and a half are bridged.
+  function stretch(dark, W, H, lineYs, g, near, loose = false) {
     const run = Math.max(3, Math.round(g)), half = run >> 1;
     const along = lineYs.map(yOf => {
       const sm = new Float64Array(W).fill(-Infinity), sum = new Float64Array(W + 1);
@@ -126,12 +128,12 @@
       return { sm, typical };
     });
     const good = new Uint8Array(W);
-    for (let x = 0; x < W; x++) good[x] = along.filter(a => a.typical > 0 && a.sm[x] >= 0.5 * a.typical).length >= 3 ? 1 : 0;
+    for (let x = 0; x < W; x++) good[x] = along.filter(a => a.typical > 0 && a.sm[x] >= 0.5 * a.typical).length >= (loose ? 2 : 3) ? 1 : 0;
     let first = -1, last = -1, from = -1, gap = 0;
     for (let x = 0; x <= W; x++) {
       if (x < W && good[x]) { if (from < 0) from = x; gap = 0; continue; }
       if (from < 0) continue;
-      if (x < W && ++gap <= g / 2) continue;
+      if (x < W && ++gap <= (loose ? 1.5 * g : g / 2)) continue;
       const end = x - (x < W ? gap : 0);
       if (end - from > last - first) { first = from; last = end; }
       from = -1; gap = 0;
@@ -216,7 +218,7 @@
 
     // how far the lines run
     const near = Math.max(1, Math.ceil(Math.max(...staff.q.map(v => v.thick)) / 2));
-    const span = stretch(dark, W, H, staff.q.map(v => x => v.y - y0 + slope * (x - xc)), staff.g, near);
+    const span = stretch(dark, W, H, staff.q.map(v => x => v.y - y0 + slope * (x - xc)), staff.g, near, loose);
     if (!span) return null;
     const [first, last] = span;
     const xa = x0 + first, xb = x0 + last;
@@ -296,7 +298,7 @@
     const yr = [ex0, ex1].flatMap(x => [yAt(lines[0], x), yAt(lines[3], x)]).concat(lines.flatMap(l => l.filter((v, i) => i & 1)));
     const ey0 = Math.max(0, Math.floor(Math.min(...yr) - 2 * lg)), ey1 = Math.min(h, Math.ceil(Math.max(...yr) + 2 * lg));
     const dm = ex1 - ex0 > 20 && ey1 - ey0 > 8 && darkness(gray, w, ex0, ey0, ex1, ey1);
-    const span = dm && stretch(dm.dark, dm.W, dm.H, lines.map(l => x => yAt(l, ex0 + x) - ey0), lg, Math.max(1, Math.round(lg / 8)));
+    const span = dm && stretch(dm.dark, dm.W, dm.H, lines.map(l => x => yAt(l, ex0 + x) - ey0), lg, Math.max(1, Math.round(lg / 8)), loose);
     if (span) lines = clip(lines, ex0 + span[0], ex0 + span[1]);
     return { lines, spacing: spacing(lines) };
   }
