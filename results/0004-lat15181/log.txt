@@ -162,3 +162,38 @@ epoch 9 batch 900: loss 0.134 (1816 s)
 epoch 9 batch 1000: loss 0.133 (1828 s)
 epoch 9 batch 1100: loss 0.133 (1839 s)
 epoch 9 batch 1200: loss 0.133 (1851 s)
+epoch 9 batch 1300: loss 0.133 (1862 s)
+epoch 9 batch 1400: loss 0.132 (1874 s)
+epoch 9 batch 1500: loss 0.132 (1885 s)
+epoch 9 batch 1600: loss 0.131 (1896 s)
+epoch 9: loss 0.131; synthetic test staves: token errors 3.52%, note errors 3.83%; real: token errors 6.99%, note errors 7.23% (1901 s)
+epoch 10 batch 0: loss 0.044 (1901 s)
+epoch 10 batch 100: loss 0.132 (1912 s)
+epoch 10 batch 200: loss 0.132 (1924 s)
+epoch 10 batch 300: loss 0.130 (1935 s)
+epoch 10 batch 400: loss 0.128 (1947 s)
+epoch 10 batch 500: loss 0.128 (1959 s)
+epoch 10 batch 600: loss 0.129 (1970 s)
+epoch 10 batch 700: loss 0.129 (1981 s)
+epoch 10 batch 800: loss 0.129 (1992 s)
+epoch 10 batch 900: loss 0.129 (2004 s)
+epoch 10 batch 1000: loss 0.129 (2015 s)
+epoch 10 batch 1100: loss 0.128 (2026 s)
+epoch 10 batch 1200: loss 0.129 (2037 s)
+epoch 10 batch 1300: loss 0.129 (2049 s)
+epoch 10 batch 1400: loss 0.129 (2061 s)
+epoch 10 batch 1500: loss 0.129 (2073 s)
+epoch 10 batch 1600: loss 0.129 (2084 s)
+epoch 10: loss 0.129; synthetic test staves: token errors 3.54%, note errors 3.84%; real: token errors 6.78%, note errors 6.99% (2088 s)
+
+$ recognizer.py test --model training/data/j0004/best.pt --data training/data/ms-123631-all --real-labels labels-fit.jsonl --held 10
+263 staves: token errors 13.60%, note errors 15.65%
+
+$ recognizer.py test --model training/data/j0003/best.pt --data training/data/ms-123631-all --real-labels labels-fit.jsonl --held 10
+263 staves: token errors 33.11%, note errors 38.73%
+
+$ recognizer.py test --model training/data/j0004/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.37%, note errors 2.74%
+
+$ recognizer.py export --model training/data/j0004/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0004-lat15181/chant.onnx (5.7 MB)
