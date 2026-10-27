@@ -1,0 +1,8 @@
+{"id": "0001-wide-rebroken",
+ "about": "A model 1.5 times wider, from scratch, 30 passes, on the synthetic staves and the Graduale's with mended line breaks; then tested on the held-out Graduale staves and exported",
+ "data": ["real-labels.zip"],
+ "steps": [["recognizer.py", "train", "--real", "training/data/real", "--real-labels", "labels-rebroken-clean.jsonl", "--width", "192", "--epochs", "30", "--lr", "2e-3", "--batch", "32", "--out", "training/data/j0001"],
+           ["recognizer.py", "test", "--model", "training/data/j0001/best.pt", "--data", "training/data/real", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "test", "--model", "training/data/model3/best.pt", "--data", "training/data/real", "--real-labels", "labels-rebroken-clean.jsonl", "--held", "10"],
+           ["recognizer.py", "export", "--model", "training/data/j0001/best.pt", "--onnx", "OUT/chant.onnx"]],
+ "keep": ["training/data/j0001/best.pt"]}
