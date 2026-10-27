@@ -3,6 +3,8 @@
 Staves for the recognizer, already straightened (see `training/README.md` on `main`), and the latest checkpoint:
 
 - `staves-*.zip`: 14,442 synthetic staves (`training/data/staves/`).
+- `staves-ms-*.zip`: 26,756 synthetic manuscript staves (`training/data/staves-ms/`: `render.js --style ms`, two
+  columns, red hand-ruled staves, a scribe's notes, parchment).
 - `real-1.zip`: the 1908 Graduale's staves aligned with GregoBase (`training/data/real/`; `labels-clean.jsonl`: those
   the model agrees with).
 - `real-labels.zip`: the real staves' labels with their line breaks mended (`recognizer.py rebreak`, then `clean`):
