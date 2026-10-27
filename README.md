@@ -14,7 +14,7 @@ These are the first steps. You can:
 
 - open a PDF of a chant book, or photographs or scans of its pages (JPEG, PNG, WebP), or a manuscript a library
   puts online with IIIF (Gallica, the Bayerische Staatsbibliothek, e-codices …): give its manifest's address, and the
-  pages come from the library as you turn to them;
+  pages come from the library as you turn to them; save a range of them, at full size, as one zip;
 - page through it and zoom;
 - find its staves: on a page, or on every page of a book, ChantGPT finds each staff's four lines in the ink, tilt and
   all, and bent where the page couldn't be scanned flat. Or drag a box around a staff to mark it yourself. If a line

@@ -158,6 +158,12 @@
         const g = await greyOf(b.width, b.height, (c, ctx) => ctx.drawImage(b, 0, 0));
         return Object.assign(g, { scale: b.width / p.w });
       },
+      // the page's image as the library has it, at full size (for saving): { data: Uint8Array, type }
+      async original(i) {
+        const p = pages[i], res = await fetch(p.service ? `${p.service}/full/${p.v3 ? 'max' : 'full'}/0/default.jpg` : p.image);
+        if (!res.ok) throw new Error(`Couldn't load page ${p.label} from the library (${res.status}).`);
+        return { data: new Uint8Array(await res.arrayBuffer()), type: res.headers.get('content-type') || 'image/jpeg' };
+      },
       close() { cache.forEach(v => v.then(b => b.close(), () => {})); cache.clear(); }
     };
   }
