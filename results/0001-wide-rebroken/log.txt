@@ -183,3 +183,44 @@ epoch 25: loss 0.072; synthetic test staves: token errors 3.93%, note errors 4.5
 epoch 26 batch 0: loss 0.086 (2409 s)
 epoch 26 batch 100: loss 0.069 (2425 s)
 epoch 26 batch 200: loss 0.069 (2440 s)
+epoch 26 batch 300: loss 0.070 (2456 s)
+epoch 26 batch 400: loss 0.070 (2471 s)
+epoch 26 batch 500: loss 0.070 (2487 s)
+epoch 26: loss 0.070; synthetic test staves: token errors 3.86%, note errors 4.51%; real: token errors 3.35%, note errors 2.65% (2504 s)
+epoch 27 batch 0: loss 0.031 (2504 s)
+epoch 27 batch 100: loss 0.069 (2520 s)
+epoch 27 batch 200: loss 0.067 (2536 s)
+epoch 27 batch 300: loss 0.069 (2552 s)
+epoch 27 batch 400: loss 0.068 (2567 s)
+epoch 27 batch 500: loss 0.068 (2583 s)
+epoch 27: loss 0.068; synthetic test staves: token errors 3.83%, note errors 4.45%; real: token errors 3.54%, note errors 2.76% (2601 s)
+epoch 28 batch 0: loss 0.033 (2601 s)
+epoch 28 batch 100: loss 0.064 (2617 s)
+epoch 28 batch 200: loss 0.063 (2632 s)
+epoch 28 batch 300: loss 0.065 (2647 s)
+epoch 28 batch 400: loss 0.066 (2663 s)
+epoch 28 batch 500: loss 0.066 (2678 s)
+epoch 28: loss 0.066; synthetic test staves: token errors 3.88%, note errors 4.51%; real: token errors 3.24%, note errors 2.57% (2696 s)
+epoch 29 batch 0: loss 0.018 (2696 s)
+epoch 29 batch 100: loss 0.070 (2712 s)
+epoch 29 batch 200: loss 0.069 (2727 s)
+epoch 29 batch 300: loss 0.068 (2743 s)
+epoch 29 batch 400: loss 0.067 (2758 s)
+epoch 29 batch 500: loss 0.066 (2774 s)
+epoch 29: loss 0.066; synthetic test staves: token errors 3.91%, note errors 4.56%; real: token errors 3.18%, note errors 2.51% (2791 s)
+epoch 30 batch 0: loss 0.061 (2791 s)
+epoch 30 batch 100: loss 0.063 (2807 s)
+epoch 30 batch 200: loss 0.065 (2822 s)
+epoch 30 batch 300: loss 0.064 (2838 s)
+epoch 30 batch 400: loss 0.065 (2854 s)
+epoch 30 batch 500: loss 0.066 (2869 s)
+epoch 30: loss 0.065; synthetic test staves: token errors 3.83%, note errors 4.49%; real: token errors 3.71%, note errors 2.84% (2886 s)
+
+$ recognizer.py test --model training/data/j0001/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.12%, note errors 2.46%
+
+$ recognizer.py test --model training/data/model3/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 2.73%, note errors 2.26%
+
+$ recognizer.py export --model training/data/j0001/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0001-wide-rebroken/chant.onnx (5.7 MB)
