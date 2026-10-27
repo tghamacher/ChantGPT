@@ -1,0 +1,5 @@
+job 0000-lat15181-samples: Paris lat. 15181: the pages the app saved (in Downloads) filed by folio; folios 11r-21r sent back to work on
+code: 1f5b590
+
+$ cantus.py collect --source 123631 --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+94 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123631 (from 2 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 106 pages with no chant left out)
