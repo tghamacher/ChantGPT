@@ -169,7 +169,9 @@ def split(rows, every):
 
 
 def train(o):
-    rows, test = split(load(o.data), 33) if o.data else ([], [])
+    rows, test = [], []
+    for d in (o.data.split(',') if o.data else []):            # (synthetic staves from more than one folder: printed, manuscript)
+        a, b = split(load(d), 33); rows += a; test += b
     real, real_test = split(load(o.real, o.real_labels), 10) if o.real else ([], [])
     device = device_of(o.device)
     dml = device.type == 'privateuseone'                     # DirectML
@@ -345,7 +347,7 @@ def export(o):
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['train', 'test', 'export', 'clean', 'rebreak'])
-    a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'))
+    a.add_argument('--data', default=os.path.join(HERE, 'data', 'staves'), help='the staves (train: synthetic ones, folders separated by commas)')
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'model'))
     a.add_argument('--model')
     a.add_argument('--real', help='real staves too (align.js), every tenth page kept out to test on')
