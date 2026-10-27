@@ -5,6 +5,9 @@ them in Volpiano, page by page and line by line; and their pages, from the libra
     python -I training/cantus.py images --source 123631 [--folios 011r-020v] [--wait 2]
                                                                         # the pages -> training/data/scans/123631/
     python -I training/cantus.py lines --source 123631 [--folio 015r]   # what each page's lines hold
+    python -I training/cantus.py labels --source 123631 --staves training/data/ms-123631 --model training/data/model2/best.pt
+        # the staves found on its pages (staves_of.js) paired with its lines, each with the clef that fits what the
+        # model reads on it: <staves>/labels.jsonl, for recognizer.py (rebreak, clean, train --real)
     python -I training/cantus.py collect --source 123631 [--downloads DIR] [--share D:\\ChantGPT\\chantgpt-data --folios 011r-021r]
         # the zips the app saved (Save pages, from the library's IIIF) -> training/data/scans/123631/<folio>.jpg;
         # --share: those folios zipped into a clone of the training-data branch, committed and pushed
@@ -137,21 +140,47 @@ def collect(o):
                 n += 1
     print(f'{n} pages filed by folio -> {out} (from {len(zips)} zips in {downloads}; {skipped} pages with no chant left out)')
     if o.share:
-        lo, hi = (o.folios.split('-') + [None])[:2] if o.folios else ('011r', '021r')
-        hi = hi or lo
-        files = sorted(f for f in os.listdir(out) if f.endswith('.jpg') and folio_key(lo) <= folio_key(f[:-4]) <= folio_key(hi))
-        if not files: raise SystemExit(f'No pages between {lo} and {hi} in {out}.')
-        dest = os.path.join(o.share, f'cantus-{o.source}')
-        os.makedirs(dest, exist_ok=True)
-        name = f'pages-{lo}-{hi}.zip'
+        share(o, out)
+
+
+def share(o, out):
+    """Folios (--folios lo-hi, or all) zipped into a clone of the training-data branch, committed and pushed: zips of
+    up to about 90 MB, each pushed as it is made; with --width, each page made no wider (as JPEG)."""
+    lo, hi = ('', '') if o.folios == 'all' else ((o.folios.split('-') + [None])[:2] if o.folios else ('011r', '021r'))
+    hi = hi or lo
+    files = sorted((f for f in os.listdir(out) if f.endswith('.jpg') and (not lo or folio_key(lo) <= folio_key(f[:-4]) <= folio_key(hi))), key=lambda f: folio_key(f[:-4]))
+    if not files: raise SystemExit(f'No pages {o.folios} in {out}.')
+    dest = os.path.join(o.share, f'cantus-{o.source}')
+    os.makedirs(dest, exist_ok=True)
+    git = lambda *a: subprocess.run(['git', '-C', o.share, *a], check=True)
+    git('pull', '--quiet')
+    def page(f):
+        if not o.width: return open(os.path.join(out, f), 'rb').read()
+        from PIL import Image
+        im = Image.open(os.path.join(out, f))
+        if im.width > o.width: im = im.resize((o.width, round(im.height * o.width / im.width)), Image.LANCZOS)
+        b = io.BytesIO(); im.convert('RGB').save(b, 'JPEG', quality=88); return b.getvalue()
+    part, size, batch, sent = 0, 0, [], 0
+    def flush():
+        nonlocal part, size, batch, sent
+        if not batch: return
+        part += 1
+        name = f'pages-{batch[0][0][:-4]}-{batch[-1][0][:-4]}{"-w" + str(o.width) if o.width else ""}.zip'
         with zipfile.ZipFile(os.path.join(dest, name), 'w', zipfile.ZIP_STORED) as zf:
-            for f in files: zf.write(os.path.join(out, f), f)
-        git = lambda *a: subprocess.run(['git', '-C', o.share, *a], check=True)
-        git('pull', '--quiet')
+            for f, data in batch: zf.writestr(f, data)
         git('add', os.path.join(f'cantus-{o.source}', name))
-        git('commit', '--quiet', '-m', f'Pages {lo}-{hi} of Cantus source {o.source}')
-        git('push', '--quiet')
-        print(f'{len(files)} pages ({lo} to {hi}) -> {os.path.join(dest, name)}, pushed')
+        git('commit', '--quiet', '-m', f'Pages {batch[0][0][:-4]}-{batch[-1][0][:-4]} of Cantus source {o.source}')
+        for k in range(4):
+            if not subprocess.run(['git', '-C', o.share, 'push', '--quiet']).returncode: break
+            subprocess.run(['git', '-C', o.share, 'pull', '--rebase', '--quiet']); time.sleep(10 * 2 ** k)
+        sent += len(batch)
+        print(f'{sent} of {len(files)} pages -> {name}, pushed', flush=True)
+        batch, size = [], 0
+    for f in files:
+        data = page(f)
+        if size + len(data) > 90e6: flush()
+        batch.append((f, data)); size += len(data)
+    flush()
 
 
 # ---------------------------------------------------------------- melodies: Volpiano
@@ -282,6 +311,83 @@ def first_step(line):
     return None
 
 
+CLEFS = ['c1', 'c2', 'c3', 'c4', 'f2', 'f3', 'f4']
+
+
+def positions(tokens):
+    """The staff positions (GABC letters) of the notes among tokens (recognizer.py's or staffdata.py's)."""
+    return [t[0].lower() for t in tokens if re.fullmatch(r'[a-mA-M][vVoOwsr]?[~<>]?', t)]
+
+
+def edits(a, b):
+    d = list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        prev, d[0] = d[0], i
+        for j in range(1, len(b) + 1):
+            cur = d[j]; d[j] = min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] != b[j - 1])); prev = cur
+    return d[len(b)]
+
+
+def fit_clef(read, line, custos):
+    """The clef under which a line's notes (Cantus's pitches) sit where the model read notes on the staff: (clef,
+    GABC items, the share of notes that differ). read: the tokens the model read."""
+    seen = positions([t for t in read if not t.endswith('+')])
+    best = None
+    for clef in CLEFS:
+        items = gabc(line, clef, custos)
+        if not items: continue
+        want = positions(staffdata_tokens(items[1:-1] if items[-1].endswith('+') else items[1:]))
+        d = edits(seen, want) / max(1, len(want))
+        # (a tie: the clef the model read, if it read one)
+        key = (d, 0 if read and read[0] == clef else 1)
+        if best is None or key < best[0]: best = (key, clef, items)
+    return (best[1], best[2], best[0][0]) if best else (None, None, 1.0)
+
+
+def staffdata_tokens(items):
+    sys.path.insert(0, HERE)
+    import staffdata
+    return staffdata.tokens(items)
+
+
+def labels(o):
+    """Each page whose staves (as staves_of.js found them) are as many as its lines (Cantus's 7s), every chant on it
+    with its melody: staff k gets line k, with the clef that best fits what the model reads there and the next line's
+    first note as its custos. Written to <staves>/labels.jsonl ({file, items, page, chant, staff, fit}); a page is its
+    own 'chant', so that recognizer.py rebreak can move a neume from line to line within it."""
+    sys.path.insert(0, HERE)
+    import recognizer, torch
+    m, s = recognizer.restore(o.model)
+    pages = lines(o.source)
+    folios = list(pages)
+    found = {}
+    for l in open(os.path.join(o.staves, 'staves.jsonl'), encoding='utf-8'):
+        r = json.loads(l)
+        if r.get('file'): found.setdefault(r['page'], []).append(r)
+    kept = skipped = staves = 0
+    why = {}
+    with open(os.path.join(o.staves, 'labels.jsonl'), 'w', encoding='utf-8') as out:
+        for f, rows in sorted(found.items(), key=lambda v: folio_key(v[0])):
+            p = pages.get(f)
+            if not p: why['not in Cantus'] = why.get('not in Cantus', 0) + 1; continue
+            if not p['complete']: why['a chant without its melody'] = why.get('a chant without its melody', 0) + 1; continue
+            rows.sort(key=lambda r: r['k'])
+            if len(rows) != len(p['lines']):
+                why['staves found not as many as lines'] = why.get('staves found not as many as lines', 0) + 1; continue
+            nxt = folios[folios.index(f) + 1] if folios.index(f) + 1 < len(folios) else None
+            for k, (r, line) in enumerate(zip(rows, p['lines'])):
+                after = p['lines'][k + 1] if k + 1 < len(p['lines']) else (pages[nxt]['lines'][0] if nxt and pages[nxt]['lines'] else None)
+                x, n = recognizer.collate([recognizer.ink(recognizer.image(o.staves, r['file']))])
+                with torch.no_grad(): read, _ = recognizer.greedy(m(x), n, s['vocab'])[0]
+                clef, items, d = fit_clef(read, line, first_step(after) if after else None)
+                if not items: skipped += 1; continue
+                out.write(json.dumps({'file': r['file'], 'items': items, 'page': folios.index(f), 'chant': f,
+                                      'staff': f'f{f}s{k + 1}', 'fit': round(d, 3)}) + '\n')
+                staves += 1
+            kept += 1
+    print(f'{kept} pages paired, {staves} staves -> {os.path.join(o.staves, "labels.jsonl")}; pages left out: {why or "none"}; {skipped} lines off every staff')
+
+
 def show(o):
     pages = lines(o.source)
     shown = [o.folio] if o.folio else list(pages)[:3]
@@ -298,13 +404,16 @@ def show(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['fetch', 'images', 'lines', 'collect'])
+    a.add_argument('what', choices=['fetch', 'images', 'lines', 'collect', 'labels'])
+    a.add_argument('--staves', help='labels: the folder staves_of.js wrote')
+    a.add_argument('--model', help='labels: the recognizer checkpoint that reads the staves')
     a.add_argument('--source', required=True, help='the Cantus source id (Paris lat. 15181: 123631)')
     a.add_argument('--folios', help='images, collect --share: only these, e.g. 011r-020v')
     a.add_argument('--downloads', help='collect: where the zips are (your Downloads folder)')
-    a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to')
+    a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to (all: every one)')
+    a.add_argument('--width', type=int, help='collect --share: pages made no wider than this')
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
     o = a.parse_args()
-    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect}[o.what](o)
+    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels}[o.what](o)
