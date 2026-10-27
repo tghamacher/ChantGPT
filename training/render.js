@@ -2,12 +2,13 @@
 // Gregorio's font, on uneven paper, blurred and speckled, as JPEGs; each with its answers, a ChantGPT document
 // (staves, syllables, neumes, each with its box) and the glyphs drawn (name, pitch, box).
 // usage: node training/render.js [--pages 100] [--from 0] [--out training/data/synth] [--corpus training/data/gregobase.jsonl]
+//          [--style ms]  (manuscript pages, as a noted breviary of about 1300; see render.html)
 // Needs playwright (pre-installed here; elsewhere npm install playwright and npx playwright install chromium).
 const fs = require('fs'), path = require('path'), http = require('http');
 const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const PAGES = +arg('pages', 100), FROM = +arg('from', 0);
+const PAGES = +arg('pages', 100), FROM = +arg('from', 0), STYLE = arg('style', '');
 const OUT = path.resolve(arg('out', path.join(__dirname, 'data', 'synth')));
 const CORPUS = path.resolve(arg('corpus', path.join(__dirname, 'data', 'gregobase.jsonl')));
 
@@ -22,7 +23,7 @@ function corpus() {
 
 // the repository served to the page (fonts and scripts load over http, not file://)
 function serve() {
-  const types = { '.html': 'text/html', '.js': 'text/javascript', '.ttf': 'font/ttf', '.css': 'text/css' };
+  const types = { '.html': 'text/html', '.js': 'text/javascript', '.ttf': 'font/ttf', '.css': 'text/css' };   // (training/fonts too)
   const srv = http.createServer((q, s) => {
     const f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]));
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { s.writeHead(404); return s.end(); }
@@ -42,10 +43,10 @@ function serve() {
     // enough chants for a page, taken in turn round the corpus; a page uses what fits
     const offer = [];
     for (let i = 0; i < 12; i++) { const c = chants[(at + i) % chants.length]; offer.push({ id: c.id, gabc: c.gabc[0], incipit: c.incipit, mode: c.mode, part: c.office_part }); }
-    const res = await p.evaluate(spec => window.render(spec), { chants: offer, seed: 1000 + n, W, H });
+    const res = await p.evaluate(spec => window.render(spec), { chants: offer, seed: (STYLE ? 500000 : 1000) + n, W, H, style: STYLE });
     at += Math.max(1, res.used.length + res.skipped.length);
     skipped.push(...res.skipped);
-    const name = `synth-${String(n).padStart(6, '0')}`;
+    const name = `synth${STYLE ? '-' + STYLE : ''}-${String(n).padStart(6, '0')}`;
     fs.writeFileSync(path.join(OUT, name + '.jpg'), Buffer.from(res.jpeg, 'base64'));
     fs.writeFileSync(path.join(OUT, name + '.json'), JSON.stringify({ doc: res.doc, glyphs: res.glyphs, spacing: res.spacing }));
     staves += res.doc.pages[0].staves.length; glyphs += res.glyphs.length;
