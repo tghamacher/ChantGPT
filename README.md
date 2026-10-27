@@ -35,7 +35,8 @@ These are the first steps. You can:
   the scan, say once which page of the book a scan page is, and on each page "Place this page's chants" finds the
   staves and where chants begin, and places the chants GregoBase lists for that page, a chant running over the page
   turn included;
-- read the notes from the scan (an early recognizer, trained so far on synthetic pages and on the 1908 Graduale): on
+- read the notes from the scan (an early recognizer, trained so far on synthetic pages and on the 1908 Graduale; a
+  page whose staves are ruled in red is read by a second model, for manuscripts, trained on Paris BnF lat. 15181): on
   a staff without chant, what it reads is put on the staff; on a staff with chant placed from GregoBase, each neume is
   moved to where it was seen and those that differ from what was read are marked in orange, with what was read, so
   you look only at those. Placing a book page's chants does this by itself when the recognizer is there;

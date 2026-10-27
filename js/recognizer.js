@@ -6,7 +6,9 @@
 (function (global) {
   'use strict';
   const S = () => global.CGStaves;
-  const BASE = 'models/chant';      // models/chant.onnx and models/chant.json (its tokens and how it cuts a staff)
+  // models/chant.onnx and models/chant.json (its tokens and how it cuts a staff): printed books; models/chant-ms.*:
+  // manuscripts (a page whose staves are ruled in red, as viewer.js's pixels() tells), if there is one
+  const BASES = { print: 'models/chant', ms: 'models/chant-ms' };
 
   // ---------------------------------------------------------------- the staff, straightened
   // gray: the page in grey (w × h), lines: the staff's four lines in the same pixels; meta: as models/chant.json says.
@@ -77,31 +79,37 @@
   }
 
   // ---------------------------------------------------------------- the model
-  let session = null, meta = null, loading = null;
+  const loaded = {};
+  let meta = null;
   function script(src) {
     return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error(`Couldn't load ${src}`)); document.head.appendChild(s); });
   }
-  // the model, loaded the first time it's wanted
-  function load() {
-    if (loading) return loading;
-    loading = (async () => {
+  // a model ('print' or 'ms'), loaded the first time it's wanted; the manuscript one falls back to the printed one
+  function load(kind = 'print') {
+    if (loaded[kind]) return loaded[kind];
+    const p = loaded[kind] = (async () => {
       if (!global.ort) await script('vendor/onnxruntime/ort.wasm.min.js');
       global.ort.env.wasm.wasmPaths = new URL('vendor/onnxruntime/', document.baseURI).href;
       if (!global.crossOriginIsolated) global.ort.env.wasm.numThreads = 1;
-      const r = await fetch(BASE + '.json');
-      if (!r.ok) throw new Error('No recognizer model here yet (models/chant.json).');
-      meta = await r.json();
-      session = await global.ort.InferenceSession.create(BASE + '.onnx', { executionProviders: ['wasm'] });
-      return { session, meta };
+      const r = await fetch(BASES[kind] + '.json');
+      if (!r.ok) {
+        if (kind !== 'print') return load('print');
+        throw new Error('No recognizer model here yet (models/chant.json).');
+      }
+      const m = await r.json();
+      const session = await global.ort.InferenceSession.create(BASES[kind] + '.onnx', { executionProviders: ['wasm'] });
+      if (kind === 'print') meta = m;
+      return { session, meta: m };
     })();
-    loading.catch(() => { loading = null; });
-    return loading;
+    p.catch(() => { delete loaded[kind]; });
+    return p;
   }
 
-  // The neumes on a staff, read: px, the page's pixels (viewer.js: { gray, w, h, scale }); lines in page units.
-  // Returns [{ g, x0, x1 (page units), conf }], in order along the staff.
+  // The neumes on a staff, read: px, the page's pixels (viewer.js: { gray, w, h, scale, lines }); lines in page units.
+  // Returns [{ g, x0, x1 (page units), conf }], in order along the staff. A page ruled in red is read by the
+  // manuscript model.
   async function read(px, lines) {
-    const { session: s, meta: m } = await load();
+    const { session: s, meta: m } = await load(px.lines ? 'ms' : 'print');
     const L = lines.map(l => l.map(v => v * px.scale));
     const st = straighten(px.gray, px.w, px.h, L, m);
     const W = st.W + ((-st.W) % m.stride + m.stride) % m.stride, data = new Float32Array(m.height * W);
