@@ -5,6 +5,12 @@ them in Volpiano, page by page and line by line; and their pages, from the libra
     python -I training/cantus.py images --source 123631 [--folios 011r-020v] [--wait 2]
                                                                         # the pages -> training/data/scans/123631/
     python -I training/cantus.py lines --source 123631 [--folio 015r]   # what each page's lines hold
+    python -I training/cantus.py collect --source 123631 [--downloads DIR] [--share D:\\ChantGPT\\chantgpt-data --folios 011r-021r]
+        # the zips the app saved (Save pages, from the library's IIIF) -> training/data/scans/123631/<folio>.jpg;
+        # --share: those folios zipped into a clone of the training-data branch, committed and pushed
+
+Where the library won't serve pages to a program (Gallica, behind Cloudflare), the app fetches them in the browser
+(open the manifest, Save pages; or the link index.html?iiif=<manifest>&save=1-1124) and collect files them.
 
 Volpiano (Cantus's "Volpiano protocols"): 1 the clef; pitches 9 a b … s from the G at the bottom of the gamut up
 (no i), upper case for a liquescent; i, y, z a flat before the B it stands by (I, Y, Z a natural); hyphens between
@@ -12,7 +18,7 @@ neumes (one), syllables (two), words (three); 3 and 4 Cantus's barlines (editori
 a line in the manuscript, 77 of a page, 777 of a column; 6------6 pitches that can't be read. Cantus gives pitch,
 not the staff: where a line's notes sit depends on its clef, which only the page shows (gabc() takes it).
 """
-import argparse, csv, io, json, os, re, sys, time, urllib.request
+import argparse, csv, glob, io, json, os, re, subprocess, sys, time, urllib.request, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = 'https://cantusdatabase.org'
@@ -97,6 +103,55 @@ def images(o):
         print(f'{k + 1}/{len(todo)} {f} ({len(data) // 1024} KB)', flush=True)
         time.sleep(o.wait)
     print(f'{len(todo)} pages -> {out}')
+
+
+def view_of(url):
+    """The page number (from 1, the IIIF canvas's) in a page's image URL."""
+    m = re.search(r'/f(\d+)/full/', url) or re.search(r'_(\d{5})/full/', url)
+    return int(m.group(1)) if m else None
+
+
+def collect(o):
+    """The app's zips (images named '<page number, 4 digits> <label>.jpg'), each image filed as its folio."""
+    out = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
+    os.makedirs(out, exist_ok=True)
+    pages = page_images(o.source)
+    folio = {view_of(u): f for f, u in pages.items()}
+    ident = re.search(r'ark:/12148/(\w+)|(bsb\d+)', next(iter(pages.values())))
+    ident = ident and (ident.group(1) or ident.group(2))
+    downloads = o.downloads or os.path.join(os.path.expanduser('~'), 'Downloads')
+    zips = [z for z in glob.glob(os.path.join(downloads, '*.zip')) if re.search(r' \d+-\d+\.zip$', z)]
+    n = skipped = 0
+    def ours(z):                                        # (the app writes the manifest it saved from in source.txt)
+        with zipfile.ZipFile(z) as zf:
+            return 'source.txt' in zf.namelist() and bool(ident) and ident in zf.read('source.txt').decode('utf-8', 'replace')
+    zips = [z for z in zips if ours(z)]
+    for z in sorted(zips):
+        with zipfile.ZipFile(z) as zf:
+            for name in zf.namelist():
+                m = re.match(r'(\d{4})\b.*\.(jpe?g|png)$', name)
+                if not m: continue
+                f = folio.get(int(m.group(1)))
+                if not f: skipped += 1; continue
+                with open(os.path.join(out, f + '.jpg'), 'wb') as fh: fh.write(zf.read(name))
+                n += 1
+    print(f'{n} pages filed by folio -> {out} (from {len(zips)} zips in {downloads}; {skipped} pages with no chant left out)')
+    if o.share:
+        lo, hi = (o.folios.split('-') + [None])[:2] if o.folios else ('011r', '021r')
+        hi = hi or lo
+        files = sorted(f for f in os.listdir(out) if f.endswith('.jpg') and folio_key(lo) <= folio_key(f[:-4]) <= folio_key(hi))
+        if not files: raise SystemExit(f'No pages between {lo} and {hi} in {out}.')
+        dest = os.path.join(o.share, f'cantus-{o.source}')
+        os.makedirs(dest, exist_ok=True)
+        name = f'pages-{lo}-{hi}.zip'
+        with zipfile.ZipFile(os.path.join(dest, name), 'w', zipfile.ZIP_STORED) as zf:
+            for f in files: zf.write(os.path.join(out, f), f)
+        git = lambda *a: subprocess.run(['git', '-C', o.share, *a], check=True)
+        git('pull', '--quiet')
+        git('add', os.path.join(f'cantus-{o.source}', name))
+        git('commit', '--quiet', '-m', f'Pages {lo}-{hi} of Cantus source {o.source}')
+        git('push', '--quiet')
+        print(f'{len(files)} pages ({lo} to {hi}) -> {os.path.join(dest, name)}, pushed')
 
 
 # ---------------------------------------------------------------- melodies: Volpiano
@@ -243,11 +298,13 @@ def show(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['fetch', 'images', 'lines'])
+    a.add_argument('what', choices=['fetch', 'images', 'lines', 'collect'])
     a.add_argument('--source', required=True, help='the Cantus source id (Paris lat. 15181: 123631)')
-    a.add_argument('--folios', help='images: only these, e.g. 011r-020v')
+    a.add_argument('--folios', help='images, collect --share: only these, e.g. 011r-020v')
+    a.add_argument('--downloads', help='collect: where the zips are (your Downloads folder)')
+    a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to')
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
     o = a.parse_args()
-    {'fetch': fetch, 'images': images, 'lines': show}[o.what](o)
+    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect}[o.what](o)
