@@ -126,3 +126,54 @@ epoch 8 batch 500: loss 0.139 (1492 s)
 epoch 8 batch 600: loss 0.136 (1504 s)
 epoch 8 batch 700: loss 0.136 (1517 s)
 epoch 8 batch 800: loss 0.137 (1529 s)
+epoch 8 batch 900: loss 0.138 (1542 s)
+epoch 8 batch 1000: loss 0.137 (1555 s)
+epoch 8 batch 1100: loss 0.137 (1567 s)
+epoch 8 batch 1200: loss 0.137 (1580 s)
+epoch 8 batch 1300: loss 0.136 (1592 s)
+epoch 8 batch 1400: loss 0.135 (1604 s)
+epoch 8: loss 0.135; synthetic test staves: token errors 3.69%, note errors 4.09%; real: token errors 3.51%, note errors 2.98% (1607 s)
+epoch 9 batch 0: loss 0.148 (1607 s)
+epoch 9 batch 100: loss 0.138 (1619 s)
+epoch 9 batch 200: loss 0.133 (1632 s)
+epoch 9 batch 300: loss 0.131 (1644 s)
+epoch 9 batch 400: loss 0.131 (1657 s)
+epoch 9 batch 500: loss 0.130 (1669 s)
+epoch 9 batch 600: loss 0.130 (1681 s)
+epoch 9 batch 700: loss 0.131 (1693 s)
+epoch 9 batch 800: loss 0.130 (1705 s)
+epoch 9 batch 900: loss 0.130 (1718 s)
+epoch 9 batch 1000: loss 0.130 (1731 s)
+epoch 9 batch 1100: loss 0.130 (1743 s)
+epoch 9 batch 1200: loss 0.130 (1754 s)
+epoch 9 batch 1300: loss 0.130 (1766 s)
+epoch 9 batch 1400: loss 0.129 (1779 s)
+epoch 9: loss 0.129; synthetic test staves: token errors 3.58%, note errors 3.93%; real: token errors 3.39%, note errors 2.79% (1782 s)
+epoch 10 batch 0: loss 0.106 (1782 s)
+epoch 10 batch 100: loss 0.126 (1796 s)
+epoch 10 batch 200: loss 0.127 (1808 s)
+epoch 10 batch 300: loss 0.127 (1821 s)
+epoch 10 batch 400: loss 0.129 (1833 s)
+epoch 10 batch 500: loss 0.128 (1846 s)
+epoch 10 batch 600: loss 0.128 (1859 s)
+epoch 10 batch 700: loss 0.126 (1871 s)
+epoch 10 batch 800: loss 0.126 (1884 s)
+epoch 10 batch 900: loss 0.126 (1896 s)
+epoch 10 batch 1000: loss 0.126 (1909 s)
+epoch 10 batch 1100: loss 0.127 (1922 s)
+epoch 10 batch 1200: loss 0.127 (1935 s)
+epoch 10 batch 1300: loss 0.127 (1948 s)
+epoch 10 batch 1400: loss 0.127 (1959 s)
+epoch 10: loss 0.127; synthetic test staves: token errors 3.60%, note errors 3.96%; real: token errors 3.41%, note errors 2.80% (1962 s)
+
+$ recognizer.py test --model training/data/j0003/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.30%, note errors 2.72%
+
+$ recognizer.py test --model training/data/j0003/best.pt --data training/data/staves-ms --test-limit 1000
+1000 staves: token errors 3.61%, note errors 4.16%
+
+$ recognizer.py test --model training/data/j0001/best.pt --data training/data/staves-ms --test-limit 1000
+1000 staves: token errors 8.30%, note errors 8.98%
+
+$ recognizer.py export --model training/data/j0003/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0003-wide-plus-ms/chant.onnx (5.7 MB)
