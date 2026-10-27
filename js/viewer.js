@@ -2,7 +2,8 @@
 // browser: pdf.js (vendored in vendor/pdfjs) reads the PDF here, and nothing is sent anywhere.
 // A source: { name, type: 'pdf' | 'images' | 'iiif', count, sizes: [[w, h], ...], render(index, canvas, scale),
 // pixels(index), close() }; a IIIF one also its url (the manifest's). Sizes are in the page's own units, which the document's boxes use too: PDF points (1/72 inch) or image
-// pixels. pixels() gives a page in grey for finding things in it: { gray, w, h, scale }, scale being pixels per unit.
+// pixels. pixels() gives a page in grey for finding things in it: { gray, w, h, scale, lines }, scale being pixels per unit;
+// lines, if the page's staves are ruled in red, its red ink alone (as grey: see CGStaves.ruling), else null.
 (function (global) {
   'use strict';
 
@@ -22,7 +23,10 @@
     const c = document.createElement('canvas');
     c.width = w; c.height = h;
     const ctx = c.getContext('2d', { willReadFrequently: true });
-    return Promise.resolve(draw(c, ctx)).then(() => ({ gray: global.CGStaves.grey(ctx.getImageData(0, 0, w, h).data), w, h }));
+    return Promise.resolve(draw(c, ctx)).then(() => {
+      const rgba = ctx.getImageData(0, 0, w, h).data, S = global.CGStaves;
+      return { gray: S.grey(rgba), lines: S.ruling(rgba), w, h };
+    });
   }
 
   const isPdf = f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf';

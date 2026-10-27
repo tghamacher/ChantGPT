@@ -21,10 +21,13 @@
     const data = new Float32Array(H * W);
     // (beyond the staff's ends its lines run on straight from the last point, as numpy's interp holds them level)
     const at = (l, x) => { const v = S().xsOf(l); return S().yAt(l, Math.min(v[v.length - 1], Math.max(v[0], x))); };
+    // (between the lines, from line to line: a hand-ruled staff's spaces can differ a good deal; beyond them, at the
+    // staff's mean space)
     for (let u = 0; u < W; u++) {
-      const cx = x0 + (u + 0.5) * step, yt = at(lines[0], cx), yb = at(lines[3], cx);
+      const cx = x0 + (u + 0.5) * step, ys = lines.map(l => at(l, cx)), mean = (ys[3] - ys[0]) / 3;
       for (let v = 0; v < H; v++) {
-        const py = yt + (v + 0.5 - top) / (3 * sp) * (yb - yt);
+        const s = (v + 0.5 - top) / sp, k = Math.max(0, Math.min(2, Math.floor(s)));
+        const py = s < 0 ? ys[0] + s * mean : s > 3 ? ys[3] + (s - 3) * mean : ys[k] + (s - k) * (ys[k + 1] - ys[k]);
         data[v * W + u] = 1 - sample(gray, w, h, cx, py) / 255;
       }
     }
