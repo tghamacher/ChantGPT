@@ -1,0 +1,25 @@
+job 0012-salzinnes-pages: The Salzinnes Antiphonal (1554-5; Cantus 123723): the pages the app saved from Leuven's manifest (in EMS Tools), filed by folio from their labels, and all of them (1800 pixels wide) zipped onto training-data. Leaves out zips still being saved: run it again for the rest. Then the zips and pages used are deleted from this computer
+code: eeb4879
+
+$ cantus.py collect --source 123723 --manifest https://lib.is/IE9434868/manifest --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123723/pages-001r-056r-w1800.zip is 85.49 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+281 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123723 (from 3 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 19 pages with no chant left out)
+111 of 281 pages -> pages-001r-056r-w1800.zip, pushed
+Traceback (most recent call last):
+  File "D:\ChantGPT\changpt-repo\training\cantus.py", line 520, in <module>
+    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels, 'tidy': tidy}[o.what](o)
+  File "D:\ChantGPT\changpt-repo\training\cantus.py", line 173, in collect
+    share(o, out)
+  File "D:\ChantGPT\changpt-repo\training\cantus.py", line 248, in share
+    if size + len(data) > 90e6: flush()
+                                ^^^^^^^
+  File "D:\ChantGPT\changpt-repo\training\cantus.py", line 234, in flush
+    with zipfile.ZipFile(os.path.join(dest, name), 'w', zipfile.ZIP_STORED) as zf:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ted Hamacher\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py", line 1336, in __init__
+    self.fp = io.open(file, filemode)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'D:\\ChantGPT\\chantgpt-data\\cantus-123723\\pages-056v-111r-w1800.zip'
+(step 1 failed: exit 1)
