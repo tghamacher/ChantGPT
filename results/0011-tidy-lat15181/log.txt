@@ -1,0 +1,5 @@
+job 0011-tidy-lat15181: Lat. 15181's pages are all on training-data: the app's zips of them (in EMS Tools) and the pages filed by folio (training/data/scans/123631) deleted from this computer
+code: e2e1be4
+
+$ cantus.py tidy --source 123631 --share DATA --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+5 zips of cantus-123631 on training-data; deleted 12 of the app's zips from C:\Users\Ted Hamacher\Desktop\EMS Tools and 352 pages from D:\ChantGPT\changpt-repo\training\data\scans\123631
