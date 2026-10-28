@@ -135,10 +135,19 @@ def collect(o):
     """The app's zips (images named '<page number, 4 digits> <label>.jpg'), each image filed as its folio."""
     out = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
     os.makedirs(out, exist_ok=True)
-    pages = page_images(o.source)
-    folio = {view_of(u): f for f, u in pages.items()}
-    ident = re.search(r'ark:/12148/(\w+)|(bsb\d+)', next(iter(pages.values())))
-    ident = ident and (ident.group(1) or ident.group(2))
+    if o.manifest:                                      # (pages filed by their labels: 12r, f. 12v, …)
+        have = {r['folio'] for r in chants(o.source)}
+        ident = o.manifest
+        def folio_of(n, name):
+            m = re.search(r'(\d+)\s*_?([rv])\b', name[5:].rsplit('.', 1)[0])
+            f = m and f'{int(m.group(1)):03d}{m.group(2)}'
+            return f if f in have else None
+    else:
+        pages = page_images(o.source)
+        folio = {view_of(u): f for f, u in pages.items()}
+        ident = re.search(r'ark:/12148/(\w+)|(bsb\d+)', next(iter(pages.values())))
+        ident = ident and (ident.group(1) or ident.group(2))
+        folio_of = lambda n, name: folio.get(n)
     downloads = o.downloads or os.path.join(os.path.expanduser('~'), 'Downloads')
     zips = [z for z in glob.glob(os.path.join(downloads, '*.zip')) if re.search(r' \d+-\d+\.zip$', z)]
     n = skipped = 0
@@ -151,7 +160,7 @@ def collect(o):
             for name in zf.namelist():
                 m = re.match(r'(\d{4})\b.*\.(jpe?g|png)$', name)
                 if not m: continue
-                f = folio.get(int(m.group(1)))
+                f = folio_of(int(m.group(1)), name)
                 if not f: skipped += 1; continue
                 with open(os.path.join(out, f + '.jpg'), 'wb') as fh: fh.write(zf.read(name))
                 n += 1
@@ -460,7 +469,7 @@ if __name__ == '__main__':
     a.add_argument('--downloads', help='collect: where the zips are (your Downloads folder)')
     a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to (all: every one)')
     a.add_argument('--width', type=int, help='collect --share, images --manifest: pages made no wider than this')
-    a.add_argument('--manifest', help='images: the pages from this IIIF manifest, its pages labelled by folio (e-codices\'s are)')
+    a.add_argument('--manifest', help='images: the pages from this IIIF manifest, its pages labelled by folio (e-codices\'s are); collect: the zips saved from it, each page filed by its label')
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')

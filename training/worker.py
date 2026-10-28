@@ -16,7 +16,7 @@ queue/<id>.json on that branch:
 Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
 the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
-app's zips from (--downloads), which it only reads.
+app's zips from (--downloads), which it only reads; and its --manifest, an https address it only matches.
 Before each job the repository is brought up to date with main. The results go to results/<id>/ on the jobs
 branch: log.txt (pushed every few minutes while it runs), the kept files, and done.json.
 """
@@ -49,6 +49,9 @@ def checked(step, out, data=None):
     for k, s in enumerate(step[2:]):
         if script == 'cantus.py' and k and step[2:][k - 1] == '--downloads':
             if not os.path.isdir(s): raise ValueError(f'no folder {s}')
+            args.append(s); continue
+        if script == 'cantus.py' and k and step[2:][k - 1] == '--manifest':   # (a manifest's address, only matched)
+            if not re.fullmatch(r'https://[\w.-]+/[\w./%:-]*', s): raise ValueError(f'not a manifest address: {s!r}')
             args.append(s); continue
         s = s.replace('OUT', out)
         if data and s == 'DATA': args.append(os.path.realpath(data)); continue

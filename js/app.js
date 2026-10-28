@@ -365,10 +365,14 @@
   // (and ?iiif=<manifest> a manuscript online)
   const urls = new URLSearchParams(location.search).getAll('source'), iiif = new URLSearchParams(location.search).get('iiif');
   if (urls.length) V.fetchFiles(urls).then(open, e => say(e.message, true));
-  // (with &save=29-49, those pages saved as soon as it is open)
+  // (with &save=29-49, those pages saved as soon as it is open; &save=all, all of them)
   else if (iiif) {
     $('iiifUrl').value = iiif;
-    const range = (new URLSearchParams(location.search).get('save') || '').match(/^(\d+)-(\d+)$/);
-    openIiif(iiif).then(ok => { if (ok && range) { $('saveFrom').value = range[1]; $('saveTo').value = range[2]; savePages(+range[1], +range[2]); } });
+    // (&save=all: every page)
+    const want = new URLSearchParams(location.search).get('save') || '', range = want.match(/^(\d+)-(\d+)$/);
+    openIiif(iiif).then(ok => {
+      const r = range ? [+range[1], +range[2]] : want === 'all' && ok && state.src ? [1, state.src.count] : null;
+      if (ok && r) { $('saveFrom').value = r[0]; $('saveTo').value = r[1]; savePages(r[0], r[1]); }
+    });
   }
 })();
