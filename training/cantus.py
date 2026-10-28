@@ -21,7 +21,7 @@ neumes (one), syllables (two), words (three); 3 and 4 Cantus's barlines (editori
 a line in the manuscript, 77 of a page, 777 of a column; 6------6 pitches that can't be read. Cantus gives pitch,
 not the staff: where a line's notes sit depends on its clef, which only the page shows (gabc() takes it).
 """
-import argparse, csv, glob, io, json, os, re, subprocess, sys, time, urllib.request, zipfile
+import argparse, csv, glob, io, json, os, re, shutil, subprocess, sys, time, urllib.request, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITE = 'https://cantusdatabase.org'
@@ -169,6 +169,37 @@ def collect(o):
         share(o, out)
 
 
+def tidy(o):
+    """Once a source's pages are on the training-data branch (cantus-<source>/ there, pushed), what was kept on this
+    computer to get them there is deleted: the app's zips of its pages (those whose source.txt names its manifest, in
+    --downloads) and the pages filed by folio (training/data/scans/<source>)."""
+    if not o.share: raise SystemExit('tidy: --share, the clone of training-data, to check the pages are there')
+    subprocess.run(['git', '-C', o.share, 'fetch', '--quiet', 'origin'], check=True)
+    branch = subprocess.run(['git', '-C', o.share, 'rev-parse', '--abbrev-ref', '@{u}'], capture_output=True, text=True, check=True).stdout.strip()
+    there = subprocess.run(['git', '-C', o.share, 'ls-tree', '--name-only', branch, f'cantus-{o.source}/'],
+                           capture_output=True, text=True, check=True).stdout.split()
+    if not there: raise SystemExit(f'tidy: no cantus-{o.source}/ on training-data yet; nothing deleted')
+    if o.manifest: ident = o.manifest
+    else:
+        ident = re.search(r'ark:/12148/(\w+)|(bsb\d+)', next(iter(page_images(o.source).values())))
+        ident = ident and (ident.group(1) or ident.group(2))
+    if not ident: raise SystemExit('tidy: no manifest to tell the zips by (--manifest)')
+    downloads = o.downloads or os.path.join(os.path.expanduser('~'), 'Downloads')
+    gone = 0
+    for z in glob.glob(os.path.join(downloads, '*.zip')):
+        try:
+            with zipfile.ZipFile(z) as zf:
+                ours = 'source.txt' in zf.namelist() and ident in zf.read('source.txt').decode('utf-8', 'replace')
+        except zipfile.BadZipFile:
+            continue
+        if ours: os.remove(z); gone += 1
+    scans = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
+    pages = len(glob.glob(os.path.join(scans, '*.jpg'))) if os.path.isdir(scans) else 0
+    if os.path.isdir(scans): shutil.rmtree(scans)
+    print(f'{len(there)} zips of cantus-{o.source} on training-data; deleted {gone} of the app\'s zips from {downloads} '
+          f'and {pages} pages from {scans}')
+
+
 def share(o, out):
     """Folios (--folios lo-hi, or all) zipped into a clone of the training-data branch, committed and pushed: zips of
     up to about 90 MB, each pushed as it is made; with --width, each page made no wider (as JPEG)."""
@@ -194,11 +225,13 @@ def share(o, out):
         name = f'pages-{batch[0][0][:-4]}-{batch[-1][0][:-4]}{"-w" + str(o.width) if o.width else ""}.zip'
         with zipfile.ZipFile(os.path.join(dest, name), 'w', zipfile.ZIP_STORED) as zf:
             for f, data in batch: zf.writestr(f, data)
-        git('add', os.path.join(f'cantus-{o.source}', name))
+        git('add', '--sparse', os.path.join(f'cantus-{o.source}', name))
         git('commit', '--quiet', '-m', f'Pages {batch[0][0][:-4]}-{batch[-1][0][:-4]} of Cantus source {o.source}')
         for k in range(4):
             if not subprocess.run(['git', '-C', o.share, 'push', '--quiet']).returncode: break
             subprocess.run(['git', '-C', o.share, 'pull', '--rebase', '--quiet']); time.sleep(10 * 2 ** k)
+        # (pushed: in a clone that holds only what it needs (the worker's), the zip is taken out of it again)
+        subprocess.run(['git', '-C', o.share, 'sparse-checkout', 'reapply'], capture_output=True)
         sent += len(batch)
         print(f'{sent} of {len(files)} pages -> {name}, pushed', flush=True)
         batch, size = [], 0
@@ -461,7 +494,7 @@ def show(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['fetch', 'images', 'lines', 'collect', 'labels'])
+    a.add_argument('what', choices=['fetch', 'images', 'lines', 'collect', 'labels', 'tidy'])
     a.add_argument('--staves', help='labels: the folder staves_of.js wrote')
     a.add_argument('--model', help='labels: the recognizer checkpoint that reads the staves')
     a.add_argument('--source', required=True, help='the Cantus source id (Paris lat. 15181: 123631)')
@@ -476,4 +509,4 @@ if __name__ == '__main__':
     a.add_argument('--worth', type=float, default=0.4, help='labels: a staff paired with a line only if fewer than this share of notes differ')
     a.add_argument('--verbose', action='store_true', help='labels: print each page\'s pairs')
     o = a.parse_args()
-    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels}[o.what](o)
+    {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels, 'tidy': tidy}[o.what](o)
