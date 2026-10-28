@@ -164,6 +164,10 @@ def collect(o):
                 if not f: skipped += 1; continue
                 with open(os.path.join(out, f + '.jpg'), 'wb') as fh: fh.write(zf.read(name))
                 n += 1
+    # (the zips used, for tidy: only these are deleted, not one saved since)
+    used = os.path.join(out, '.collected.json')
+    before = json.load(open(used)) if os.path.exists(used) else []
+    json.dump(sorted(set(before) | {os.path.abspath(z) for z in zips}), open(used, 'w'), indent=1)
     print(f'{n} pages filed by folio -> {out} (from {len(zips)} zips in {downloads}; {skipped} pages with no chant left out)')
     if o.share:
         share(o, out)
@@ -172,7 +176,7 @@ def collect(o):
 def tidy(o):
     """Once a source's pages are on the training-data branch (cantus-<source>/ there, pushed), what was kept on this
     computer to get them there is deleted: the app's zips of its pages (those whose source.txt names its manifest, in
-    --downloads) and the pages filed by folio (training/data/scans/<source>)."""
+    --downloads, and that collect filed pages from) and the pages filed by folio (training/data/scans/<source>)."""
     if not o.share: raise SystemExit('tidy: --share, the clone of training-data, to check the pages are there')
     subprocess.run(['git', '-C', o.share, 'fetch', '--quiet', 'origin'], check=True)
     branch = subprocess.run(['git', '-C', o.share, 'rev-parse', '--abbrev-ref', '@{u}'], capture_output=True, text=True, check=True).stdout.strip()
@@ -185,15 +189,19 @@ def tidy(o):
         ident = ident and (ident.group(1) or ident.group(2))
     if not ident: raise SystemExit('tidy: no manifest to tell the zips by (--manifest)')
     downloads = o.downloads or os.path.join(os.path.expanduser('~'), 'Downloads')
+    scans = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
+    used = os.path.join(scans, '.collected.json')
+    # (only the zips collect filed pages from: one saved since waits for the next collect)
+    collected = set(json.load(open(used))) if os.path.exists(used) else None
     gone = 0
     for z in glob.glob(os.path.join(downloads, '*.zip')):
+        if collected is not None and os.path.abspath(z) not in collected: continue
         try:
             with zipfile.ZipFile(z) as zf:
                 ours = 'source.txt' in zf.namelist() and ident in zf.read('source.txt').decode('utf-8', 'replace')
         except zipfile.BadZipFile:
             continue
         if ours: os.remove(z); gone += 1
-    scans = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
     pages = len(glob.glob(os.path.join(scans, '*.jpg'))) if os.path.isdir(scans) else 0
     if os.path.isdir(scans): shutil.rmtree(scans)
     print(f'{len(there)} zips of cantus-{o.source} on training-data; deleted {gone} of the app\'s zips from {downloads} '
