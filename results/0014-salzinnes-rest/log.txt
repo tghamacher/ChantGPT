@@ -1,0 +1,16 @@
+job 0014-salzinnes-rest: The Salzinnes Antiphonal (1554-5; Cantus 123723): the pages the app saved from Leuven's manifest (in EMS Tools), filed by folio from their labels, and all of them (1800 pixels wide) zipped onto training-data. Leaves out zips still being saved: run it again for the rest. Then the zips and pages used are deleted from this computer
+code: ee0f4bc
+
+$ cantus.py collect --source 123723 --manifest https://lib.is/IE9434868/manifest --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123723/pages-001r-160r-w1800.zip is 85.44 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+186 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123723 (from 2 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 11 pages with no chant left out)
+111 of 186 pages -> pages-001r-160r-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123723/pages-160v-197v-w1800.zip is 58.17 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+186 of 186 pages -> pages-160v-197v-w1800.zip, pushed
+
+$ cantus.py tidy --source 123723 --manifest https://lib.is/IE9434868/manifest --share DATA --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+5 zips of cantus-123723 on training-data; deleted 2 of the app's zips from C:\Users\Ted Hamacher\Desktop\EMS Tools and 186 pages from D:\ChantGPT\changpt-repo\training\data\scans\123723
