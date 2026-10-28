@@ -1,0 +1,3 @@
+job 0010-tidy-lat15181: Lat. 15181's pages are all on training-data: the app's zips of them (in EMS Tools) and the pages filed by folio (training/data/scans/123631) deleted from this computer
+code: e2e1be4
+(the job could not run: not allowed: cantus.py tidy)
