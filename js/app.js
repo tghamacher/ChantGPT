@@ -242,7 +242,10 @@
   }
 
   // ---------------------------------------------------------------- controls
-  E.init({ state, svg: $('overlay'), say, pixels, show, changed: () => { state.dirty = true; } });
+  // which recognizer reads the notes (remembered)
+  try { const v = localStorage.getItem('cg-model'); if (v) $('readModel').value = v; } catch (e) { }
+  $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
+  E.init({ state, svg: $('overlay'), say, pixels, show, model: () => $('readModel').value, changed: () => { state.dirty = true; } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });

@@ -106,10 +106,10 @@
   }
 
   // The neumes on a staff, read: px, the page's pixels (viewer.js: { gray, w, h, scale, lines }); lines in page units.
-  // Returns [{ g, x0, x1 (page units), conf }], in order along the staff. A page ruled in red is read by the
-  // manuscript model.
-  async function read(px, lines) {
-    const { session: s, meta: m } = await load(px.lines ? 'ms' : 'print');
+  // Returns [{ g, x0, x1 (page units), conf }], in order along the staff. kind: 'print' or 'ms' (which model), or
+  // 'auto': a page ruled in red is read by the manuscript model.
+  async function read(px, lines, kind = 'auto') {
+    const { session: s, meta: m } = await load(kind === 'auto' ? (px.lines ? 'ms' : 'print') : kind);
     const L = lines.map(l => l.map(v => v * px.scale));
     const st = straighten(px.gray, px.w, px.h, L, m);
     const W = st.W + ((-st.W) % m.stride + m.stride) % m.stride, data = new Float32Array(m.height * W);
