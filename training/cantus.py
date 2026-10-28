@@ -231,10 +231,13 @@ def share(o, out):
         if not batch: return
         part += 1
         name = f'pages-{batch[0][0][:-4]}-{batch[-1][0][:-4]}{"-w" + str(o.width) if o.width else ""}.zip'
+        os.makedirs(dest, exist_ok=True)                # (a lean clone takes the folder away with its last zip)
         with zipfile.ZipFile(os.path.join(dest, name), 'w', zipfile.ZIP_STORED) as zf:
             for f, data in batch: zf.writestr(f, data)
         git('add', '--sparse', os.path.join(f'cantus-{o.source}', name))
-        git('commit', '--quiet', '-m', f'Pages {batch[0][0][:-4]}-{batch[-1][0][:-4]} of Cantus source {o.source}')
+        # (the same zip pushed before, by a run that stopped after it: nothing to commit)
+        if subprocess.run(['git', '-C', o.share, 'diff', '--cached', '--quiet']).returncode:
+            git('commit', '--quiet', '-m', f'Pages {batch[0][0][:-4]}-{batch[-1][0][:-4]} of Cantus source {o.source}')
         for k in range(4):
             if not subprocess.run(['git', '-C', o.share, 'push', '--quiet']).returncode: break
             subprocess.run(['git', '-C', o.share, 'pull', '--rebase', '--quiet']); time.sleep(10 * 2 ** k)
