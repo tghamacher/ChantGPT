@@ -539,7 +539,7 @@
   // what was read kept with it (read), to be looked at. Returns what it did, or null (and says why).
   async function readStaff(st, pg = ctx.state.page) {
     let px, got;
-    try { px = await ctx.pixels(pg); got = await R.read(px, st.lines); }
+    try { px = await ctx.pixels(pg); got = await R.read(px, st.lines, ctx.model ? ctx.model() : 'auto'); }
     catch (e) { ctx.say(`Couldn't read the notes: ${e.message || e}`, true); return null; }
     const items = st.syllables.flatMap((syl, s) => syl.items.map((it, i) => ({ it, s, i })));
     let same = 0, differ = 0, unseen = 0, extra = 0;
