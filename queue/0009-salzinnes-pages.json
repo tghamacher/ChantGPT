@@ -1,0 +1,5 @@
+{"id": "0009-salzinnes-pages",
+ "about": "The Salzinnes Antiphonal (1554-5; Cantus 123723): the pages the app saved from Leuven's manifest (in EMS Tools), filed by folio from their labels, and all of them (1800 pixels wide) zipped onto training-data. Leaves out zips still being saved: run it again for the rest",
+ "data": ["cantus-csv.zip"],
+ "steps": [["cantus.py", "collect", "--source", "123723", "--manifest", "https://lib.is/IE9434868/manifest", "--downloads", "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools", "--share", "DATA", "--folios", "all", "--width", "1800"]],
+ "keep": []}
