@@ -90,10 +90,27 @@ def page_images(source):
     return {f: url(n) for f, (url, n) in sorted(out.items(), key=lambda v: folio_key(v[0]))}
 
 
+def manifest_pages(url, width):
+    """Each folio a IIIF manifest's pages are labelled with (1r, 12v, …; others, a cover, left out) and its image,
+    no wider than width (v2 manifests, as e-codices's)."""
+    m = json.loads(get(url))
+    out = {}
+    for c in m['sequences'][0]['canvases']:
+        f = re.fullmatch(r'\s*(\d+)\s*([rv])\s*', str(c.get('label', '')))
+        if not f: continue
+        svc = c['images'][0]['resource']['service']['@id'].rstrip('/')
+        out[f'{int(f.group(1)):03d}{f.group(2)}'] = f'{svc}/full/{width or "full"},/0/default.jpg'
+    return out
+
+
 def images(o):
     out = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
     os.makedirs(out, exist_ok=True)
-    pages = page_images(o.source)
+    if o.manifest:                                      # (the folios with chants, as the manifest labels its pages)
+        have = {r['folio'] for r in chants(o.source)}
+        pages = {f: u for f, u in manifest_pages(o.manifest, o.width).items() if f in have}
+    else:
+        pages = page_images(o.source)
     lo, hi = (o.folios.split('-') + [None])[:2] if o.folios else (None, None)
     hi = hi or lo
     todo = [f for f in pages if (not lo or folio_key(lo) <= folio_key(f) <= folio_key(hi))]
@@ -442,7 +459,8 @@ if __name__ == '__main__':
     a.add_argument('--folios', help='images, collect --share: only these, e.g. 011r-020v')
     a.add_argument('--downloads', help='collect: where the zips are (your Downloads folder)')
     a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to (all: every one)')
-    a.add_argument('--width', type=int, help='collect --share: pages made no wider than this')
+    a.add_argument('--width', type=int, help='collect --share, images --manifest: pages made no wider than this')
+    a.add_argument('--manifest', help='images: the pages from this IIIF manifest, its pages labelled by folio (e-codices\'s are)')
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
