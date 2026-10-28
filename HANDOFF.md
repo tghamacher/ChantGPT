@@ -209,10 +209,12 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line
   bridged), Paris BnF lat. 15181 from Gallica paired line by line with the Cantus Database's melodies (source 123631;
   `training/cantus.py`), and training on the user's GPU by jobs (`training/worker.py`, the `jobs` branch).
-  - `models/chant-ms.*`: the manuscript model (job 0006), read on pages ruled in red. Synthetic manuscript-style staves,
-    then two rounds on lat. 15181's own staves (3,524 paired, line breaks mended), each labelled by the last round's
-    model. On held-out folios of lat. 15181 8.4% of notes wrong (the model before 0006: 10.4%; before any 15181:
-    38.7%); on the Graduale 2.85% (`models/chant.*` stays the printed books' model: 2.26%).
+  - `models/chant-ms.*`: the manuscript model (job 0008), read on pages ruled in red. Synthetic manuscript-style
+    staves, then two rounds on lat. 15181's own staves (3,524 paired, line breaks mended; a third round gained
+    nothing), then a second manuscript besides: Einsiedeln 611 (14th century, Gothic neumes on black lines; Cantus
+    123606, images from e-codices, folios 1-84 so far: 1,569 staves fitting well). Notes wrong on held-out folios:
+    Einsiedeln 7.8% (21.6% before it), lat. 15181 8.6%, the Graduale 2.9% (`models/chant.*` stays the printed
+    books' model: 2.26%).
 
 - **Step 4, the recognizer** (branch `step-4-recognizer`, merged into `main` with the model: the user is happy to
   publish it, GregoBase's transcriptions being there for anyone to use). See `training/README.md`.
