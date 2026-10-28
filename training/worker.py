@@ -13,7 +13,7 @@ queue/<id>.json on that branch:
                ["recognizer.py", "export", "--model", "training/data/model6/best.pt", "--onnx", "OUT/chant.onnx"]],
      "keep": ["training/data/model6/best.pt"]}         # files copied back with the log
 
-Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect),
+Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect, tidy),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
 the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
 app's zips from (--downloads), which it only reads; and its --manifest, an https address it only matches.
@@ -24,7 +24,7 @@ import argparse, glob, json, os, platform, re, shutil, subprocess, sys, time, zi
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect'}}
+ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'}}
 
 
 def git(where, *args, check=True, quiet=False):
@@ -66,23 +66,28 @@ def checked(step, out, data=None):
 
 
 def unpack(data, names):
-    """Zips from the training-data clone, unpacked into the repository (each once: a list of those done is kept)."""
+    """Zips from the training-data clone, unpacked into the repository (each once: a list of those done is kept). Each
+    is fetched only for this, and taken out of the clone again once unpacked: the disk keeps what it holds, not both."""
     if not names: return
     git(data, 'pull', '--quiet')
     done_file = os.path.join(REPO, 'training', 'data', '.unpacked.json')
     done = json.load(open(done_file)) if os.path.exists(done_file) else {}
     for n in names:
-        path = os.path.realpath(os.path.join(data, n))
-        if not path.startswith(os.path.realpath(data) + os.sep) or not os.path.exists(path):
-            raise ValueError(f'no {n} on training-data')
-        stamp = f'{os.path.getsize(path)}'
+        if not re.fullmatch(r'[\w.-]+\.zip', n): raise ValueError(f'not a zip on training-data: {n}')
+        listed = git(data, 'ls-tree', '-l', 'HEAD', '--', n, quiet=True).stdout.split()
+        if len(listed) < 4: raise ValueError(f'no {n} on training-data')
+        stamp = listed[3]                                   # (its size)
         if done.get(n) == stamp: continue
         say(f'unpacking {n}')
-        with zipfile.ZipFile(path) as z:
-            for m in z.namelist():
-                t = os.path.realpath(os.path.join(REPO, m))
-                if not t.startswith(REPO + os.sep): raise ValueError(f'{n}: {m} would land outside the repository')
-            z.extractall(REPO)
+        git(data, 'sparse-checkout', 'add', '/' + n)
+        try:
+            with zipfile.ZipFile(os.path.join(data, n)) as z:
+                for m in z.namelist():
+                    t = os.path.realpath(os.path.join(REPO, m))
+                    if not t.startswith(REPO + os.sep): raise ValueError(f'{n}: {m} would land outside the repository')
+                z.extractall(REPO)
+        finally:
+            git(data, 'sparse-checkout', 'set', '--no-cone', '/README.md')
         done[n] = stamp
         os.makedirs(os.path.dirname(done_file), exist_ok=True)
         json.dump(done, open(done_file, 'w'), indent=1)
@@ -149,6 +154,20 @@ def run(job, jobs, data):
     say(f'job {jid}: {status}')
 
 
+def lean(data, origin):
+    """The clone of training-data, holding nothing but its history (a few MB): each zip is fetched when a job unpacks
+    it, and the manuscripts' pages (cantus-*/) never (this computer trains only on the staves made from them). A clone
+    made before this, with everything, is made again, to free the disk."""
+    if os.path.isdir(os.path.join(data, '.git')):
+        if git(data, 'config', 'remote.origin.partialclonefilter', check=False, quiet=True).stdout.strip(): return
+        say(f'making {data} again without the manuscripts\' pages, to free the disk')
+        shutil.rmtree(data, onerror=lambda f, p, e: (os.chmod(p, 0o700), f(p)))
+    say(f'cloning the training-data branch into {data} (without the manuscripts\' pages)')
+    subprocess.run(['git', 'clone', '--quiet', '--filter=blob:none', '--no-checkout', '--single-branch', '-b', 'training-data', origin, data], check=True)
+    git(data, 'sparse-checkout', 'set', '--no-cone', '/README.md')
+    git(data, 'checkout', '--quiet', 'training-data')
+
+
 def main():
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('--jobs', default=os.path.join(os.path.dirname(REPO), 'chantgpt-jobs'))
@@ -160,9 +179,7 @@ def main():
     if not os.path.isdir(os.path.join(o.jobs, '.git')):
         say(f'cloning the jobs branch into {o.jobs}')
         subprocess.run(['git', 'clone', '--quiet', '--single-branch', '-b', 'jobs', origin, o.jobs], check=True)
-    if not os.path.isdir(os.path.join(o.data, '.git')):
-        say(f'cloning the training-data branch into {o.data}')
-        subprocess.run(['git', 'clone', '--quiet', '--depth', '1', '--single-branch', '-b', 'training-data', origin, o.data], check=True)
+    lean(o.data, origin)
     say(f'watching for jobs (every {o.every} s; Ctrl+C to stop)')
     while True:
         try:
