@@ -1,0 +1,5 @@
+{"id": "0011-tidy-lat15181",
+ "about": "Lat. 15181's pages are all on training-data: the app's zips of them (in EMS Tools) and the pages filed by folio (training/data/scans/123631) deleted from this computer",
+ "data": ["cantus-csv.zip"],
+ "steps": [["cantus.py", "tidy", "--source", "123631", "--share", "DATA", "--downloads", "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools"]],
+ "keep": []}
