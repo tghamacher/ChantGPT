@@ -5,187 +5,197 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.14.0">
+<link rel="stylesheet" href="css/site.css?v=0.15.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
+<!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.14.0">version 0.14.0</span>
-  <p>Read scans of Gregorian chant into GABC, with the doubtful places marked for you to check.</p>
-  <nav><a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a><a href="#about">About</a><select id="theme" class="cg-theme" aria-label="Colour theme"><option value="system">System theme</option><option value="light">Light</option><option value="dark">Dark</option></select></nav>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.15.0">0.15.0</span>
+  <div class="cg-tools">
+    <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
+    <button type="button" class="cg-tb" id="iiifToggle" title="Open a manuscript online, from a library's IIIF manifest"><span aria-hidden="true">🌐</span> Online</button>
+    <span class="cg-sep"></span>
+    <span id="pageGroup" class="cg-tbgroup" hidden>
+      <button type="button" class="cg-tb icon" id="prev" aria-label="Previous page" title="Previous page (←)">‹</button>
+      <label class="cg-pageno">Page <input type="number" id="pageNo" min="1" value="1" inputmode="numeric"> / <span id="pageCount">0</span></label>
+      <button type="button" class="cg-tb icon" id="next" aria-label="Next page" title="Next page (→)">›</button>
+      <span class="cg-sep"></span>
+      <span class="cg-seg" role="group" aria-label="Zoom">
+        <button type="button" data-zoom="width" aria-pressed="true" title="Fit the page's width">Width</button>
+        <button type="button" data-zoom="page" aria-pressed="false" title="The whole page">Page</button>
+      </span>
+      <button type="button" class="cg-tb icon" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
+      <button type="button" class="cg-tb icon" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
+      <span class="cg-sep"></span>
+      <button type="button" class="cg-tb icon" id="undo" aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
+      <button type="button" class="cg-tb icon" id="redo" aria-label="Redo" title="Redo (Ctrl+Y)">↷</button>
+    </span>
+  </div>
+  <nav>
+    <span id="docGroup" class="cg-tbgroup" hidden>
+      <button type="button" class="cg-tb" id="save" title="Save your work as a document (Ctrl+S)"><span aria-hidden="true">💾</span> Save</button>
+      <label class="cg-tb" title="Open a saved document, to carry on where you left off">Resume<input type="file" id="openDoc" accept=".json,application/json" hidden></label>
+    </span>
+    <button type="button" class="cg-tb icon" id="helpToggle" aria-label="Help" title="How it works, and the keys (?)">?</button>
+    <select id="theme" class="cg-theme" aria-label="Colour theme" title="Colour theme"><option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select>
+  </nav>
+  <form class="cg-pop cg-iiif" id="iiifForm" hidden>
+    <label>A library's IIIF manifest <input type="url" id="iiifUrl" spellcheck="false" placeholder="https://gallica.bnf.fr/iiif/ark:/12148/…/manifest.json" title="Gallica, the Bayerische Staatsbibliothek, e-codices … The pages are fetched from the library as you turn to them."></label>
+    <button type="submit" id="openIiif">Open</button>
+  </form>
 </header>
 
 <main class="cg-main">
-  <aside class="cg-controls" aria-label="Controls">
-    <section class="cg-group"><h2>1 · Source</h2>
-      <label class="cg-drop" id="drop" tabindex="0">
-        <strong>Choose a PDF or page images</strong>
-        <small>Click to browse, or drag them here. One PDF, or several images (JPEG, PNG, WebP), one per page. Add a saved document to carry on where you left off.</small>
-        <input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden>
-      </label>
-      <form class="cg-row cg-iiif" id="iiifForm">
-        <label>Or a manuscript online (IIIF manifest) <input type="url" id="iiifUrl" spellcheck="false" placeholder="https://gallica.bnf.fr/iiif/ark:/12148/…/manifest.json" title="The address of a library's IIIF manifest: Gallica, the Bayerische Staatsbibliothek, e-codices … The pages are fetched from the library as you turn to them."></label>
-        <button type="submit" id="openIiif">Open</button>
-      </form>
-      <p class="cg-status" id="status" role="status" aria-live="polite"></p>
-    </section>
-
-    <section class="cg-group" id="pageGroup" hidden><h2>2 · Pages</h2>
-      <div class="cg-row">
-        <button type="button" id="prev" aria-label="Previous page">‹</button>
-        <label>Page <input type="number" id="pageNo" min="1" value="1" inputmode="numeric"> of <span id="pageCount">0</span></label>
-        <button type="button" id="next" aria-label="Next page">›</button>
-      </div>
-      <div class="cg-row">
-        <div class="cg-seg" role="group" aria-label="Zoom">
-          <button type="button" data-zoom="width" aria-pressed="true">Fit width</button>
-          <button type="button" data-zoom="page" aria-pressed="false">Whole page</button>
-        </div>
-        <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
-        <button type="button" id="zoomIn" aria-label="Zoom in">+</button>
-      </div>
-      <p class="cg-hint" id="pageInfo"></p>
-      <p class="cg-hint">Arrow keys or Page Up and Page Down turn the pages; + and − zoom.</p>
-      <div id="saveGroup" hidden>
-        <div class="cg-row"><label>Save pages <input type="number" id="saveFrom" min="1" value="1" inputmode="numeric" class="cg-num"></label><label>to <input type="number" id="saveTo" min="1" value="1" inputmode="numeric" class="cg-num"></label><button type="button" id="savePages">Save</button><button type="button" id="stopSaving" hidden>Stop</button></div>
-        <p class="cg-hint">The pages' images, at full size, from the library, in zips of a hundred (each image named by its page number and label), for training or for working offline. A page a second or so: leave the tab open.</p>
-      </div>
-    </section>
-
-    <section class="cg-group" id="staffGroup" hidden><h2>3 · Staves</h2>
-      <p>Let ChantGPT find the staves, or drag a box around a staff, from its first note to its last, to add it yourself. If its lines are off, click the staff and drag them into place.</p>
-      <div class="cg-row">
-        <button type="button" id="findStaves" title="Find every staff on this page (those already marked are left as they are)">Find the staves on this page</button>
-        <button type="button" id="findEverywhere" title="Find the staves on every page from this one on">… on every page</button>
-        <button type="button" id="stopFinding" hidden>Stop</button>
-      </div>
-      <ul class="cg-keys">
-        <li>Drag a staff to move it.</li>
-        <li>Drag the dot at the end of a line to move that end up or down.</li>
-        <li>Drag the bar at either end of the staff to lengthen, shorten or tilt it.</li>
-        <li>Lines on a page that wasn't flat bend: each bend has its own bar and dots. Double-click a staff to bend it there; double-click a bend's bar to straighten it again.</li>
-      </ul>
-      <div class="cg-row">
-        <button type="button" id="refit" title="Find the selected staff's lines in the ink again (F)">Find lines</button>
-        <button type="button" id="evenly" title="Space the middle lines evenly between the outer ones (E)">Space evenly</button>
-        <button type="button" id="remove" title="Delete the selected staff (Delete)">Delete</button>
-      </div>
-      <div class="cg-row">
-        <button type="button" id="undo" title="Undo (Ctrl+Z)">Undo</button>
-        <button type="button" id="redo" title="Redo (Ctrl+Y)">Redo</button>
-      </div>
-      <p class="cg-hint" id="staffInfo"></p>
-      <p class="cg-hint">Hold H to hide the lines and see the page under them.</p>
-      <p class="cg-hint">With a staff selected: arrow keys nudge it (Shift for more), Tab goes to the next staff, F finds its lines again, E spaces them evenly, Delete removes it, Esc lets go of it.</p>
-    </section>
-
-    <section class="cg-group" id="chantGroup" hidden><h2>4 · Chant</h2>
-      <p>Paste the chant in GABC (from GregoBase, say), select the staff it begins on, and place it. ChantGPT draws it on the staff in square notation, over the page, so you can see where it differs.</p>
-      <p class="cg-hint">A chant without line breaks (as GregoBase gives it) is spread over all its staves, down to where the next chant begins, with a clef at each line's start and a custos at its end, as printed. GABC with line breaks, <code>(z)</code>, puts each line on the next staff.</p>
-      <div class="cg-row">
-        <button type="button" id="findBeginnings" title="Mark where chants begin in the book: at the staves set in for an initial">Find where chants begin</button>
-        <label class="cg-check"><input type="checkbox" id="beginsHere"> A chant begins on this staff (B)</label>
-      </div>
-      <div class="cg-book" id="bookPanel">
-        <h3>From the book's index</h3>
-        <p class="cg-hint">For a book GregoBase has indexed, such as the 1908 Graduale Romanum: open its index (made by <code>training/gregobase.py book</code>), say which page of the book this is, and its chants are placed page by page.</p>
-        <div class="cg-row"><label class="cg-button">Open the book's index<input type="file" id="openBook" accept=".json,application/json" hidden></label></div>
-        <div id="bookBody" hidden>
-          <div class="cg-row"><label>This is page <input type="text" id="bookPage" size="5" spellcheck="false" title="The page's number as the book prints it (I, 1, 25*)"> of the book</label><button type="button" id="setBookPage">Set</button></div>
-          <p class="cg-hint" id="bookInfo"></p>
-          <ol class="cg-bookchants" id="bookChants"></ol>
-          <div class="cg-row"><button type="button" id="placePage" title="Find this page's staves and where chants begin, and place the chants the index lists for it">Place this page's chants</button></div>
-        </div>
-      </div>
-      <textarea id="gabcText" rows="6" spellcheck="false" placeholder="name: Gloria Patri;&#10;%%&#10;(c4) Gló(f)ri(gh)a(h) Pa(h)tri.(h.) (::)"></textarea>
-      <div class="cg-row">
-        <button type="button" id="placeChant" title="Place the GABC on the selected staff and the ones below it">Place on this staff</button>
-        <button type="button" id="clearChant" title="Take the chant off the selected staff">Take it off</button>
-        <button type="button" id="readStaff" title="Read the notes on the selected staff from the scan (the recognizer); on a staff with chant, compare them with it">Read the notes</button>
-        <button type="button" id="readPage" title="Read the notes on every staff of this page">… on the whole page</button>
-        <button type="button" id="readBreaks" title="Break the selected staff's chant into lines where the page breaks them, read from the ink along its staves and the custos at their ends">Read the line breaks from the page</button>
-        <select id="readModel" class="cg-theme" aria-label="Which recognizer reads the notes" title="Which recognizer reads the notes: the one for printed books, the one for manuscripts, or (automatically) the manuscript one on pages ruled in red"><option value="auto">Recognizer: automatic</option><option value="print">… for printed books</option><option value="ms">… for manuscripts</option></select>
-      </div>
-      <ul class="cg-keys">
-        <li>Drag a neume up or down to move it by steps (its GABC changes with it), or along the staff to line it up with the page.</li>
-        <li>Shift-drag to move just the note under the pointer.</li>
-        <li>With a neume selected: arrow keys move it, Enter accepts it and goes on to the next, Tab skips to the next, Delete takes it out, Esc lets go of it.</li>
-        <li>Click the words under a neume to correct them, or drag them into place.</li>
-        <li>A chant without line breaks is broken where the page seems to break it: from how much ink each staff carries (notes and words) and the custos at its end. If a line still breaks in a different place from the page, select the syllable it should break at and move it to the next line (]) or the line before ([).</li>
-        <li>Read the notes: the recognizer reads them from the page. On a staff with chant, the neumes it reads differently are marked in orange; select one to see what it read.</li>
-        <li>When a staff looks right, accept it (Shift+Enter): its unchecked neumes and words are checked with it. Doubtful ones, in orange, must be accepted one by one first.</li>
-      </ul>
-      <p class="cg-hint" id="chantInfo"></p>
-      <div class="cg-word" id="wordPanel" hidden>
-        <label>Text <input type="text" id="sylText" spellcheck="false" title="The syllable as it goes into the GABC, abbreviations written out"></label>
-        <label>As written <input type="text" id="sylDipl" spellcheck="false" placeholder="if it differs: dñs, xps …" title="The syllable as the source writes it, abbreviation marks and all"></label>
-        <label class="cg-check"><input type="checkbox" id="sylStart"> Begins a word</label>
-        <p class="cg-hint" id="sylInfo"></p>
-      </div>
-      <div class="cg-row">
-        <button type="button" id="splitHere" title="Start a new syllable at the selected neume">New syllable here</button>
-        <button type="button" id="joinPrev" title="Join the selected syllable onto the one before it">Join to the one before</button>
-      </div>
-      <div class="cg-row">
-        <button type="button" id="linePrev" title="Move the selected syllable, and those before it on its line, to the line before ([)">Move to the line before</button>
-        <button type="button" id="lineNext" title="Move the selected syllable, and those after it on its line, to the next line (])">Move to the next line</button>
-      </div>
-      <div class="cg-row">
-        <button type="button" id="acceptStaff" title="Accept the selected staff: its neumes and words not yet checked (Shift+Enter)">Accept this staff</button>
-      </div>
-      <label class="cg-slider">Notation <input type="range" id="opacity" min="0.15" max="1" step="0.05" value="0.7"> <span>see-through</span></label>
-      <div class="cg-row">
-        <button type="button" id="downloadGabc" title="Save the chant as a .gabc file, with the page's line breaks">Save as GABC</button>
-        <button type="button" id="showVolpiano" title="The chant in Volpiano, the CANTUS database's melodic encoding">Volpiano</button>
-        <button type="button" id="downloadMei" title="This page as MEI (with neumes), each element tied to its place on the page: for Neon">Save page as MEI</button>
-      </div>
-      <div id="volpianoBox" hidden>
-        <textarea id="volpianoText" rows="3" readonly spellcheck="false"></textarea>
-        <div class="cg-row"><button type="button" id="copyVolpiano">Copy</button><span class="cg-hint" id="volpianoNote"></span></div>
-      </div>
-    </section>
-
-    <section class="cg-group" id="checkGroup" hidden><h2>5 · Checks <span class="cg-count" id="checkCount"></span></h2>
-      <p class="cg-hint">Things that are often misreadings: a custos that doesn't point to the next note, a staff without its clef, leaps of a seventh or more, flats off B, and, when the chant's mode is in its GABC headers, its final and range. Click one to go to it.</p>
-      <ol class="cg-checks" id="checkList"></ol>
-    </section>
-
-    <section class="cg-group" id="docGroup" hidden><h2>6 · Document</h2>
-      <p>Save what you've marked as a document. To carry on later, open the scan and the document together.</p>
-      <div class="cg-row">
-        <button type="button" id="save" title="Save the document (Ctrl+S)">Save document</button>
-        <label class="cg-button">Open a document<input type="file" id="openDoc" accept=".json,application/json" hidden></label>
-      </div>
-    </section>
-
-    <section class="cg-group" id="about"><h2>About</h2>
-      <p>ChantGPT will read Gregorian chant from scans of printed books and manuscripts, give you the music in GABC (the format of Gregorio), and point out the places it isn't sure of so you can check them against the page. Later it will read Renaissance mensural notation too.</p>
-      <p><strong>This is an early version.</strong> You can open a scan, find its staves, place a chant's GABC on them (a whole book's, page by page, from GregoBase), have the notes read from the page and compared with it, and correct the neumes and words by dragging and typing. The recognizer is young: check what it says.</p>
-      <p><strong>Private:</strong> your files are read in this browser and never leave your computer.</p>
-    </section>
-  </aside>
+  <!-- the tools: the big actions, a click away -->
+  <nav class="cg-rail" id="staffGroup" aria-label="Tools" hidden>
+    <button type="button" id="findStaves" title="Find every staff on this page (those already marked are left as they are). Or drag a box around a staff to add it yourself."><span aria-hidden="true">☰</span>Find staves</button>
+    <button type="button" id="findEverywhere" title="Find the staves on every page from this one on"><span aria-hidden="true">⇊</span>All pages</button>
+    <button type="button" id="stopFinding" hidden><span aria-hidden="true">■</span>Stop</button>
+    <button type="button" id="readPage" title="Read the notes on every staff of this page"><span aria-hidden="true">♪</span>Read page</button>
+    <button type="button" id="readStaff" title="Read the notes on the selected staff"><span aria-hidden="true">♩</span>Read staff</button>
+    <button type="button" id="acceptStaff" title="Accept the selected staff: its neumes and words not yet checked (Shift+Enter)"><span aria-hidden="true">✓</span>Accept</button>
+    <label class="cg-rail-slider" title="How see-through the notation drawn over the page is (hold H to hide it)"><span aria-hidden="true">◐</span><input type="range" id="opacity" min="0.15" max="1" step="0.05" value="0.7" aria-label="Notation opacity"></label>
+  </nav>
 
   <section class="cg-stage" id="stage" aria-label="Page">
     <div class="cg-empty" id="empty">
-      <p>Open a scan to begin.</p>
-      <p class="cg-hint">A PDF of a chant book, or photographs of its pages.</p>
+      <p class="cg-empty-title">Open a scan to begin</p>
+      <p>A PDF of a chant book, photographs of its pages, or a manuscript online.</p>
+      <p class="cg-hint">Drop files anywhere, or use <strong>Open</strong> above. Everything stays in your browser.</p>
     </div>
     <div class="cg-page" id="page" hidden>
       <canvas id="canvas"></canvas>
       <svg id="overlay" class="cg-overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
     </div>
   </section>
+
+  <!-- the inspector: what's selected, then the chant, the book, the checks, saving -->
+  <aside class="cg-inspector" id="inspector" aria-label="Inspector" hidden>
+    <section class="cg-card" id="selCard">
+      <h2>Selection</h2>
+      <p class="cg-sel" id="staffInfo">Open a scan to begin.</p>
+      <p class="cg-sel" id="chantInfo"></p>
+      <div class="cg-word" id="wordPanel" hidden>
+        <label>Text <input type="text" id="sylText" spellcheck="false" title="The syllable as it goes into the GABC, abbreviations written out"></label>
+        <label>As written <input type="text" id="sylDipl" spellcheck="false" placeholder="if it differs: dñs, xps …" title="The syllable as the source writes it, abbreviation marks and all"></label>
+        <label class="cg-check"><input type="checkbox" id="sylStart"> Begins a word</label>
+        <p class="cg-hint" id="sylInfo"></p>
+      </div>
+      <div class="cg-row" id="staffTools">
+        <label class="cg-check" title="A chant begins on this staff (B)"><input type="checkbox" id="beginsHere"> Chant begins here</label>
+      </div>
+      <div class="cg-row" id="staffRow">
+        <button type="button" id="refit" title="Find the selected staff's lines in the ink again (F)">Find lines</button>
+        <button type="button" id="evenly" title="Space the middle lines evenly between the outer ones (E)">Space evenly</button>
+        <button type="button" id="remove" title="Delete the selected staff (Delete)">Delete</button>
+      </div>
+      <div class="cg-row" id="sylTools">
+        <button type="button" id="splitHere" title="Start a new syllable at the selected neume">New syllable</button>
+        <button type="button" id="joinPrev" title="Join the selected syllable onto the one before it">Join to previous</button>
+        <button type="button" id="linePrev" title="Move the selected syllable, and those before it on its line, to the line before ([)">↑ Line</button>
+        <button type="button" id="lineNext" title="Move the selected syllable, and those after it on its line, to the next line (])">↓ Line</button>
+      </div>
+      <p class="cg-hint">Right-click anything on the page for what you can do with it.</p>
+    </section>
+
+    <details class="cg-card" id="chantGroup" hidden>
+      <summary>Chant</summary>
+      <textarea id="gabcText" rows="5" spellcheck="false" placeholder="Paste GABC (from GregoBase, say)&#10;(c4) Gló(f)ri(gh)a(h) Pa(h)tri.(h.) (::)"></textarea>
+      <div class="cg-row">
+        <button type="button" id="placeChant" title="Place the GABC on the selected staff and the ones below it">Place on staff</button>
+        <button type="button" id="clearChant" title="Take the chant off the selected staff">Take off</button>
+        <button type="button" id="readBreaks" title="Break the selected staff's chant into lines where the page breaks them">Read line breaks</button>
+      </div>
+      <div class="cg-row">
+        <button type="button" id="findBeginnings" title="Mark where chants begin in the book: at the staves set in for an initial">Find where chants begin</button>
+        <select id="readModel" class="cg-theme" aria-label="Which recognizer reads the notes" title="Which recognizer reads the notes: the one for printed books, the one for manuscripts, or (automatically) the manuscript one on pages ruled in red"><option value="auto">Recognizer: automatic</option><option value="print">Printed books</option><option value="ms">Manuscripts</option></select>
+      </div>
+      <div class="cg-book" id="bookPanel">
+        <div class="cg-row"><label class="cg-button" title="A book GregoBase has indexed (made by training/gregobase.py book): its chants are placed page by page">Open a book's index<input type="file" id="openBook" accept=".json,application/json" hidden></label></div>
+        <div id="bookBody" hidden>
+          <div class="cg-row"><label>Book page <input type="text" id="bookPage" size="5" spellcheck="false" title="The page's number as the book prints it (I, 1, 25*)"></label><button type="button" id="setBookPage">Set</button></div>
+          <p class="cg-hint" id="bookInfo"></p>
+          <ol class="cg-bookchants" id="bookChants"></ol>
+          <div class="cg-row"><button type="button" id="placePage" title="Find this page's staves and where chants begin, and place the chants the index lists for it">Place this page's chants</button></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="cg-card" id="checkGroup" hidden>
+      <summary>Checks <span class="cg-count" id="checkCount"></span></summary>
+      <ol class="cg-checks" id="checkList"></ol>
+    </details>
+
+    <details class="cg-card" id="exportGroup" hidden>
+      <summary>Export</summary>
+      <div class="cg-row">
+        <button type="button" id="downloadGabc" title="Save the chant as a .gabc file, with the page's line breaks">GABC</button>
+        <button type="button" id="showVolpiano" title="The chant in Volpiano, the CANTUS database's melodic encoding">Volpiano</button>
+        <button type="button" id="downloadMei" title="This page as MEI (with neumes), each element tied to its place on the page: for Neon">MEI</button>
+      </div>
+      <div id="volpianoBox" hidden>
+        <textarea id="volpianoText" rows="3" readonly spellcheck="false"></textarea>
+        <div class="cg-row"><button type="button" id="copyVolpiano">Copy</button><span class="cg-hint" id="volpianoNote"></span></div>
+      </div>
+      <div id="saveGroup" hidden>
+        <div class="cg-row"><label>Save pages <input type="number" id="saveFrom" min="1" value="1" inputmode="numeric" class="cg-num"></label><label>to <input type="number" id="saveTo" min="1" value="1" inputmode="numeric" class="cg-num"></label><button type="button" id="savePages" title="The pages' full-size images from the library, in zips of a hundred: a page a second, leave the tab open">Save</button><button type="button" id="stopSaving" hidden>Stop</button></div>
+      </div>
+      <p class="cg-hint" id="pageInfo"></p>
+    </details>
+  </aside>
 </main>
 
-<script src="js/chant.js?v=0.14.0"></script>
-<script src="js/staves.js?v=0.14.0"></script>
-<script src="js/greciliae.js?v=0.14.0"></script>
-<script src="js/neumes.js?v=0.14.0"></script>
-<script src="js/checks.js?v=0.14.0"></script>
-<script src="js/export.js?v=0.14.0"></script>
-<script src="js/viewer.js?v=0.14.0"></script>
-<script src="js/recognizer.js?v=0.14.0"></script>
-<script src="js/editor.js?v=0.14.0"></script>
-<script src="js/app.js?v=0.14.0"></script>
+<footer class="cg-statusbar"><p class="cg-status" id="status" role="status" aria-live="polite"></p></footer>
+
+<!-- the right-click menu (filled in when it opens) -->
+<div class="cg-menu" id="menu" role="menu" hidden></div>
+
+<!-- help: how it works, and the keys -->
+<dialog class="cg-help" id="help">
+  <form method="dialog" class="cg-help-close"><button aria-label="Close">×</button></form>
+  <h2>How it works</h2>
+  <ol>
+    <li><strong>Open</strong> a PDF, page images, or a manuscript online. Your files never leave your browser.</li>
+    <li><strong>Find staves</strong> on the page, or drag a box around a staff, from its first note to its last, to add it yourself.</li>
+    <li><strong>Read page</strong>: the recognizer reads the notes. Doubtful neumes are orange; the rest are red until you accept them, then green.</li>
+    <li>Check and correct, then <strong>Accept</strong> each staff. Save your work as a document to carry on later.</li>
+  </ol>
+  <p>Right-click a neume, a syllable, a staff or the page for what you can do with it. Or paste a chant's GABC (Chant, on the right) and place it on a staff: it's drawn over the page so you can see where they differ.</p>
+  <h2>The mouse</h2>
+  <ul>
+    <li>Drag a staff to move it; drag a line's dot to move that end; drag the bar at either end to lengthen, shorten or tilt it. Double-click a staff to bend it there; double-click a bend's bar to straighten it.</li>
+    <li>Drag a neume up or down by steps (its GABC changes with it), or along the staff. Shift-drag moves one note.</li>
+    <li>Click the words under a neume to correct them, or drag them into place.</li>
+  </ul>
+  <h2>The keys</h2>
+  <dl class="cg-keys">
+    <dt>← → · PgUp PgDn</dt><dd>turn the page</dd>
+    <dt>+ −</dt><dd>zoom</dd>
+    <dt>H (hold)</dt><dd>hide the notation and see the page</dd>
+    <dt>Tab · Shift+Tab</dt><dd>next or previous staff, neume or syllable</dd>
+    <dt>↑ ↓ ← →</dt><dd>move what's selected (Shift: further)</dd>
+    <dt>Enter</dt><dd>accept the neume or syllable and go on</dd>
+    <dt>Shift+Enter</dt><dd>accept the staff</dd>
+    <dt>Delete</dt><dd>delete what's selected</dd>
+    <dt>B</dt><dd>a chant begins on this staff</dd>
+    <dt>F · E</dt><dd>find the staff's lines again · space them evenly</dd>
+    <dt>[ ]</dt><dd>move a syllable to the line before or after</dd>
+    <dt>Esc</dt><dd>let go</dd>
+    <dt>Ctrl+Z · Ctrl+Y · Ctrl+S</dt><dd>undo · redo · save</dd>
+  </dl>
+  <p class="cg-hint" id="about">ChantGPT reads Gregorian chant from scans of printed books and manuscripts into GABC (the format of Gregorio), and points out the places it isn't sure of. It's an early version: check what the recognizer says. <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a></p>
+</dialog>
+
+<script src="js/chant.js?v=0.15.0"></script>
+<script src="js/staves.js?v=0.15.0"></script>
+<script src="js/greciliae.js?v=0.15.0"></script>
+<script src="js/neumes.js?v=0.15.0"></script>
+<script src="js/checks.js?v=0.15.0"></script>
+<script src="js/export.js?v=0.15.0"></script>
+<script src="js/viewer.js?v=0.15.0"></script>
+<script src="js/recognizer.js?v=0.15.0"></script>
+<script src="js/editor.js?v=0.15.0"></script>
+<script src="js/app.js?v=0.15.0"></script>
 </body>
 </html>

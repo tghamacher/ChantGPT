@@ -205,6 +205,15 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **0.15.0, the layout** (asked for by the user: "too text-heavy and scholarly looking"; they chose a toolbar and an
+  inspector for large-scale work, and want a step-by-step wizard kept in reserve for someone with a page or two):
+  a toolbar (open, online, pages, zoom, undo, save, help), a rail of the big actions (find staves, read, accept), the
+  page in the middle, an inspector on the right showing only what applies to the selection, with Chant, Checks and
+  Export folded; the instructions moved into a help dialog (?). Right-click menus on neumes (shape: punctum, virga,
+  inclinatum, quilisma, oriscus, via `CGChant.reshape`; climacus as diamonds; accept, delete), syllables, staves
+  (read, accept, a chant begins here, find lines, space evenly, straighten, delete) and the page. Mid-line chant
+  beginnings (a chant starting part way along a staff, as in manuscripts) are proposed, not yet built.
+
 - **Step 6, manuscripts** (branch `step-6-manuscripts`): IIIF manuscripts in the app (open a manifest, save its pages),
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line
   bridged), Paris BnF lat. 15181 from Gallica paired line by line with the Cantus Database's melodies (source 123631;

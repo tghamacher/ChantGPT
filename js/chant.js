@@ -71,6 +71,32 @@
   // only its note number `only` (counting notes, not accidentals, from 0). A clef moves by lines: k is cut to
   // whole lines (two steps). A bar doesn't move. Null if a note would go off the staff (above m or below a), or a clef
   // off its four lines.
+  // A note's shape (k: which note of the group, accidentals not counted): punctum, inclinatum (a capital), virga,
+  // quilisma, oriscus or stropha (a sign after its letter); its other signs (liquescence, episemata, dots) kept.
+  const SHAPE_SIGN = { punctum: '', inclinatum: '', virga: 'v', quilisma: 'w', oriscus: 'o', stropha: 's' };
+  function shapeOf(n) {
+    if (!n || n.acc) return null;
+    const m = /[vVwos]/.exec(n.signs || '');
+    return m ? { v: 'virga', V: 'virga', w: 'quilisma', o: 'oriscus', s: 'stropha' }[m[0]] : n.shape;
+  }
+  function reshape(g, k, shape) {
+    if (!(shape in SHAPE_SIGN)) return g;
+    let note = -1;
+    for (let i = 0; i < g.length; i++) {
+      const ch = g[i];
+      if (ch === '[') { const j = g.indexOf(']', i); if (j < 0) break; i = j; continue; }
+      if (!/[a-m]/i.test(ch)) continue;
+      if (/[xy#]/.test(g[i + 1] || '')) { i++; continue; }
+      let j = i + 1;
+      while (j < g.length && !/[a-m\[\s\/!@,;:`]/i.test(g[j])) j++;
+      if (++note !== k) { i = j - 1; continue; }
+      const letter = shape === 'inclinatum' ? ch.toUpperCase() : ch.toLowerCase();
+      const rest = g.slice(i + 1, j).replace(/[vVwos]/g, '');
+      return g.slice(0, i) + letter + SHAPE_SIGN[shape] + rest + g.slice(j);
+    }
+    return g;
+  }
+
   function transpose(g, k, only = null) {
     const kd = kind(g);
     if (kd === 'bar' || kd === 'break' || !k) return g;
@@ -248,7 +274,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

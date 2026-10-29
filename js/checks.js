@@ -80,7 +80,8 @@
             lastBar = false;
             notes.push(prev);
           }
-          if (ns.some(n => !n.acc) && !syl.text && !syl.items.some(x => C().kind(x.g) === 'clef'))
+          // (only where the staff has words at all: notes read from the page, before any text, all lack them)
+          if (ns.some(n => !n.acc) && !syl.text && !syl.items.some(x => C().kind(x.g) === 'clef') && st.syllables.some(x => x.text))
             at(v, s, i, 'text', 'note', 'Notes over no syllable. Is a syllable missing, or do they belong to the one before?');
         }));
       });

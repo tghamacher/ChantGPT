@@ -27,6 +27,7 @@
     ctx.svg.addEventListener('pointermove', move);
     ctx.svg.addEventListener('pointerup', up);
     ctx.svg.addEventListener('dblclick', dbl);
+    ctx.svg.addEventListener('contextmenu', contextMenu);
     ctx.svg.addEventListener('pointercancel', () => { if (drag && drag.before) restore(drag.before); drag = null; draw(); });
   }
 
@@ -830,6 +831,110 @@
     draw();
   }
 
+  // ---------------------------------------------------------------- the right-click menu
+  // What's under the pointer selected, and what can be done with it offered (app.js shows the menu): a neume, a
+  // syllable's words, a staff, or the page.
+  const SHAPES = [['punctum', 'Punctum'], ['virga', 'Virga'], ['inclinatum', 'Inclinatum'], ['quilisma', 'Quilisma'], ['oriscus', 'Oriscus']];
+  function contextMenu(e) {
+    if (!ctx.state.doc || !ctx.menu) return;
+    e.preventDefault();
+    const t = e.target.closest('[data-act]'), act = t ? t.dataset.act : 'page', p = at(e), x = e.clientX, y = e.clientY;
+    if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
+    if (act === 'neume') {
+      selected = t.dataset.staff; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null; draw();
+      const st = staffOf(selected), it = itemOf(), kd = C.kind(it.g);
+      const ns = kd === 'neume' ? C.notes(it.g).filter(n => !n.acc) : [];
+      // the note under the pointer (the nearest in pitch), whose shape the row sets
+      const here = pitchAt(st, p[0], p[1]).p;
+      let k = 0, best = Infinity;
+      ns.forEach((n, j) => { const d = Math.abs(n.p.charCodeAt(0) - 97 - here); if (d < best) { best = d; k = j; } });
+      const now = ns.length ? C.shapeOf(ns[k]) : null;
+      const falls = ns.length >= 3 && ns.every((n, j) => !j || n.p < ns[j - 1].p);
+      ctx.menu([
+        { title: `Neume (${it.g})${ns.length > 1 ? `, note ${k + 1} of ${ns.length}` : ''}` },
+        ns.length ? { shapes: SHAPES.map(([sh, label]) => ({ label, on: now === sh, title: `This note as a ${sh}`, run: () => reshape(k, sh) })) } : null,
+        falls ? { label: 'Climacus: the falling notes as diamonds', run: () => climacus() } : null,
+        '-',
+        { label: 'Accept', key: 'Enter', run: acceptNeume },
+        { label: 'Next doubtful', key: 'Tab', run: () => nextNeume(1) },
+        { label: 'New syllable here', disabled: item.i === 0, run: splitHere },
+        { label: 'Delete', key: 'Del', run: removeNeume },
+        '-',
+        { label: 'Accept the whole staff', key: 'Shift+Enter', run: acceptStaff },
+      ], x, y);
+      return;
+    }
+    if (act === 'syl') {
+      selected = t.dataset.staff; word = +t.dataset.s; item = null; draw();
+      ctx.menu([
+        { title: `Syllable "${(sylOf().text || '').replace(/<[^>]*>/g, '')}"` },
+        { label: 'Edit the text', run: () => { const f = document.getElementById('sylText'); if (f) { f.focus(); f.select(); } } },
+        { label: 'Accept', key: 'Enter', run: acceptWord },
+        { label: 'Join to the one before', disabled: word === 0, run: joinPrev },
+        '-',
+        { label: 'Move to the line before', key: '[', run: () => moveLine(-1) },
+        { label: 'Move to the next line', key: ']', run: () => moveLine(1) },
+      ], x, y);
+      return;
+    }
+    if (act === 'body' || act === 'knot' || act === 'point') {
+      letGo(); selected = t.dataset.staff; draw();
+      const st = staffOf(selected), n = page().staves.indexOf(st) + 1, bent = S.count(st.lines[0]) > 2;
+      ctx.menu([
+        { title: `Staff ${n}` },
+        { label: 'Read the notes', disabled: busy, run: () => readNotes(false) },
+        { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
+        { label: st.begins === true ? 'A chant begins here ✓' : 'A chant begins here', key: 'B', run: () => toggleBegins() },
+        '-',
+        { label: 'Find its lines again', key: 'F', run: refit },
+        { label: 'Space the lines evenly', key: 'E', run: evenly },
+        { label: 'Straighten', disabled: !bent, run: straighten },
+        { label: 'Take its chant off', disabled: !st.syllables.length, run: clearChant },
+        { label: 'Delete the staff', key: 'Del', run: remove },
+      ], x, y);
+      return;
+    }
+    // the page
+    if (selected) { selected = null; letGo(); draw(); }
+    const list = page().staves;
+    ctx.menu([
+      { title: `Page ${ctx.state.page + 1}` },
+      { label: 'Find the staves', disabled: busy, run: findHere },
+      { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
+      { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
+      '-',
+      { label: 'Undo', key: 'Ctrl+Z', disabled: !history.undo.length, run: undo },
+      { label: 'Redo', key: 'Ctrl+Y', disabled: !history.redo.length, run: redo },
+    ], x, y);
+  }
+  // the selected neume's note k given a shape; its falling notes as inclinata
+  function reshape(k, shape) {
+    const st = staffOf(selected), it = itemOf();
+    if (!st || !it) return;
+    const before = snapshot();
+    if (setG(it, C.reshape(it.g, k, shape))) { N.fitBox(st, it); commit(before); }
+    draw();
+  }
+  function climacus() {
+    const st = staffOf(selected), it = itemOf();
+    if (!st || !it) return;
+    const before = snapshot(), n = C.notes(it.g).filter(v => !v.acc).length;
+    let g = it.g;
+    for (let k = 1; k < n; k++) g = C.reshape(g, k, 'inclinatum');
+    if (setG(it, g)) { N.fitBox(st, it); commit(before); }
+    draw();
+  }
+  // the selected staff without its bends (its ends kept)
+  function straighten() {
+    const st = staffOf(selected);
+    if (!st || S.count(st.lines[0]) <= 2) return;
+    const before = snapshot();
+    st.lines = st.lines.map(l => [l[0], l[1], l[l.length - 2], l[l.length - 1]]);
+    settle(st);
+    commit(before);
+    draw();
+  }
+
   // ---------------------------------------------------------------- the pointer
   function down(e) {
     if (e.button !== 0 || !ctx.state.doc) return;
@@ -1087,11 +1192,11 @@
     if (!out || !ctx || !ctx.state.doc) return;
     const list = page().staves, st = staffOf(selected);
     const n = list.length;
-    let text = n ? `${n} ${n === 1 ? 'staff' : 'staves'} on this page.` : 'No staves on this page yet.';
+    let text = n ? `${n} ${n === 1 ? 'staff' : 'staves'} on this page.` : 'No staves on this page yet: Find staves, or drag a box around one.';
     if (st) {
       const bends = S.count(st.lines[0]) - 2;
-      text += ` Staff ${list.indexOf(st) + 1} is selected: lines ${S.spacing(st.lines).toFixed(1)} apart, tilted ${S.tilt(st.lines).toFixed(2)}°` +
-        (bends ? `, bent at ${bends} ${bends === 1 ? 'point' : 'points'} (up to ${S.bend(st.lines).toFixed(1)} spaces off straight).` : '.');
+      text += ` Staff ${list.indexOf(st) + 1} selected: lines ${S.spacing(st.lines).toFixed(1)} apart, tilted ${S.tilt(st.lines).toFixed(2)}°` +
+        (bends ? `, bent at ${bends} ${bends === 1 ? 'point' : 'points'}.` : '.');
     }
     out.textContent = text;
     checkList();
@@ -1099,6 +1204,12 @@
     document.getElementById('findStaves').disabled = busy;
     document.getElementById('findEverywhere').hidden = busy || ctx.state.doc.pages.length < 2;
     document.getElementById('stopFinding').hidden = !busy || ctx.state.doc.pages.length < 2;
+    // (only the tools for what's selected: a staff's, or a neume's and its syllable's)
+    const sylTools = document.getElementById('sylTools');
+    if (sylTools) {
+      document.getElementById('staffTools').hidden = document.getElementById('staffRow').hidden = !st || !!itemOf() || !!sylOf();
+      sylTools.hidden = !itemOf() && !sylOf();
+    }
     const begins = document.getElementById('beginsHere');
     if (begins) { begins.disabled = !st; begins.checked = !!(st && st.begins === true); }
     const place = document.getElementById('placeChant');
@@ -1114,7 +1225,7 @@
       document.getElementById('splitHere').disabled = !it || item.i === 0;
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
-      document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? 'Select the staff the chant begins on.'
+      document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
@@ -1189,8 +1300,7 @@
     const its = st.syllables.flatMap(syl => syl.items.filter(it => it.box)), words = st.syllables.filter(syl => syl.text);
     const done = its.filter(it => it.checked).length + words.filter(w => w.checked).length, all = its.length + words.length;
     const doubts = its.filter(doubtful).length + words.filter(doubtful).length;
-    return `${done} of ${all} neumes and syllables on this staff checked` + (doubts ? `; ${doubts} doubtful still to look at.` : '.') +
-      (done < all ? ' Shift+Enter accepts the staff.' : '');
+    return `${done} of ${all} neumes and syllables checked` + (doubts ? `; ${doubts} doubtful (orange) to look at.` : '.');
   }
 
   // the side panel's fields for the selected syllable (kept as they are while being typed in)
@@ -1205,7 +1315,7 @@
     document.getElementById('sylStart').checked = !syl.join;
     document.getElementById('joinPrev').disabled = word === 0;
     const how = { item: 'Checked.', edited: 'Changed by you (so checked).', staff: 'Checked with its staff.' }[syl.checked] || 'Not checked yet.';
-    document.getElementById('sylInfo').textContent = how + ' Drag the words into place, or use the arrow keys; Enter accepts them and goes on; Tab skips.';
+    document.getElementById('sylInfo').textContent = how;
   }
 
   // what the side panel says of a neume: its GABC, its syllable, its notes by name, and whether it's been checked
@@ -1215,8 +1325,7 @@
     const names = kind === 'neume' || kind === 'custos' ? C.notes(it.g).filter(n => !n.acc).map(n => { const q = C.pitch(n.p, clef); return q ? q.step + q.octave : n.p; }).join(' ') : '';
     const how = { item: 'checked', edited: 'changed by you (so checked)', staff: 'checked with its staff' }[it.checked] || 'not checked yet';
     const read = it.read === undefined ? '' : it.read ? ` The recognizer reads (${it.read}) here.` : ' The recognizer saw nothing here.';
-    return `(${it.g})` + (syl.text ? ` over "${syl.text.replace(/<[^>]*>/g, '')}"` : '') + (names ? `: ${names}` : '') + `. ${how[0].toUpperCase() + how.slice(1)}.` + read +
-      ' Drag it, or use the arrow keys; Shift-drag moves one note; Enter accepts it and goes on; Tab skips; Delete takes it out.';
+    return `Neume (${it.g})` + (syl.text ? ` over "${syl.text.replace(/<[^>]*>/g, '')}"` : '') + (names ? `: ${names}` : '') + `. ${how[0].toUpperCase() + how.slice(1)}.` + read;
   }
 
   global.CGEditor = {
