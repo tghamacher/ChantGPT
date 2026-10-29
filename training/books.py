@@ -62,7 +62,8 @@ def offset(pdf, pages, ia=None):
         if f:
             for r in json.loads(get(f'https://archive.org/download/{ia}/' + urllib.request.quote(f))).get('pages', []):
                 if r.get('pageNumber') in at: votes[r['leafNum'] + 1 - at[r['pageNumber']]] += 1   # (leaves from 0)
-    n = pages_in(pdf) if not votes else 0
+    # (and the scan's own text layer, where it has one: the two counted together)
+    n = pages_in(pdf)
     for k in range(1, n + 1, max(1, n // 120)):         # (a hundred or so pages is plenty)
         text = subprocess.run(['pdftotext', '-f', str(k), '-l', str(k), '-layout', pdf, '-'], capture_output=True, text=True).stdout
         lines = [l for l in text.splitlines() if l.strip()]
