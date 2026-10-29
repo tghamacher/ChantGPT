@@ -209,12 +209,12 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line
   bridged), Paris BnF lat. 15181 from Gallica paired line by line with the Cantus Database's melodies (source 123631;
   `training/cantus.py`), and training on the user's GPU by jobs (`training/worker.py`, the `jobs` branch).
-  - `models/chant-ms.*`: the manuscript model (job 0015), chosen beside the Read buttons (automatic: on pages ruled
+  - `models/chant-ms.*`: the manuscript model (job 0020), chosen beside the Read buttons (automatic: on pages ruled
     in red). Synthetic manuscript-style staves, then two rounds on lat. 15181's own staves (3,524 paired, line breaks
     mended; a third round gained nothing), then more manuscripts, each paired line by line with Cantus's melodies:
-    Einsiedeln 611 (14th century, Gothic neumes on black lines; e-codices, folios 1-84 so far, 1,569 staves) and the
+    Einsiedeln 611 (14th century, Gothic neumes on black lines; e-codices, all of it, 4,994 staves) and the
     Salzinnes Antiphonal (1554-5, square notation on red; Leuven via the user's browser, both volumes, 3,814 staves).
-    Notes wrong on held-out folios: Salzinnes 3.3%, Einsiedeln 7.4%, lat. 15181 8.4%, the Graduale 2.8%
+    Notes wrong on held-out folios: Salzinnes 3.2%, Einsiedeln 7.6% (more of it held out now), lat. 15181 8.6%, the Graduale 2.7%
     (`models/chant.*` stays the printed books' model: 2.26%). Next: Karlsruhe Aug. LX (BLB, fetched here).
 
 - **Step 4, the recognizer** (branch `step-4-recognizer`, merged into `main` with the model: the user is happy to
