@@ -145,14 +145,17 @@ def main():
     import staffdata
     out_path = os.path.join(o.data, re.sub(r'\.jsonl$', '', o.real_labels) + '-shapes.jsonl')
     n_single = n_virga = n_incl = 0
-    with open(out_path, 'w', encoding='utf-8') as f:
+    # (a run stopped part way is carried on: the staves written are kept)
+    done = {json.loads(l)['file'] for l in open(out_path, encoding='utf-8')} if os.path.exists(out_path) else set()
+    with open(out_path, 'a', encoding='utf-8') as f:
         for r in rows:
+            if r['file'] in done: continue
             got, seen = found(m, s, o.data, r)
             n_single += len(seen); n_virga += len(got)
             r = dict(r, items=inclinata(with_virgae(r['items'], got)))
             n_incl += sum(c.isupper() for it in r['items'][1:] if not it.endswith('+') for c in it)
             r['tokens'] = staffdata.tokens(r['items'])
-            f.write(json.dumps(r) + '\n')
+            f.write(json.dumps(r) + '\n'); f.flush()
     print(f'{n_virga} of {n_single} single notes read as virgae, made so; {n_incl} notes of climaci made inclinata -> {out_path}')
 
 
