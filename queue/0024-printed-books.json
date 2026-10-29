@@ -228,9 +228,6 @@
   ]
  ],
  "keep": [
-  "training/data/j0024/best.pt",
-  "training/data/book-7/labels-plain-clean.jsonl",
-  "training/data/book-48/labels-plain-clean.jsonl",
-  "training/data/book-9/labels-plain-clean.jsonl"
+  "training/data/j0024/best.pt"
  ]
 }
