@@ -1,0 +1,38 @@
+{
+ "id": "0018-einsiedeln-rest",
+ "about": "Einsiedeln 611: the pages the app saved from e-codices, filed by folio, zipped onto training-data, then deleted from this computer",
+ "data": [
+  "cantus-csv.zip"
+ ],
+ "steps": [
+  [
+   "cantus.py",
+   "collect",
+   "--source",
+   "123606",
+   "--manifest",
+   "https://www.e-codices.unifr.ch/metadata/iiif/sbe-0611/manifest.json",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools",
+   "--share",
+   "DATA",
+   "--folios",
+   "all",
+   "--width",
+   "1800"
+  ],
+  [
+   "cantus.py",
+   "tidy",
+   "--source",
+   "123606",
+   "--manifest",
+   "https://www.e-codices.unifr.ch/metadata/iiif/sbe-0611/manifest.json",
+   "--share",
+   "DATA",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools"
+  ]
+ ],
+ "keep": []
+}
