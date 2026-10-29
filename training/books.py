@@ -78,7 +78,7 @@ def offset(pdf, pages, ia=None):
 def run(o):
     pdf = scan(o.ia)
     book = index(o.source)
-    pages = json.load(open(book, encoding='utf-8'))['pages']
+    pages = [str(p) for p in json.load(open(book, encoding='utf-8'))['pages']]          # (some books number them as numbers)
     out = os.path.join(DATA, f'book-{o.source}')
     os.makedirs(out, exist_ok=True)
     state_path = os.path.join(out, '.progress.json')
