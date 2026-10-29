@@ -101,6 +101,18 @@
   ],
   [
    "recognizer.py",
+   "test",
+   "--model",
+   "training/data/j0015/best.pt",
+   "--data",
+   "training/data/ms-123606",
+   "--real-labels",
+   "labels-fit.jsonl",
+   "--held",
+   "10"
+  ],
+  [
+   "recognizer.py",
    "export",
    "--model",
    "training/data/j0020/best.pt",
