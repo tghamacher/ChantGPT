@@ -94,14 +94,14 @@ def sources(t):
 def book(rows, src, sid):
     """A book's index, for the app: its pages (as numbered in the book, in order) and the chants on each, in order,
     with their GABC: what to place on a scan of it, page by page."""
-    pages = src.get('pages') or []
+    pages = [str(p) for p in src.get('pages') or []]   # (labels as text: some sources give some as numbers)
     at = {p: i for i, p in enumerate(pages)}
     out = []
     for r in rows:
         if r.get('duplicateof') or not r['gabc']: continue
         for w in r['sources']:
             if w.get('source') != sid: continue
-            out.append({'id': r['id'], 'page': w['page'], 'sequence': w.get('sequence') or 1, 'extent': w.get('extent') or 1,
+            out.append({'id': r['id'], 'page': str(w['page']), 'sequence': w.get('sequence') or 1, 'extent': w.get('extent') or 1,
                         'incipit': r['incipit'], 'office_part': r['office_part'], 'mode': r['mode'], 'gabc': r['gabc'][0]})
     out.sort(key=lambda c: (at.get(c['page'], 1e9), c['sequence']))
     return {'format': 'chantgpt-book', 'version': 1, 'from': 'GregoBase (gregobase.selapa.net)',

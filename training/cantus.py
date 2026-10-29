@@ -456,8 +456,14 @@ def labels(o):
         if r.get('file'): found.setdefault(r['page'], []).append(r)
     kept = staves = missed = 0
     why = {}
-    with open(os.path.join(o.staves, 'labels.jsonl'), 'w', encoding='utf-8') as out:
+    # (a run stopped part way is carried on: the folios done are kept, and marked done in labels.done)
+    path, done_path = os.path.join(o.staves, 'labels.jsonl'), os.path.join(o.staves, 'labels.done')
+    done = set(open(done_path).read().split()) if o.resume and os.path.exists(done_path) else set()
+    if not done:
+        open(path, 'w').close(); open(done_path, 'w').close()
+    with open(path, 'a', encoding='utf-8') as out, open(done_path, 'a') as marks:
         for f, rows in sorted(found.items(), key=lambda v: folio_key(v[0])):
+            if f in done: continue
             p = pages.get(f)
             if not p or not p['lines']: why['no melodies in Cantus'] = why.get('no melodies in Cantus', 0) + 1; continue
             rows.sort(key=lambda r: r['k'])
@@ -482,6 +488,7 @@ def labels(o):
                 staves += 1
             missed += len(rows) - len(pairs)
             kept += bool(pairs)
+            out.flush(); marks.write(f + '\n'); marks.flush()
             if o.verbose:
                 print(f'{f}: {len(rows)} staves, {len(p["lines"])} lines{"" if p["complete"] else " (not every melody)"}; paired',
                       ' '.join(f'{rows[k]["k"]}-{j + 1}:{fits[k][j][2]:.2f}' for k, j in pairs))
@@ -518,6 +525,7 @@ if __name__ == '__main__':
     a.add_argument('--out')
     a.add_argument('--wait', type=float, default=2.0, help='images: seconds between pages (be kind to the library)')
     a.add_argument('--worth', type=float, default=0.4, help='labels: a staff paired with a line only if fewer than this share of notes differ')
+    a.add_argument('--resume', action='store_true', help='labels: carry on a run that stopped part way')
     a.add_argument('--verbose', action='store_true', help='labels: print each page\'s pairs')
     o = a.parse_args()
     {'fetch': fetch, 'images': images, 'lines': show, 'collect': collect, 'labels': labels, 'tidy': tidy}[o.what](o)
