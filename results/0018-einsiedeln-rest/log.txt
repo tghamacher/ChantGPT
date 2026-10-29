@@ -1,0 +1,21 @@
+job 0018-einsiedeln-rest: Einsiedeln 611: the pages the app saved from e-codices, filed by folio, zipped onto training-data, then deleted from this computer
+code: bcf88b4
+
+$ cantus.py collect --source 123606 --manifest https://www.e-codices.unifr.ch/metadata/iiif/sbe-0611/manifest.json --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123606/pages-134r-178v-w1800.zip is 85.76 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+283 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123606 (from 4 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 20 pages with no chant left out)
+88 of 283 pages -> pages-134r-178v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123606/pages-179r-223r-w1800.zip is 84.90 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+173 of 283 pages -> pages-179r-223r-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123606/pages-223v-266v-w1800.zip is 85.81 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+259 of 283 pages -> pages-223v-266v-w1800.zip, pushed
+283 of 283 pages -> pages-267r-281v-w1800.zip, pushed
+
+$ cantus.py tidy --source 123606 --manifest https://www.e-codices.unifr.ch/metadata/iiif/sbe-0611/manifest.json --share DATA --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+6 zips of cantus-123606 on training-data; deleted 4 of the app's zips from C:\Users\Ted Hamacher\Desktop\EMS Tools and 283 pages from D:\ChantGPT\changpt-repo\training\data\scans\123606
