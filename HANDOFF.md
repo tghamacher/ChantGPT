@@ -209,7 +209,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line
   bridged), Paris BnF lat. 15181 from Gallica paired line by line with the Cantus Database's melodies (source 123631;
   `training/cantus.py`), and training on the user's GPU by jobs (`training/worker.py`, the `jobs` branch).
-  - `models/chant-ms.*`: the manuscript model (job 0022), chosen beside the Read buttons (automatic: on pages ruled
+  - `models/chant-ms.*`: the manuscript model (job 0024), chosen beside the Read buttons (automatic: on pages ruled
     in red). Synthetic manuscript-style staves, then two rounds on lat. 15181's own staves (3,524 paired, line breaks
     mended; a third round gained nothing), then more manuscripts, each paired line by line with Cantus's melodies:
     Einsiedeln 611 (14th century, Gothic neumes on black lines; e-codices, all of it, 4,994 staves) and the
@@ -220,7 +220,11 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
     them back (virgae read by a model that never learnt from those labels, or a hairline stem under the head;
     inclinata in every climacus, as the Graduale writes all 499 of its). Job 0022, trained on them, reads them (e.g.
     Einsiedeln's held-out folios: 894 virgae read of 892 marked, against 1 before) with its pitches as good as before
-    (pitch errors 2.9% Salzinnes, 5.5% Einsiedeln, 5.3% lat. 15181, 2.6% the Graduale). Next: Karlsruhe Aug. LX (BLB, fetched here).
+    (pitch errors 2.9% Salzinnes, 5.5% Einsiedeln, 5.3% lat. 15181, 2.6% the Graduale). Job 0024 added printed books aligned with GregoBase
+    by `training/books.py` (scans from the Internet Archive): the Antiphonale Monasticum (1934), the Liber
+    antiphonarius (1960) and the Antiphonale Romanum (1912), their labels without the Solesmes ictus and episema
+    (`training/plain.py`) and cleaned (3,540 staves of 6,413 kept: align.js sometimes puts a melody on the staff next to
+    it). The manuscripts as before; the Graduale 2.7% (3.0%), the books' held-out pages 14% (18-19%). Next: Karlsruhe Aug. LX (BLB, fetched here).
 
 - **Step 4, the recognizer** (branch `step-4-recognizer`, merged into `main` with the model: the user is happy to
   publish it, GregoBase's transcriptions being there for anyone to use). See `training/README.md`.
