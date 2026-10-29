@@ -1,0 +1,7 @@
+job 0019-fribourg-pages: Fribourg, Cordeliers Ms. 2 (Franciscan antiphoner, c. 1300): the pages the app saved from e-codices, filed by folio, zipped onto training-data, then deleted from this computer
+code: bcf88b4
+
+$ cantus.py collect --source 123672 --manifest https://www.e-codices.unifr.ch/metadata/iiif/fcc-0002/manifest.json --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+0 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123672 (from 0 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 0 pages with no chant left out)
+No pages all in D:\ChantGPT\changpt-repo\training\data\scans\123672.
+(step 1 failed: exit 1)
