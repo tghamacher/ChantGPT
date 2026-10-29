@@ -65,10 +65,13 @@
     state.page = 0;
     state.dirty = false;
     E.reset();
-    say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}.`);
+    say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}. Find the staves to begin (or right-click the page).`);
     $('pageCount').textContent = src.count;
     $('pageNo').max = src.count;
-    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'docGroup']) $(id).hidden = false;
+    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'exportGroup', 'docGroup']) $(id).hidden = false;
+    $('iiifForm').hidden = true;
+    $('inspector').hidden = false;
+    document.querySelector('.cg-main').classList.add('open');
     $('empty').hidden = true;
     $('page').hidden = false;
     $('saveGroup').hidden = !src.original;
@@ -241,11 +244,60 @@
     show(state.page);
   }
 
+  // ---------------------------------------------------------------- the right-click menu
+  // items: [{ label, key, run, disabled }], a heading { title }, a rule '-', or a row of shapes { shapes: [{ label, on, run }] };
+  // shown at the pointer, kept on the screen; a click outside, Esc, or a choice closes it
+  function menu(items, x, y) {
+    const m = $('menu');
+    m.replaceChildren();
+    const button = (it, parent) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'menuitem'); b.disabled = !!it.disabled;
+      const l = document.createElement('span'); l.textContent = it.label; b.appendChild(l);
+      if (it.key) { const k = document.createElement('kbd'); k.textContent = it.key; b.appendChild(k); }
+      if (it.title) b.title = it.title;
+      if (it.on !== undefined) b.setAttribute('aria-pressed', String(!!it.on));
+      b.addEventListener('click', () => { closeMenu(); it.run(); });
+      parent.appendChild(b);
+      return b;
+    };
+    for (const it of items) {
+      if (!it) continue;
+      if (it === '-') { m.appendChild(document.createElement('hr')); continue; }
+      if (it.title && !it.run) { const h = document.createElement('div'); h.className = 'cg-menu-title'; h.textContent = it.title; m.appendChild(h); continue; }
+      if (it.shapes) { const row = document.createElement('div'); row.className = 'cg-shapes'; it.shapes.forEach(sh => button(sh, row)); m.appendChild(row); continue; }
+      button(it, m);
+    }
+    m.hidden = false;
+    const r = m.getBoundingClientRect();
+    m.style.left = `${Math.max(4, Math.min(x, innerWidth - r.width - 4))}px`;
+    m.style.top = `${Math.max(4, Math.min(y, innerHeight - r.height - 4))}px`;
+    const first = m.querySelector('button:not(:disabled)');
+    if (first) first.focus({ preventScroll: true });
+  }
+  const closeMenu = () => { $('menu').hidden = true; };
+  document.addEventListener('pointerdown', e => { if (!$('menu').hidden && !$('menu').contains(e.target)) closeMenu(); }, true);
+  document.addEventListener('keydown', e => {
+    if ($('menu').hidden) return;
+    if (e.key === 'Escape') { closeMenu(); e.stopPropagation(); e.preventDefault(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      const bs = [...$('menu').querySelectorAll('button:not(:disabled)')], i = bs.indexOf(document.activeElement);
+      bs[(i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length].focus(); e.stopPropagation(); e.preventDefault();
+    }
+  }, true);
+  window.addEventListener('blur', closeMenu);
+  $('stage').addEventListener('scroll', closeMenu);
+
+  // the online manuscript's form, under the toolbar; help
+  $('iiifToggle').addEventListener('click', () => { $('iiifForm').hidden = !$('iiifForm').hidden; if (!$('iiifForm').hidden) $('iiifUrl').focus(); });
+  $('iiifUrl').addEventListener('keydown', e => { if (e.key === 'Escape') $('iiifForm').hidden = true; });
+  $('helpToggle').addEventListener('click', () => $('help').showModal());
+
   // ---------------------------------------------------------------- controls
   // which recognizer reads the notes (remembered)
   try { const v = localStorage.getItem('cg-model'); if (v) $('readModel').value = v; } catch (e) { }
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
-  E.init({ state, svg: $('overlay'), say, pixels, show, model: () => $('readModel').value, changed: () => { state.dirty = true; } });
+  E.init({ state, svg: $('overlay'), say, pixels, show, menu, model: () => $('readModel').value, changed: () => { state.dirty = true; } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
@@ -310,11 +362,11 @@
   $('drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
   // a drop anywhere on the window opens the files
   let depth = 0;
-  window.addEventListener('dragenter', e => { e.preventDefault(); depth++; $('drop').classList.add('over'); });
-  window.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; $('drop').classList.remove('over'); } });
+  window.addEventListener('dragenter', e => { e.preventDefault(); depth++; $('drop').classList.add('over'); document.body.classList.add('dropping'); });
+  window.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; $('drop').classList.remove('over'); document.body.classList.remove('dropping'); } });
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => {
-    e.preventDefault(); depth = 0; $('drop').classList.remove('over');
+    e.preventDefault(); depth = 0; $('drop').classList.remove('over'); document.body.classList.remove('dropping');
     if (e.dataTransfer.files.length) open(e.dataTransfer.files);
   });
 
@@ -325,9 +377,11 @@
   $('zoomIn').addEventListener('click', () => zoom('in'));
   $('zoomOut').addEventListener('click', () => zoom('out'));
   document.addEventListener('keydown', e => {
-    if (!state.src || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === '?' && !state.src && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { $('help').showModal(); return; }
+    if (!state.src || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || $('help').open) return;
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); save(); return; }
     if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { peek(true); e.preventDefault(); return; }
+    if (e.key === '?') { $('help').showModal(); e.preventDefault(); return; }
     if (E.key(e)) { e.preventDefault(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
