@@ -1,0 +1,28 @@
+job 0021-fribourg-pages: Fribourg, Cordeliers Ms. 2 (Franciscan antiphoner, c. 1300): the pages the app saved from e-codices, filed by folio, zipped onto training-data, then deleted from this computer
+code: bcf88b4
+
+$ cantus.py collect --source 123672 --manifest https://www.e-codices.unifr.ch/metadata/iiif/fcc-0002/manifest.json --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --share DATA --folios all --width 1800
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123672/pages-001r-052r-w1800.zip is 85.21 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+489 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\123672 (from 6 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 15 pages with no chant left out)
+102 of 489 pages -> pages-001r-052r-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123672/pages-052v-105v-w1800.zip is 85.83 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+209 of 489 pages -> pages-052v-105v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123672/pages-106r-158v-w1800.zip is 85.72 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+315 of 489 pages -> pages-106r-158v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123672/pages-159r-210v-w1800.zip is 85.12 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+419 of 489 pages -> pages-159r-210v-w1800.zip, pushed
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-123672/pages-211r-245v-w1800.zip is 57.10 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+489 of 489 pages -> pages-211r-245v-w1800.zip, pushed
+
+$ cantus.py tidy --source 123672 --manifest https://www.e-codices.unifr.ch/metadata/iiif/fcc-0002/manifest.json --share DATA --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+5 zips of cantus-123672 on training-data; deleted 6 of the app's zips from C:\Users\Ted Hamacher\Desktop\EMS Tools and 489 pages from D:\ChantGPT\changpt-repo\training\data\scans\123672
