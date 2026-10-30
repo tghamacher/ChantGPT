@@ -598,6 +598,17 @@
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
       return bad;
     } },
+    { name: 'app: GABC saved from notes read with no chant placed (the page\'s staves)', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      const bad = [];
+      if (w.CGEditor.gabc() !== null) bad.push('something to save from an empty page');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const st = w.CGApp.state.doc.pages[0].staves[0];
+      st.syllables = [{ text: '', items: [{ g: 'c4' }] }, { text: '', items: [{ g: 'fgh' }, { g: 'gf' }] }];
+      const g = w.CGEditor.gabc();
+      if (!g || !/%%\n\(c4\) \(fgh gf\)/.test(g.text)) bad.push('saved: ' + JSON.stringify(g));
+      return bad;
+    } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
       const { w } = await app('test/pages/engraved.jpg');
       await w.CGEditor.addStaff([70, 430, 1060, 90]);

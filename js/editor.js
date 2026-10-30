@@ -847,10 +847,17 @@
   }
 
   // the chant the selected staff belongs to (or the first), as GABC with the source's line breaks
+  // (no chant placed, only notes read: this page's staves that have any, top to bottom)
   function gabc() {
     const doc = ctx.state.doc;
-    const chant = doc.chants.find(c => c.staves.includes(selected)) || doc.chants[0];
-    return chant ? { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true }) } : null;
+    let chant = doc.chants.find(c => c.staves.includes(selected)) || doc.chants[0];
+    if (!chant) {
+      const ids = page().staves.filter(st => st.syllables.length).map(st => st.id);
+      if (!ids.length) { ctx.say('Nothing to save yet: read the notes or place a chant first.', true); return null; }
+      const base = (doc.source.name || 'chant').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
+      chant = { headers: { name: `${base}, page ${page().n}` }, staves: ids };
+    }
+    return { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true }) };
   }
 
   // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away
