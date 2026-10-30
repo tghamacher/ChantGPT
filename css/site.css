@@ -163,6 +163,9 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-overlay .syl.doubt { fill: var(--doubt); }
 .cg-overlay .syl.on { fill: var(--sel); text-decoration: underline; }
 .cg-overlay .neume { fill: transparent; cursor: grab; }
+.cg-overlay .neume.playing { fill: rgba(255, 170, 0, 0.35); stroke: #e69500; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cg-play { display: inline-flex; align-items: center; gap: 4px; }
+.cg-play input[type=range] { width: 80px; }
 .cg-overlay .neume.on { fill: var(--sel-fill); stroke: var(--sel); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .syl { font-family: var(--textfont); fill: var(--notation-ink); text-anchor: middle; }
 .cg-overlay .item { fill: none; stroke: var(--staff); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }

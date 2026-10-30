@@ -204,6 +204,7 @@
   async function show(i) {
     const src = state.src;
     if (!src) return;
+    if (window.CGPlay) window.CGPlay.stop();          // (the page turned: what was playing was the last page's)
     i = Math.max(0, Math.min(src.count - 1, i));
     state.page = i;
     $('pageNo').value = i + 1;
@@ -297,7 +298,7 @@
   // which recognizer reads the notes (remembered)
   try { const v = localStorage.getItem('cg-model'); if (v) $('readModel').value = v; } catch (e) { }
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
-  E.init({ state, svg: $('overlay'), say, pixels, show, menu, model: () => $('readModel').value, changed: () => { state.dirty = true; } });
+  E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
@@ -309,6 +310,21 @@
   $('remove').addEventListener('click', () => E.remove());
   $('undo').addEventListener('click', () => E.undo());
   $('redo').addEventListener('click', () => E.redo());
+  const P = window.CGPlay;
+  // hearing it: ▶ plays (from the selection), again pauses; ■ stops; the tempo kept for next time
+  const playState = () => { $('play').textContent = P.playing ? '❚❚' : '▶'; $('play').title = P.playing ? 'Pause (Space)' : 'Hear it: from the selected neume or staff, else the page\'s start (Space)'; $('stopPlay').disabled = !P.playing && !P.paused; };
+  function playEvents(events) {
+    P.play(events, +$('tempo').value, e => E.mark(e), () => { E.mark(null); playState(); });
+    playState();
+  }
+  function togglePlay() {
+    if (P.playing) P.pause(); else if (P.paused) P.resume(); else E.listen(E.playFrom());
+    playState();
+  }
+  $('play').addEventListener('click', togglePlay);
+  $('stopPlay').addEventListener('click', () => { P.stop(); playState(); });
+  try { const v = localStorage.getItem('cg-tempo'); if (v) $('tempo').value = v; } catch (e) { }
+  $('tempo').addEventListener('change', e => { try { localStorage.setItem('cg-tempo', e.target.value); } catch (x) { } });
   $('save').addEventListener('click', save);
   $('placeChant').addEventListener('click', () => E.placeChant($('gabcText').value));
   $('openBook').addEventListener('change', e => { if (e.target.files.length) open(e.target.files); e.target.value = ''; });
@@ -393,6 +409,7 @@
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); save(); return; }
     if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) { peek(true); e.preventDefault(); return; }
     if (e.key === '?') { $('help').showModal(); e.preventDefault(); return; }
+    if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !/^(BUTTON|A)$/.test(e.target.tagName)) { togglePlay(); e.preventDefault(); return; }
     if (E.key(e)) { e.preventDefault(); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
