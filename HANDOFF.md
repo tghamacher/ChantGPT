@@ -220,7 +220,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line
   bridged), Paris BnF lat. 15181 from Gallica paired line by line with the Cantus Database's melodies (source 123631;
   `training/cantus.py`), and training on the user's GPU by jobs (`training/worker.py`, the `jobs` branch).
-  - `models/chant-ms.*`: the manuscript model (job 0024), chosen beside the Read buttons (automatic: on pages ruled
+  - `models/chant-ms.*`: the manuscript model (job 0026), chosen beside the Read buttons (automatic: on pages ruled
     in red). Synthetic manuscript-style staves, then two rounds on lat. 15181's own staves (3,524 paired, line breaks
     mended; a third round gained nothing), then more manuscripts, each paired line by line with Cantus's melodies:
     Einsiedeln 611 (14th century, Gothic neumes on black lines; e-codices, all of it, 4,994 staves) and the
@@ -235,7 +235,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
     by `training/books.py` (scans from the Internet Archive): the Antiphonale Monasticum (1934), the Liber
     antiphonarius (1960) and the Antiphonale Romanum (1912), their labels without the Solesmes ictus and episema
     (`training/plain.py`) and cleaned (3,540 staves of 6,413 kept: align.js sometimes puts a melody on the staff next to
-    it). The manuscripts as before; the Graduale 2.7% (3.0%), the books' held-out pages 14% (18-19%). Next: Karlsruhe Aug. LX (BLB, fetched here).
+    it). The manuscripts as before; the Graduale 2.7% (3.0%), the books' held-out pages 14% (18-19%). Job 0026 added the Fribourg Cordeliers antiphoner (Cantus 123672, 3,651 staves with shapes) and the Graduale Romanum 1961 (GregoBase source 2, 5,640 staves, plain and cleaned on the PC). Against job 0024 on held-out pages (notes wrong): Fribourg 7.4% (11.0%), Salzinnes 3.6% (3.8%), Einsiedeln 12.0% (12.7%), lat. 15181 12.7% (13.0%), Graduale 1961 7.2% (10.1%), Liber antiphonarius 14.6% (14.8%); the 1908 Graduale 2.9% (2.7%). GregoBase has only 39-59 chants for the Graduale Cisterciense, Hymnarium Cisterciense and Liber responsorialis: set aside. The Liber usualis 1949 (2,748 chants) is aligned with an offset per 25 pages (`books.py local`: its index has pages put in, 262.8). Next: Karlsruhe Aug. LX (BLB, fetched here).
 
 - **Step 4, the recognizer** (branch `step-4-recognizer`, merged into `main` with the model: the user is happy to
   publish it, GregoBase's transcriptions being there for anyone to use). See `training/README.md`.
