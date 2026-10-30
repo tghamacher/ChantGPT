@@ -881,17 +881,17 @@
       selected = t.dataset.staff; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null; draw();
       const st = staffOf(selected), it = itemOf(), kd = C.kind(it.g);
       const ns = kd === 'neume' ? C.notes(it.g).filter(n => !n.acc) : [];
-      // the note under the pointer (the nearest in pitch), whose shape the row sets
-      const here = pitchAt(st, p[0], p[1]).p;
-      let k = 0, best = Infinity;
-      ns.forEach((n, j) => { const d = Math.abs(n.p.charCodeAt(0) - 97 - here); if (d < best) { best = d; k = j; } });
-      const now = ns.length ? C.shapeOf(ns[k]) : null;
+      // the note under the pointer, whose shape the row sets
+      const k = ns.length ? noteUnder(st, it, p) : 0, now = ns.length ? C.shapeOf(ns[k]) : null;
       const falls = ns.length >= 3 && ns.every((n, j) => !j || n.p < ns[j - 1].p);
+      const nxt = st.syllables[item.s].items[item.i + 1];
       ctx.menu([
         { title: `Neume (${it.g})${ns.length > 1 ? `, note ${k + 1} of ${ns.length}` : ''}` },
         ns.length ? { shapes: SHAPES.map(([sh, label]) => ({ label, on: now === sh, title: `This note as a ${sh}`, run: () => reshape(k, sh) })) } : null,
         falls ? { label: 'Climacus: the falling notes as diamonds', run: () => climacus() } : null,
         '-',
+        ns.length > 1 ? { label: k ? `Split the neume before note ${k + 1}` : 'Split the neume (point at a later note)', disabled: !k, title: 'Two neumes from here: the notes before this one, and this one on', run: () => splitNeume(k) } : null,
+        { label: 'Join to the next neume', key: 'J', disabled: !nxt || kd !== 'neume' || C.kind(nxt.g) !== 'neume', title: 'This neume and the next one in the syllable as one', run: joinNext },
         { label: 'Accept', key: 'Enter', run: acceptNeume },
         { label: 'Next doubtful', key: 'Tab', run: () => nextNeume(1) },
         { label: 'New syllable here', disabled: item.i === 0, run: splitHere },
@@ -946,6 +946,49 @@
       { label: 'Redo', key: 'Ctrl+Y', disabled: !history.redo.length, run: redo },
     ], x, y);
   }
+  // Which note of a neume is under a point on the page (counting notes, not accidentals, from 0): the glyph nearest
+  // along the staff, and of its notes (a ligature has several) the nearest in pitch.
+  function noteUnder(st, it, p) {
+    const sh = N.itemShapes(it.g, false), sc = N.scaleOf(st.lines), here = pitchAt(st, p[0], p[1]).p;
+    let k = 0, n = 0, best = Infinity;
+    for (const v of sh.list) {
+      if (v.sign || !v.notes.length) continue;
+      const x0 = it.box[0] + v.dx * sc, x1 = x0 + v.w * sc, dx = p[0] < x0 ? x0 - p[0] : p[0] > x1 ? p[0] - x1 : 0;
+      for (const m of v.notes) {
+        const d = dx / (pitchAt(st, p[0], p[1]).step || 1) * 4 + Math.abs(m.p - here);
+        if (d < best) { best = d; k = n; }
+        n++;
+      }
+    }
+    return k;
+  }
+  // the selected neume cut in two before its note k: the second part where its notes were drawn
+  function splitNeume(k) {
+    const st = staffOf(selected), it = itemOf();
+    if (!st || !it || !it.box) return;
+    const parts = C.splitAt(it.g, k);
+    if (!parts) return;
+    const sh = N.itemShapes(it.g, false), sc = N.scaleOf(st.lines);
+    let n = 0, dx = 0;
+    for (const v of sh.list) { if (v.sign || !v.notes.length) continue; if (n <= k && k < n + v.notes.length) { dx = v.dx; break; } n += v.notes.length; }
+    const before = snapshot(), fresh = { g: parts[1], box: [it.box[0] + dx * sc, 0, 0, 0], checked: 'edited' };
+    it.g = parts[0]; it.checked = 'edited';
+    st.syllables[item.s].items.splice(item.i + 1, 0, fresh);
+    N.fitBox(st, it); N.fitBox(st, fresh);
+    commit(before);
+    draw();
+  }
+  // the selected neume and the next one in its syllable as one
+  function joinNext() {
+    const st = staffOf(selected), it = itemOf(), items = st && item ? st.syllables[item.s].items : [], nxt = items[item ? item.i + 1 : 0];
+    if (!it || !nxt || C.kind(it.g) !== 'neume' || C.kind(nxt.g) !== 'neume') return;
+    const before = snapshot();
+    it.g = C.joinG(it.g, nxt.g); it.checked = 'edited';
+    items.splice(item.i + 1, 1);
+    if (it.box) N.fitBox(st, it);
+    commit(before);
+    draw();
+  }
   // the selected neume's note k given a shape; its falling notes as inclinata
   function reshape(k, shape) {
     const st = staffOf(selected), it = itemOf();
@@ -996,11 +1039,7 @@
       const st = staffOf(id), it = itemOf();
       // Shift: only the note nearest the pointer
       let note = null;
-      if (e.shiftKey && C.kind(it.g) === 'neume') {
-        const here = pitchAt(st, p[0], p[1]).p, ns = C.notes(it.g).filter(n => !n.acc);
-        let best = Infinity;
-        ns.forEach((n, k) => { const d = Math.abs(n.p.charCodeAt(0) - 97 - here); if (d < best) { best = d; note = k; } });
-      }
+      if (e.shiftKey && C.kind(it.g) === 'neume') note = noteUnder(st, it, p);
       drag = { act, from: p, g: it.g, box: it.box.slice(), checked: it.checked, note, before: snapshot(), moved: false };
       draw();
       return;
@@ -1122,6 +1161,7 @@
       if (k === 'Tab') { nextNeume(e.shiftKey ? -1 : 1); return true; }
       if (k === 'Enter') { acceptNeume(); return true; }
       if (k === 'Delete' || k === 'Backspace') { removeNeume(); return true; }
+      if (k === 'j' || k === 'J') { joinNext(); return true; }
       return false;
     }
     if (!selected) return false;
@@ -1377,7 +1417,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
