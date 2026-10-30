@@ -632,6 +632,27 @@
       bad.push(...same('with the line breaks', lined[0].text.slice(lined[0].text.indexOf('%%') + 3).trim(), '(c4) (f) (g) (z) (c4) (h) (h) (z) (c4) (g) (f)'));
       return bad;
     } },
+    { name: 'app: a clef made another and a neume written anew as GABC (several, from one), undone', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [];
+      w.CGEditor.selected = st.id;
+      await w.CGEditor.placeChant('(c3) Di(h)vi(hi) (::)');
+      w.CGEditor.selectNeume(st.id, 0, 0);
+      bad.push(...same('clef to f3', [w.CGEditor.setItem('f3'), st.syllables[0].items[0].g], [true, 'f3']));
+      const s = st.syllables.findIndex(y => y.text === 'vi');
+      w.CGEditor.selectNeume(st.id, s, 0);
+      w.CGEditor.setItem('hi j');
+      bad.push(...same('one neume to two', st.syllables[s].items.map(v => v.g), ['hi', 'j']));
+      const [a, b] = st.syllables[s].items;
+      if (!(b.box && b.box[0] >= a.box[0] + a.box[2])) bad.push('the new neume not after it');
+      bad.push(...same('not GABC: refused', [w.CGEditor.setItem('Patri'), st.syllables[s].items.map(v => v.g)], [false, ['hi', 'j']]));
+      w.CGEditor.undo(); w.CGEditor.undo();
+      const now = doc.pages[0].staves[0];
+      bad.push(...same('undone', [now.syllables[0].items[0].g, now.syllables[s].items.map(v => v.g)], ['c3', ['hi']]));
+      bad.push(...same('valid', w.CGChant.check(doc), []));
+      return bad;
+    } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
       const { w } = await app('test/pages/engraved.jpg');
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
@@ -649,7 +670,7 @@
       w.CGEditor.joinNext();
       bad.push(...same('joined', st.syllables[s].items.map(v => v.g), ['fghgf']));
       w.CGEditor.undo(); w.CGEditor.undo();
-      bad.push(...same('undone', st.syllables[s].items.map(v => v.g), ['fghgf']));
+      bad.push(...same('undone', doc.pages[0].staves[0].syllables[s].items.map(v => v.g), ['fghgf']));
       bad.push(...same('valid', w.CGChant.check(doc), []));
       return bad;
     } },
