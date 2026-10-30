@@ -86,3 +86,115 @@ epoch 13: loss 1.067; synthetic test staves: token errors -, note errors -; real
 epoch 14 batch 0: loss 0.730 (842 s)
 epoch 14 batch 100: loss 1.105 (856 s)
 epoch 14 batch 200: loss 1.088 (870 s)
+epoch 14 batch 300: loss 1.073 (885 s)
+epoch 14 batch 400: loss 1.064 (899 s)
+epoch 14: loss 1.056; synthetic test staves: token errors -, note errors -; real: token errors 10.01%, note errors 10.01% (906 s)
+epoch 15 batch 0: loss 1.378 (906 s)
+epoch 15 batch 100: loss 1.089 (920 s)
+epoch 15 batch 200: loss 1.076 (934 s)
+epoch 15 batch 300: loss 1.073 (949 s)
+epoch 15 batch 400: loss 1.059 (963 s)
+epoch 15: loss 1.055; synthetic test staves: token errors -, note errors -; real: token errors 9.98%, note errors 9.98% (970 s)
+
+$ recognizer.py clean --model training/data/j0029a/best.pt --data training/data/text-2 --real-labels text-ok.jsonl
+5232 staves kept, 273 dropped -> training/data/text-2\text-ok-clean.jsonl
+
+$ recognizer.py clean --model training/data/j0029a/best.pt --data training/data/text-3 --real-labels text-ok.jsonl
+3320 staves kept, 508 dropped -> training/data/text-3\text-ok-clean.jsonl
+
+$ recognizer.py clean --model training/data/j0029a/best.pt --data training/data/text-3a --real-labels text-ok.jsonl
+998 staves kept, 124 dropped -> training/data/text-3a\text-ok-clean.jsonl
+
+$ recognizer.py clean --model training/data/j0029a/best.pt --data training/data/text-48 --real-labels text-ok.jsonl
+2326 staves kept, 1194 dropped -> training/data/text-48\text-ok-clean.jsonl
+
+$ recognizer.py clean --model training/data/j0029a/best.pt --data training/data/text-7 --real-labels text-ok.jsonl
+1102 staves kept, 944 dropped -> training/data/text-7\text-ok-clean.jsonl
+
+$ recognizer.py train --data  --real training/data/text-2,training/data/text-3,training/data/text-3a,training/data/text-48,training/data/text-7 --real-labels text-ok-clean.jsonl --resume training/data/j0029a/best.pt --width 192 --epochs 10 --lr 4e-4 --batch 32 --real-weight 1 --out training/data/j0029
+11555 staves to learn from (11555 real, each 1 times), 0 synthetic and 1274 real to test on; 139 left out for tokens the model hasn't; 85 tokens; 1,394,622 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.397 (1 s)
+epoch 1 batch 100: loss 0.444 (18 s)
+epoch 1 batch 200: loss 0.413 (33 s)
+epoch 1 batch 300: loss 0.397 (49 s)
+epoch 1: loss 0.399; synthetic test staves: token errors -, note errors -; real: token errors 5.30%, note errors 5.30% (59 s)
+epoch 2 batch 0: loss 0.171 (59 s)
+epoch 2 batch 100: loss 0.377 (73 s)
+epoch 2 batch 200: loss 0.375 (88 s)
+epoch 2 batch 300: loss 0.369 (102 s)
+epoch 2: loss 0.376; synthetic test staves: token errors -, note errors -; real: token errors 5.48%, note errors 5.48% (111 s)
+epoch 3 batch 0: loss 0.358 (111 s)
+epoch 3 batch 100: loss 0.352 (125 s)
+epoch 3 batch 200: loss 0.354 (140 s)
+epoch 3 batch 300: loss 0.358 (154 s)
+epoch 3: loss 0.364; synthetic test staves: token errors -, note errors -; real: token errors 5.40%, note errors 5.40% (164 s)
+epoch 4 batch 0: loss 0.349 (164 s)
+epoch 4 batch 100: loss 0.351 (178 s)
+epoch 4 batch 200: loss 0.350 (192 s)
+epoch 4 batch 300: loss 0.355 (207 s)
+epoch 4: loss 0.353; synthetic test staves: token errors -, note errors -; real: token errors 5.50%, note errors 5.50% (216 s)
+epoch 5 batch 0: loss 0.469 (216 s)
+epoch 5 batch 100: loss 0.350 (231 s)
+epoch 5 batch 200: loss 0.345 (245 s)
+epoch 5 batch 300: loss 0.337 (259 s)
+epoch 5: loss 0.335; synthetic test staves: token errors -, note errors -; real: token errors 5.21%, note errors 5.21% (268 s)
+epoch 6 batch 0: loss 0.405 (268 s)
+epoch 6 batch 100: loss 0.337 (282 s)
+epoch 6 batch 200: loss 0.333 (297 s)
+epoch 6 batch 300: loss 0.330 (311 s)
+epoch 6: loss 0.331; synthetic test staves: token errors -, note errors -; real: token errors 5.42%, note errors 5.42% (320 s)
+epoch 7 batch 0: loss 0.510 (320 s)
+epoch 7 batch 100: loss 0.301 (335 s)
+epoch 7 batch 200: loss 0.302 (349 s)
+epoch 7 batch 300: loss 0.310 (363 s)
+epoch 7: loss 0.313; synthetic test staves: token errors -, note errors -; real: token errors 5.35%, note errors 5.35% (372 s)
+epoch 8 batch 0: loss 0.302 (372 s)
+epoch 8 batch 100: loss 0.299 (387 s)
+epoch 8 batch 200: loss 0.308 (401 s)
+epoch 8 batch 300: loss 0.305 (416 s)
+epoch 8: loss 0.304; synthetic test staves: token errors -, note errors -; real: token errors 5.36%, note errors 5.36% (425 s)
+epoch 9 batch 0: loss 0.172 (425 s)
+epoch 9 batch 100: loss 0.286 (439 s)
+epoch 9 batch 200: loss 0.298 (453 s)
+epoch 9 batch 300: loss 0.301 (468 s)
+epoch 9: loss 0.301; synthetic test staves: token errors -, note errors -; real: token errors 5.43%, note errors 5.43% (477 s)
+epoch 10 batch 0: loss 0.374 (477 s)
+epoch 10 batch 100: loss 0.299 (491 s)
+epoch 10 batch 200: loss 0.299 (506 s)
+epoch 10 batch 300: loss 0.301 (520 s)
+epoch 10: loss 0.298; synthetic test staves: token errors -, note errors -; real: token errors 5.40%, note errors 5.40% (529 s)
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 5.21%, note errors 5.21%
+
+$ recognizer.py test --model training/data/j0027/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 5.38%, note errors 5.38%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 6.12%, note errors 6.12%
+
+$ recognizer.py test --model training/data/j0027/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 5.92%, note errors 5.92%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-3a --real-labels text-ok-clean.jsonl --held 10
+91 staves: token errors 4.98%, note errors 4.98%
+
+$ recognizer.py test --model training/data/j0027/best.pt --data training/data/text-3a --real-labels text-ok-clean.jsonl --held 10
+91 staves: token errors 5.92%, note errors 5.92%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 8.22%, note errors 8.22%
+
+$ recognizer.py test --model training/data/j0027/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 8.85%, note errors 8.85%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 11.74%, note errors 11.74%
+
+$ recognizer.py test --model training/data/j0027/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 12.36%, note errors 12.36%
+
+$ recognizer.py export --model training/data/j0029/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0029-text-more/chant.onnx (5.6 MB)
