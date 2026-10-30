@@ -310,6 +310,7 @@
   $('remove').addEventListener('click', () => E.remove());
   $('undo').addEventListener('click', () => E.undo());
   $('redo').addEventListener('click', () => E.redo());
+  $('readText').addEventListener('click', () => E.readWords(!E.selected));
   const P = window.CGPlay;
   // hearing it: ▶ plays (from the selection), again pauses; ■ stops; the tempo kept for next time
   const playState = () => { $('play').textContent = P.playing ? '❚❚' : '▶'; $('play').title = P.playing ? 'Pause (Space)' : 'Hear it: from the selected neume or staff, else the page\'s start (Space)'; $('stopPlay').disabled = !P.playing && !P.paused; };
