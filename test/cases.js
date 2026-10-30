@@ -57,6 +57,14 @@
       same('mora stops at a bar', C().notes('f.;').map(n => n.signs), ['.'])) },
 
     // ---- GABC in
+    { name: 'notes: a note\'s shape changed; a neume split before a note, and joined again', unit: () => [].concat(
+      same('fifth of a melisma as inclinatum', C().reshape('hgfedc', 4, 'inclinatum'), 'hgfeDc'),
+      same('a virga kept its liquescence', C().reshape('hg~', 1, 'virga'), 'hgv~'),
+      same('split', C().splitAt('fgh/ihg', 3), ['fgh', 'ihg']),
+      same('split: the flat goes with its note', C().splitAt('gixhi', 1), ['g', 'ixhi']),
+      same('split: signs stay with their notes', C().splitAt('f.g_h', 1), ['f.', 'g_h']),
+      same('nothing to split before the first note', C().splitAt('fgh', 0), null),
+      same('joined', C().joinG('fgh', 'ihg'), 'fghihg')) },
     { name: 'gabc in: headers, syllables, words, bars', unit: () => {
       const r = C().fromGabc(GLORIA), syl = r.staves[0].syllables;
       return [].concat(
@@ -588,6 +596,27 @@
       for (let i = 0; i < 5; i++) w.CGEditor.undo();
       bad.push(...same('all undone', [st().syllables[2].items[0].g, st().syllables[3].items[0].g, st().syllables[4].items[0].g], ['gh', 'hj', 'h.']));
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
+      return bad;
+    } },
+    { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [];
+      w.CGEditor.selected = st.id;
+      await w.CGEditor.placeChant('(c4) Al(fghgf)le(h) (::)');
+      const s = st.syllables.findIndex(y => y.text === 'Al'), it = st.syllables[s].items[0], x0 = it.box[0], x1 = it.box[0] + it.box[2];
+      w.CGEditor.selectNeume(st.id, s, 0);
+      w.CGEditor.splitNeume(3);
+      const items = st.syllables[s].items;
+      bad.push(...same('split', items.map(v => v.g), ['fgh', 'gf']));
+      if (!(items[1].box[0] > x0 && items[1].box[0] < x1)) bad.push(`the second part not where its notes were: ${items[1].box[0]} in ${x0}-${x1}`);
+      if (!(items[0].box[0] + items[0].box[2] <= items[1].box[0] + 1)) bad.push('the parts overlap');
+      w.CGEditor.selectNeume(st.id, s, 0);
+      w.CGEditor.joinNext();
+      bad.push(...same('joined', st.syllables[s].items.map(v => v.g), ['fghgf']));
+      w.CGEditor.undo(); w.CGEditor.undo();
+      bad.push(...same('undone', st.syllables[s].items.map(v => v.g), ['fghgf']));
+      bad.push(...same('valid', w.CGChant.check(doc), []));
       return bad;
     } },
     { name: 'app: a chant begins part way along a staff: the one before stops at the point, the next starts from it', browser: true, unit: async app => {

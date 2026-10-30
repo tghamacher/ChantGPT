@@ -79,8 +79,8 @@
     const m = /[vVwos]/.exec(n.signs || '');
     return m ? { v: 'virga', V: 'virga', w: 'quilisma', o: 'oriscus', s: 'stropha' }[m[0]] : n.shape;
   }
-  function reshape(g, k, shape) {
-    if (!(shape in SHAPE_SIGN)) return g;
+  // where note k of a group is written: [from its letter, to the end of its signs], or null
+  function noteAt(g, k) {
     let note = -1;
     for (let i = 0; i < g.length; i++) {
       const ch = g[i];
@@ -89,13 +89,29 @@
       if (/[xy#]/.test(g[i + 1] || '')) { i++; continue; }
       let j = i + 1;
       while (j < g.length && !/[a-m\[\s\/!@,;:`]/i.test(g[j])) j++;
-      if (++note !== k) { i = j - 1; continue; }
-      const letter = shape === 'inclinatum' ? ch.toUpperCase() : ch.toLowerCase();
-      const rest = g.slice(i + 1, j).replace(/[vVwos]/g, '');
-      return g.slice(0, i) + letter + SHAPE_SIGN[shape] + rest + g.slice(j);
+      if (++note === k) return [i, j];
+      i = j - 1;
     }
-    return g;
+    return null;
   }
+  function reshape(g, k, shape) {
+    const at = shape in SHAPE_SIGN && noteAt(g, k);
+    if (!at) return g;
+    const [i, j] = at, letter = shape === 'inclinatum' ? g[i].toUpperCase() : g[i].toLowerCase();
+    return g.slice(0, i) + letter + SHAPE_SIGN[shape] + g.slice(i + 1, j).replace(/[vVwos]/g, '') + g.slice(j);
+  }
+  // A group cut into two neumes before its note k (an accidental just before that note goes with it; the separators
+  // between them, / ! @, dropped), or null if there's nothing on one side. Two neumes joined into one: their GABC
+  // run together, so they're drawn as one ligature where GABC makes one.
+  function splitAt(g, k) {
+    const at = k > 0 && noteAt(g, k);
+    if (!at) return null;
+    let i = at[0];
+    if (/[a-m][xy#]$/i.test(g.slice(0, i))) i -= 2;
+    const a = g.slice(0, i).replace(/[\/!@\s]+$/, ''), b = g.slice(i).replace(/^[\/!@\s]+/, '');
+    return a && b ? [a, b] : null;
+  }
+  const joinG = (a, b) => a + b;
 
   function transpose(g, k, only = null) {
     const kd = kind(g);
@@ -292,7 +308,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
