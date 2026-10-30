@@ -415,3 +415,73 @@ epoch 12 batch 700: loss 0.160 (4907 s)
 epoch 12 batch 800: loss 0.161 (4920 s)
 epoch 12 batch 900: loss 0.161 (4931 s)
 epoch 12 batch 1000: loss 0.162 (4944 s)
+epoch 12 batch 1100: loss 0.162 (4957 s)
+epoch 12 batch 1200: loss 0.162 (4970 s)
+epoch 12 batch 1300: loss 0.162 (4983 s)
+epoch 12 batch 1400: loss 0.163 (4996 s)
+epoch 12 batch 1500: loss 0.162 (5008 s)
+epoch 12 batch 1600: loss 0.163 (5021 s)
+epoch 12 batch 1700: loss 0.163 (5033 s)
+epoch 12 batch 1800: loss 0.163 (5046 s)
+epoch 12 batch 1900: loss 0.162 (5058 s)
+epoch 12 batch 2000: loss 0.162 (5070 s)
+epoch 12 batch 2100: loss 0.163 (5082 s)
+epoch 12 batch 2200: loss 0.163 (5095 s)
+epoch 12 batch 2300: loss 0.163 (5107 s)
+epoch 12 batch 2400: loss 0.163 (5119 s)
+epoch 12 batch 2500: loss 0.163 (5131 s)
+epoch 12 batch 2600: loss 0.163 (5144 s)
+epoch 12 batch 2700: loss 0.163 (5157 s)
+epoch 12 batch 2800: loss 0.163 (5169 s)
+epoch 12 batch 2900: loss 0.163 (5182 s)
+epoch 12 batch 3000: loss 0.163 (5194 s)
+epoch 12 batch 3100: loss 0.163 (5206 s)
+epoch 12 batch 3200: loss 0.163 (5218 s)
+epoch 12 batch 3300: loss 0.163 (5230 s)
+epoch 12 batch 3400: loss 0.163 (5243 s)
+epoch 12: loss 0.164; synthetic test staves: token errors 3.48%, note errors 3.84%; real: token errors 5.90%, note errors 6.29% (5257 s)
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+375 staves: token errors 6.07%, note errors 7.44%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+375 staves: token errors 9.19%, note errors 11.03%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+371 staves: token errors 3.39%, note errors 3.58%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+371 staves: token errors 3.55%, note errors 3.79%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.48%, note errors 12.03%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.95%, note errors 12.67%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+357 staves: token errors 10.14%, note errors 12.70%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+357 staves: token errors 10.48%, note errors 12.99%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.59%, note errors 2.92%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.28%, note errors 2.73%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 8.09%, note errors 7.24%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 11.62%, note errors 10.11%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.32%, note errors 14.55%
+
+$ recognizer.py test --model training/data/j0024/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.63%, note errors 14.83%
+
+$ recognizer.py export --model training/data/j0026/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0026-fribourg-graduale1961/chant.onnx (5.7 MB)
