@@ -252,7 +252,11 @@
   // nothing selected within the staff
   const letGo = () => { item = null; word = null; };
   const DOUBT = 0.8;
-  const doubtful = x => x.conf !== undefined && x.conf < DOUBT && !x.checked;
+  // A custos is no work of the editor's: Gregorio sets its own and GABC and Volpiano leave it out. It's read (so it isn't
+  // taken for a note), drawn faintly, never doubtful nor counted as to check, passed over by Tab; it's only heard from
+  // when it disagrees with the next line's first note (checks.js).
+  const isCustos = it => !!(it && it.g && C.kind(it.g) === 'custos');
+  const doubtful = x => x.conf !== undefined && x.conf < DOUBT && !x.checked && !isCustos(x);
 
   // the staff position (a = 0) at a point on the page, on the selected staff, and the size of a step there
   function pitchAt(st, x, y) {
@@ -306,7 +310,7 @@
   // the next (or previous) neume on the page, staff by staff
   function nextNeume(d) {
     const list = [];
-    page().staves.forEach(st => st.syllables.forEach((syl, s) => syl.items.forEach((it, i) => { if (it.box) list.push({ id: st.id, s, i }); })));
+    page().staves.forEach(st => st.syllables.forEach((syl, s) => syl.items.forEach((it, i) => { if (it.box && !isCustos(it)) list.push({ id: st.id, s, i }); })));
     if (!list.length) return;
     const at = list.findIndex(v => v.id === selected && item && v.s === item.s && v.i === item.i);
     const v = list[at < 0 ? (d > 0 ? 0 : list.length - 1) : (at + d + list.length) % list.length];
@@ -1432,7 +1436,8 @@
         const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
         const isSel = (s, i) => sel && item && item.s === s && item.i === i;
         for (const v of L.glyphs) {
-          const cls = 'glyph' + (v.checked ? ' ok' : v.conf !== undefined && v.conf < DOUBT ? ' doubt' : '') + (isSel(v.syllable, v.item) ? ' on' : '');
+          const cu = isCustos(st.syllables[v.syllable].items[v.item]);
+          const cls = 'glyph' + (cu ? ' custos' : v.checked ? ' ok' : v.conf !== undefined && v.conf < DOUBT ? ' doubt' : '') + (isSel(v.syllable, v.item) ? ' on' : '');
           const t = el('text', { x: v.x, y: v.y, 'font-size': L.size, class: cls, transform: `rotate(${v.angle.toFixed(3)} ${v.x} ${v.y})` }, ch);
           t.textContent = v.ch;
         }
@@ -1595,7 +1600,7 @@
 
   // how far a staff has been checked
   function progress(st) {
-    const its = st.syllables.flatMap(syl => syl.items.filter(it => it.box)), words = st.syllables.filter(syl => syl.text);
+    const its = st.syllables.flatMap(syl => syl.items.filter(it => it.box && !isCustos(it))), words = st.syllables.filter(syl => syl.text);
     const done = its.filter(it => it.checked).length + words.filter(w => w.checked).length, all = its.length + words.length;
     const doubts = its.filter(doubtful).length + words.filter(doubtful).length;
     return `${done} of ${all} neumes and syllables checked` + (doubts ? `; ${doubts} doubtful (orange) to look at.` : '.');

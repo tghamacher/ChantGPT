@@ -730,6 +730,23 @@
         ['(c4)', 'Al(f)', '-le(g)', '-lú(h)', '-ia(h)', 'Pa(g)', '-tri(gh)', '-a(f e)']));
       return bad;
     } },
+    { name: 'app: a custos is no work of the editor\'s: faint, not doubtful, not counted, passed over by Tab', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [], x0 = st.lines[0][0];
+      st.syllables = [['c4', 1], ['f', 0.5], ['g', 1], ['h+', 0.3]].map(([g, conf], k) => ({ text: '', items: [{ g, conf, box: [x0 + 10 + 60 * k, 0, 8, 10] }] }));
+      w.CGEditor.selected = st.id;
+      w.CGEditor.selectNeume(st.id, 2, 0);
+      w.CGEditor.key(new w.KeyboardEvent('keydown', { key: 'Tab' }));
+      bad.push(...same('Tab from the last note: round to the clef, not the custos', w.CGEditor.neume, { s: 0, i: 0 }));
+      const faint = w.document.querySelectorAll('.glyph.custos').length, doubts = w.document.querySelectorAll('.glyph.doubt').length;
+      bad.push(...same('drawn faintly; only the doubtful note orange', [faint > 0, doubts], [true, 1]));
+      w.CGEditor.selectNeume(st.id, 1, 0);
+      w.CGEditor.key(new w.KeyboardEvent('keydown', { key: 'Enter' }));
+      w.CGEditor.acceptStaff();
+      bad.push(...same('the staff accepted: its doubtful custos didn\'t hold it back', st.syllables.map(y => !!y.items[0].checked), [true, true, true, true]));
+      return bad;
+    } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
       const { w } = await app('test/pages/engraved.jpg');
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
