@@ -1,0 +1,30 @@
+job 0030-checked-by-words: The manuscript model (0026) trained again with the printed books' staves checked by their words (the text reader reads under each staff; a third to a half of the antiphoners' staves had another chant's melody), and the manuscripts counted twice (the printed books had come to outweigh them); tested against 0026 on held-out pages of each; exported
+code: 3e22da9
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/book-3 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl --resume training/data/j0026/best.pt --width 192 --epochs 12 --lr 6e-4 --batch 32 --out training/data/j0030
+167047 staves to learn from (42347 real, each 3 times), 1177 synthetic and 4709 real to test on; 61 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.232 (1 s)
+epoch 1 batch 100: loss 0.182 (16 s)
+epoch 1 batch 200: loss 0.183 (30 s)
+epoch 1 batch 300: loss 0.182 (44 s)
+epoch 1 batch 400: loss 0.183 (58 s)
+epoch 1 batch 500: loss 0.183 (72 s)
+epoch 1 batch 600: loss 0.183 (86 s)
+epoch 1 batch 700: loss 0.181 (99 s)
+epoch 1 batch 800: loss 0.181 (112 s)
+epoch 1 batch 900: loss 0.181 (125 s)
+epoch 1 batch 1000: loss 0.179 (139 s)
+epoch 1 batch 1100: loss 0.180 (152 s)
+epoch 1 batch 1200: loss 0.180 (166 s)
+epoch 1 batch 1300: loss 0.181 (179 s)
+epoch 1 batch 1400: loss 0.181 (192 s)
+epoch 1 batch 1500: loss 0.181 (205 s)
+epoch 1 batch 1600: loss 0.182 (218 s)
+epoch 1 batch 1700: loss 0.181 (231 s)
+epoch 1 batch 1800: loss 0.180 (244 s)
+epoch 1 batch 1900: loss 0.180 (257 s)
+epoch 1 batch 2000: loss 0.181 (270 s)
+epoch 1 batch 2100: loss 0.181 (282 s)
+epoch 1 batch 2200: loss 0.181 (296 s)
