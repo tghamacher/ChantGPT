@@ -590,6 +590,42 @@
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
       return bad;
     } },
+    { name: 'app: a chant begins part way along a staff: the one before stops at the point, the next starts from it', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      await w.CGEditor.addStaff([70, 545, 1060, 95]);
+      const doc = w.CGApp.state.doc, [a, b] = doc.pages[0].staves, bad = [], C = w.CGChant;
+      const mid = (C.staves(doc)[1].lines[0][0] + C.staves(doc)[1].lines[0][2]) / 2;
+      w.CGEditor.selected = b.id;
+      w.CGEditor.beginsAt(mid);
+      bad.push(...same('marked', b.beginsAt, Math.round(mid * 100) / 100));
+      // the first chant, from the staff above: down to the point and no further
+      w.CGEditor.selected = a.id;
+      await w.CGEditor.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::)');
+      const c1 = doc.chants[0];
+      bad.push(...same('first chant on both staves', c1.staves, [a.id, b.id]));
+      if (b.syllables.some(syl => C.sylX(syl) >= mid)) bad.push('the first chant went past the point');
+      // the second from the point
+      w.CGEditor.selected = b.id;
+      await w.CGEditor.placeChant('(c4) Gló(f)ri(gh)a(h) (:)');
+      bad.push(...same('two chants', doc.chants.length, 2));
+      const c2 = doc.chants[1];
+      bad.push(...same('second begins at the point', [c2.staves, c2.startsAt], [[b.id], b.beginsAt]));
+      bad.push(...same('first keeps the staff', doc.chants[0].staves, [a.id, b.id]));
+      const g1 = C.toGabc(doc, { chant: doc.chants[0] }), g2 = C.toGabc(doc, { chant: c2 });
+      if (!/Al\(/.test(g1) || /Gló/.test(g1)) bad.push('first chant\'s GABC: ' + g1);
+      if (!/Gló\(/.test(g2) || /Al\(|lú/.test(g2)) bad.push('second chant\'s GABC: ' + g2);
+      const right = b.syllables.filter(syl => C.sylX(syl) >= mid - 0.5).map(syl => syl.text).filter(Boolean);
+      bad.push(...same('the second\'s words after the point', right, ['Gló', 'ri', 'a']));
+      // placed again there: replaced, not added
+      await w.CGEditor.placeChant('(c4) Gló(f)ri(gh)a(h) (:)');
+      bad.push(...same('still two chants', doc.chants.length, 2));
+      bad.push(...same('valid', C.check(doc), []));
+      // (placed again the same: no change, so nothing to undo for it)
+      w.CGEditor.undo();
+      bad.push(...same('undone: one chant', doc.chants.length, 1));
+      return bad;
+    } },
     { name: 'app: words corrected, dragged, split and joined; a staff accepted once its doubtful places are checked', browser: true, unit: async app => {
       const { w } = await app('test/pages/engraved.jpg');
       await w.CGEditor.addStaff([70, 545, 1060, 95]);

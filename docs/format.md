@@ -51,7 +51,8 @@ is how training data and tests will be made.
   with its manifest's `url`), and the number of `pages`. The file itself is not kept in the document.
 - `pages`: one for each page of the source, in order.
 - `chants`: the pieces found in the source. Each has GABC `headers` (`name`, `mode`, `office-part` and so on, as
-  GregoBase uses them) and the `staves` it runs over, by id, in order. A chant can run over several pages. A chant
+  GregoBase uses them) and the `staves` it runs over, by id, in order. A chant that begins part way along its first
+  staff has `startsAt`, that staff's `beginsAt`; a staff two chants share is in both lists. A chant can run over several pages. A chant
   placed from a book's index has its GregoBase id in a `gregobase` header.
 - `book` (optional): which book the source is, when its index from GregoBase is used: `title`, `gregobase` (the
   book's source number in GregoBase) and `first`, the source's page (from 0) that is the first page of the book's
@@ -77,6 +78,10 @@ is how training data and tests will be made.
 - `begins`: `true` if a chant begins on this staff (in the Solesmes books, the staff set in for the chant's initial),
   `false` if a person said it doesn't; absent if no one has said (optional). Placing GABC without line breaks on a
   staff spreads it over the staves down to the next one where a chant begins.
+- `beginsAt`: an x on the page, if a chant begins part way along this staff (in a manuscript, after a rubric and its
+  initial), not at its start (optional). The staff is then shared: its syllables before that point are the chant that
+  runs on to it, those from it on the chant that begins there. Placing GABC on the staff starts it at the point;
+  GABC placed on the staves before, without line breaks, runs on to the point and stops.
 - `syllables`: in order, left to right.
 
 **Syllable**

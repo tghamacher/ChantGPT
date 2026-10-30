@@ -183,6 +183,22 @@
   // ---------------------------------------------------------------- GABC out
   // Writes a chant (or, given a document without chants, all its staves in order) as GABC. lines: true keeps the
   // source's line breaks as (z). A custos is left out: Gregorio sets its own at each line break.
+  // Chants that share a staff: a chant may begin part way along one (staff.beginsAt, an x on the page; the chant that
+  // begins there has startsAt, the same x). On that staff the syllables before the point are the earlier chant's,
+  // those from it on the later one's. A syllable's place: its first neume's left edge (or its words', if it has no
+  // neume placed).
+  function sylX(syl) {
+    const it = syl.items.find(v => v.box);
+    return it ? it.box[0] : syl.box ? syl.box[0] : null;
+  }
+  // whether a syllable on a staff is the chant's (any syllable is, on a staff no chant begins part way along)
+  function owns(staff, chant, syl) {
+    if (!chant || typeof staff.beginsAt !== 'number') return true;
+    const x = sylX(syl);
+    if (typeof chant.startsAt === 'number' && chant.staves && chant.staves[0] === staff.id) return x !== null && x >= chant.startsAt - 0.5;
+    return x === null || x < staff.beginsAt - 0.5;
+  }
+
   function toGabc(doc, opts = {}) {
     const chant = opts.chant || (doc.chants && doc.chants[0]) || null;
     const all = staves(doc), byId = new Map(all.map(s => [s.id, s]));
@@ -192,6 +208,7 @@
     let body = '';
     list.forEach((staff, si) => {
       for (const syl of staff.syllables) {
+        if (chant && !owns(staff, chant, syl)) continue;
         const gs = syl.items.map(it => it.g).filter(g => kind(g) !== 'custos');
         if (!gs.length && !syl.text) continue;
         body += (body && !syl.join ? ' ' : '') + syl.text + '(' + gs.join(' ') + ')';
@@ -248,6 +265,7 @@
         else ids.add(st.id);
         if (st.box !== undefined && !(box4(st.box) && inside(st.box))) bad.push(`${name}: its box is not on the page.`);
         if (st.begins !== undefined && typeof st.begins !== 'boolean') bad.push(`${name}: "begins" is true or false.`);
+        if (st.beginsAt !== undefined && !Number.isFinite(st.beginsAt)) bad.push(`${name}: "beginsAt" is a number (an x on the page).`);
         if (st.lines !== undefined) {
           const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);
           if (!(Array.isArray(st.lines) && st.lines.length === 4 && st.lines.every(pointsOk)))
@@ -274,7 +292,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
