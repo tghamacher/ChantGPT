@@ -1313,7 +1313,7 @@
       document.getElementById('readStaff').disabled = !st || busy;
       document.getElementById('readPage').disabled = !list.length || busy;
       document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
-      document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length;
+      document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length && !list.some(s => s.syllables.length);
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
       wordPanel(syl);
       document.getElementById('splitHere').disabled = !it || item.i === 0;
