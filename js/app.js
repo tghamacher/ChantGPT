@@ -337,6 +337,9 @@
     if (m) download(new Blob([m.text], { type: 'application/xml' }), m.name);
   });
   $('sylText').addEventListener('change', e => E.setText(e.target.value));
+  $('itemG').addEventListener('change', e => E.setItem(e.target.value));
+  $('itemG').addEventListener('focus', e => { e.target.dataset.was = e.target.value; });
+  $('itemG').addEventListener('keydown', e => { if (e.key === 'Escape') e.target.value = e.target.dataset.was || ''; if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); });
   $('sylDipl').addEventListener('change', e => E.setDipl(e.target.value));
   $('sylStart').addEventListener('change', e => E.setWordStart(e.target.checked));
   $('splitHere').addEventListener('click', () => { E.splitHere(); $('sylText').focus(); });

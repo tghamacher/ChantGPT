@@ -912,12 +912,27 @@
       const k = ns.length ? noteUnder(st, it, p) : 0, now = ns.length ? C.shapeOf(ns[k]) : null;
       const falls = ns.length >= 3 && ns.every((n, j) => !j || n.p < ns[j - 1].p);
       const nxt = st.syllables[item.s].items[item.i + 1];
+      if (kd === 'clef') {
+        const m = /^([cf])(b?)([1-5])$/.exec(it.g), clef = (c, n) => ({ label: `${c.toUpperCase()}${n}`, on: m[1] === c && +m[3] === n, title: `A ${c.toUpperCase()} clef on line ${n} (from the bottom)`, run: () => setItem(c + m[2] + n) });
+        ctx.menu([
+          { title: `Clef (${it.g})` },
+          { shapes: [1, 2, 3, 4].map(n => clef('c', n)) },
+          { shapes: [1, 2, 3, 4].map(n => clef('f', n)) },
+          { label: m[2] ? 'Without its flat' : 'With a flat (B♭)', run: () => setItem(m[1] + (m[2] ? '' : 'b') + m[3]) },
+          { label: 'Change its GABC…', key: 'G', run: () => focusItem() },
+          '-',
+          { label: 'Accept', key: 'Enter', run: acceptNeume },
+          { label: 'Delete', key: 'Del', run: removeNeume },
+        ], x, y);
+        return;
+      }
       ctx.menu([
         { title: `Neume (${it.g})${ns.length > 1 ? `, note ${k + 1} of ${ns.length}` : ''}` },
         ns.length ? { shapes: SHAPES.map(([sh, label]) => ({ label, on: now === sh, title: `This note as a ${sh}`, run: () => reshape(k, sh) })) } : null,
         falls ? { label: 'Climacus: the falling notes as diamonds', run: () => climacus() } : null,
         '-',
         ns.length > 1 ? { label: k ? `Split the neume before note ${k + 1}` : 'Split the neume (point at a later note)', disabled: !k, title: 'Two neumes from here: the notes before this one, and this one on', run: () => splitNeume(k) } : null,
+        { label: 'Change its GABC…', key: 'G', run: () => focusItem() },
         { label: 'Join to the next neume', key: 'J', disabled: !nxt || kd !== 'neume' || C.kind(nxt.g) !== 'neume', title: 'This neume and the next one in the syllable as one', run: joinNext },
         { label: 'Accept', key: 'Enter', run: acceptNeume },
         { label: 'Next doubtful', key: 'Tab', run: () => nextNeume(1) },
@@ -1015,6 +1030,30 @@
     if (it.box) N.fitBox(st, it);
     commit(before);
     draw();
+  }
+  // The selected item's GABC written anew: a neume, a clef, a bar, anything GABC writes (several, "fg h", become
+  // several, after it). Clefs and notes keep their places on the staff: GABC's letters are places, not pitches, so a
+  // clef changed reads the same notes as other pitches. False, and said, if it isn't GABC this can take.
+  const focusItem = () => { const f = document.getElementById('itemG'); if (f) { f.focus(); f.select(); } };
+  function setItem(text) {
+    const st = staffOf(selected), it = itemOf();
+    if (!st || !it) return false;
+    const parts = String(text || '').replace(/[()]/g, ' ').trim().split(/\s+/).filter(Boolean).flatMap(c => C.groups(c));
+    const bad = parts.find(g => C.kind(g) === 'break' || (C.kind(g) === 'neume' && (/[^a-mA-M0-9vVwos~<>\/!@\[\]:._'`\-+xy#=qrR?;, ]/.test(g) || !C.notes(g).some(n => !n.acc))));
+    if (!parts.length || bad) { ctx.say(parts.length ? `"${bad}" isn't something this can put here.` : 'Write its GABC: fgh, c3, f3, ::', true); return false; }
+    if (parts.length === 1 && parts[0] === it.g) return true;
+    const before = snapshot(), items = st.syllables[item.s].items, sc = N.scaleOf(st.lines);
+    it.g = parts[0]; it.checked = 'edited';
+    if (it.box) N.fitBox(st, it);
+    let x = it.box ? it.box[0] + it.box[2] + 0.8 * N.STEP * sc : null;
+    parts.slice(1).forEach((g, k) => {
+      const fresh = { g, checked: 'edited' };
+      if (x !== null) { fresh.box = [x, 0, 0, 0]; N.fitBox(st, fresh); x = fresh.box[0] + fresh.box[2] + 0.8 * N.STEP * sc; }
+      items.splice(item.i + 1 + k, 0, fresh);
+    });
+    commit(before);
+    draw();
+    return true;
   }
   // the selected neume's note k given a shape; its falling notes as inclinata
   function reshape(k, shape) {
@@ -1189,6 +1228,7 @@
       if (k === 'Enter') { acceptNeume(); return true; }
       if (k === 'Delete' || k === 'Backspace') { removeNeume(); return true; }
       if (k === 'j' || k === 'J') { joinNext(); return true; }
+      if (k === 'g' || k === 'G') { focusItem(); return true; }
       return false;
     }
     if (!selected) return false;
@@ -1336,6 +1376,8 @@
       document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length && !list.some(s => s.syllables.length);
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
       wordPanel(syl);
+      const ip = document.getElementById('itemPanel'), ig = document.getElementById('itemG');
+      if (ip) { ip.hidden = !it; if (it && document.activeElement !== ig) ig.value = it.g; }
       document.getElementById('splitHere').disabled = !it || item.i === 0;
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
@@ -1444,7 +1486,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

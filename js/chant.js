@@ -318,7 +318,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
