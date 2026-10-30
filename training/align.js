@@ -5,14 +5,16 @@
 // right) are kept: each straightened as training/staffdata.py does, with its GABC. Not checked by hand: what
 // GregoBase has and what the page prints can differ, and the breaks can still be wrong where no custos says.
 // usage: node training/align.js --pdf training/data/scans/gr1908.pdf --book training/data/gregobase-1.book.json
-//          --at 25 --label 1 [--from 25] [--to 948] [--out training/data/real]
+//          --at 25 --label 1 [--from 25] [--to 948] [--out training/data/real] [--text-only]
 // (--at, --label: scan page 25, from 1, is the book's page "1", as the book numbers it.) Writes <out>/<page>-<staff>.png and
-// <out>/labels.jsonl ({file, items, page, chant, staff}).
+// <out>/labels.jsonl ({file, items, page, chant, staff}); and the words under each, t-<page>-<staff>.png and
+// <out>/text.jsonl ({file, text, page, chant, staff}), for the text reader.
 const fs = require('fs'), path = require('path'), http = require('http');
 const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const PDF = path.resolve(arg('pdf')), BOOK = path.resolve(arg('book')), AT = +arg('at'), LABEL = arg('label');
+const TEXT_ONLY = process.argv.includes('--text-only');   // (the words alone: a book whose staves are done already)
 const FROM = +arg('from', AT), TO = +arg('to', 1e9), OUT = path.resolve(arg('out', path.join(__dirname, 'data', 'real')));
 
 function serve() {
@@ -38,6 +40,7 @@ function serve() {
   await p.fill('#bookPage', LABEL);
   await p.click('#setBookPage');
   const labels = fs.createWriteStream(path.join(OUT, 'labels.jsonl'), { flags: 'a' });
+  const texts = fs.createWriteStream(path.join(OUT, 'text.jsonl'), { flags: 'a' });   // (the words under each staff kept)
   let kept = 0, dropped = 0;
   for (let n = FROM; n <= Math.min(TO, count); n++) {
     await p.evaluate(n => CGApp.show(n - 1), n);
@@ -69,7 +72,25 @@ function serve() {
           const x = cv.getContext('2d'), im = x.createImageData(st.W, meta.height);
           for (let i = 0; i < st.data.length; i++) { const g = Math.round((1 - st.data[i]) * 255); im.data[4 * i] = im.data[4 * i + 1] = im.data[4 * i + 2] = g; im.data[4 * i + 3] = 255; }
           x.putImageData(im, 0, 0);
-          seen.push({ staff: v.staff.id, page: v.page + 1, items, png: cv.toDataURL('image/png').split(',')[1] });
+          // and the words under it, as the chant has them on this staff (a word running on to the next line ends with -)
+          const syls = v.staff.syllables.filter(y => C.owns(v.staff, ch, y));
+          let text = '';
+          syls.forEach((y, k) => { const t = N.plain(y.text).trim(); if (t) text += (text && !y.join ? ' ' : '') + t; });
+          // (a chant's first letter is its initial, set large before the staff: not in the strip)
+          if (v.staff.id === ch.staves[0] && typeof ch.startsAt !== 'number') text = text.replace(/^\p{L}/u, '').replace(/^\s+/, '');
+          let tpng = null;
+          // (more letters than the strip could hold: the chant wasn't broken where the page breaks it, the words aren't these)
+          const tb0 = text && CGRecognizer.textBand(px.gray, px.w, px.h, L);
+          if (tb0 && text.length > 3 * tb0.W / CGRecognizer.TEXT.across) text = '';
+          if (text) {
+            const tb = tb0, tc = document.createElement('canvas');
+            tc.width = tb.W; tc.height = CGRecognizer.TEXT.height;
+            const tx = tc.getContext('2d'), ti = tx.createImageData(tb.W, tc.height);
+            for (let i = 0; i < tb.data.length; i++) { const q = Math.round((1 - tb.data[i]) * 255); ti.data[4 * i] = ti.data[4 * i + 1] = ti.data[4 * i + 2] = q; ti.data[4 * i + 3] = 255; }
+            tx.putImageData(ti, 0, 0);
+            tpng = tc.toDataURL('image/png').split(',')[1];
+          }
+          seen.push({ staff: v.staff.id, page: v.page + 1, items, png: cv.toDataURL('image/png').split(',')[1], text, tpng });
         }
         if (agree) out.push(...seen.map(s => Object.assign(s, { chant: ch.headers.gregobase })));
         else out.push({ dropped: seen.length });
@@ -80,13 +101,14 @@ function serve() {
     for (const s of res.staves) {
       if (s.dropped) { dropped += s.dropped; continue; }
       const file = `p${String(s.page).padStart(4, '0')}-${s.staff}.png`;
-      fs.writeFileSync(path.join(OUT, file), Buffer.from(s.png, 'base64'));
-      labels.write(JSON.stringify({ file, items: s.items, page: s.page, chant: s.chant, staff: s.staff }) + '\n');
+      if (!TEXT_ONLY) fs.writeFileSync(path.join(OUT, file), Buffer.from(s.png, 'base64'));
+      if (!TEXT_ONLY) labels.write(JSON.stringify({ file, items: s.items, page: s.page, chant: s.chant, staff: s.staff }) + '\n');
+      if (s.tpng) { fs.writeFileSync(path.join(OUT, 't-' + file), Buffer.from(s.tpng, 'base64')); texts.write(JSON.stringify({ file: 't-' + file, text: s.text, page: s.page, chant: s.chant, staff: s.staff }) + '\n'); }
       kept++;
     }
     console.error(`page ${n}: ${res.staves.filter(s => !s.dropped).length} staves kept; ${kept} kept, ${dropped} dropped so far. ${res.note || ''}`.slice(0, 300));
   }
-  labels.end();
+  labels.end(); texts.end();
   console.log(`${kept} staves kept, ${dropped} dropped -> ${OUT}`);
   await b.close(); srv.close();
 })();

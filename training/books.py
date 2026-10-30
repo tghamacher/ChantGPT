@@ -95,7 +95,7 @@ def run(o):
     pdf = scan(o.ia)
     book = index(o.source)
     pages = [str(p) for p in json.load(open(book, encoding='utf-8'))['pages']]          # (some books number them as numbers)
-    out = os.path.join(DATA, f'book-{o.source}')
+    out = os.path.join(DATA, o.out or f'book-{o.source}')
     os.makedirs(out, exist_ok=True)
     state_path = os.path.join(out, '.progress.json')
     state = json.load(open(state_path)) if os.path.exists(state_path) else {}
@@ -115,7 +115,7 @@ def run(o):
         k = min(max(a - dd, 0), len(pages) - 1)
         at, label = k + dd, pages[k]
         r = subprocess.run(['node', os.path.join(HERE, 'align.js'), '--pdf', pdf, '--book', book, '--at', str(at), '--label', label,
-                            '--from', str(a), '--to', str(b), '--out', out], capture_output=True, text=True)
+                            '--from', str(a), '--to', str(b), '--out', out] + (['--text-only'] if o.text_only else []), capture_output=True, text=True)
         tail = (r.stdout.strip().splitlines() or [''])[-1]
         print(f'scan pages {a}-{b}: {tail}', flush=True)
         if r.returncode: print(r.stderr[-800:], flush=True); raise SystemExit(f'align.js stopped at scan pages {a}-{b}')
@@ -128,6 +128,14 @@ def run(o):
         r = json.loads(l)
         if r['file'] not in seen: seen.add(r['file']); rows.append(l)
     open(path, 'w', encoding='utf-8').writelines(rows)
+    tpath = os.path.join(out, 'text.jsonl')
+    if os.path.exists(tpath):
+        seen, trows = set(), []
+        for l in open(tpath, encoding='utf-8'):
+            r = json.loads(l)
+            if r['file'] not in seen: seen.add(r['file']); trows.append(l)
+        open(tpath, 'w', encoding='utf-8').writelines(trows)
+        print(f'{len(trows)} lines of words -> {tpath}')
     print(f'{len(rows)} staves with their GABC -> {out}')
 
 
@@ -138,5 +146,7 @@ if __name__ == '__main__':
     a.add_argument('--ia', required=True, help='the Internet Archive item with its scan')
     a.add_argument('--offset', type=int, help='scan page minus place in the book\'s list (found from the scan if left out)')
     a.add_argument('--to', type=int, help='only so far into the scan')
+    a.add_argument('--out', help='the folder in training/data (book-<source>)')
+    a.add_argument('--text-only', action='store_true', help='the words under the staves alone (text.jsonl): for a book whose staves are done')
     o = a.parse_args()
     run(o)

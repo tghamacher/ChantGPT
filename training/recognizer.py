@@ -55,13 +55,14 @@ def device_of(name):
 
 
 def load(data, labels='labels.jsonl'):
-    """A folder's staves: labels.jsonl with tokens (staffdata.py), or with GABC items (align.js), tokenized here."""
+    """A folder's staves: labels.jsonl with tokens (staffdata.py), or with GABC items (align.js), tokenized here; or the
+    words under them (align.js's text.jsonl, {file, text}): the text reader is this same reader, its tokens letters."""
     sys.path.insert(0, HERE)
     import staffdata
     rows = []
     for l in open(os.path.join(data, labels), encoding='utf-8'):
         r = json.loads(l)
-        if 'tokens' not in r: r['tokens'] = staffdata.tokens(r['items'])
+        if 'tokens' not in r: r['tokens'] = list(r['text']) if 'text' in r else staffdata.tokens(r['items'])   # (words: their letters)
         if 'width' not in r:
             with Image.open(os.path.join(data, r['file'])) as im: r['width'] = im.width
         r['dir'] = data

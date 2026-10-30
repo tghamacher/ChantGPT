@@ -487,7 +487,7 @@
     return out;
   }
 
-  const api = { parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, spread, breaks, gather, custosFor, STEP, MIDDLE };
+  const api = { plain, parse, glyphs, noteName, multiName, shapes, itemShapes, place, fitBox, yOf, layout, scaleOf, spread, breaks, gather, custosFor, STEP, MIDDLE };
   global.CGNeumes = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
