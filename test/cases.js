@@ -653,6 +653,25 @@
       bad.push(...same('valid', w.CGChant.check(doc), []));
       return bad;
     } },
+    { name: 'app: text put under neumes read without any, and a neume made part of the syllable before', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [], x0 = st.lines[0][0];
+      st.syllables = ['c4', 'f', 'g', 'h'].map((g, k) => ({ text: '', items: [{ g, box: [x0 + 100 * k, 0, 50, 10] }] }));
+      w.CGEditor.selectNeume(st.id, 1, 0);
+      w.CGEditor.textHere();
+      bad.push(...same('its syllable selected, the field ready', [w.CGEditor.word, w.document.activeElement.id], [1, 'sylText']));
+      w.CGEditor.setText('Al');
+      w.CGEditor.selectNeume(st.id, 2, 0);
+      w.CGEditor.joinBack();
+      const now = doc.pages[0].staves[0];
+      bad.push(...same('a melisma', now.syllables.map(y => [y.text, y.items.map(v => v.g)]), [['', ['c4']], ['Al', ['f', 'g']], ['', ['h']]]));
+      bad.push(...same('the neume still selected', w.CGEditor.neume, { s: 1, i: 1 }));
+      w.CGEditor.selectNeume(st.id, 1, 1);
+      w.CGEditor.textHere();
+      bad.push(...same('from a later neume: a new syllable', doc.pages[0].staves[0].syllables.map(y => y.items.map(v => v.g)), [['c4'], ['f'], ['g'], ['h']]));
+      return bad;
+    } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
       const { w } = await app('test/pages/engraved.jpg');
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
