@@ -1,0 +1,33 @@
+{
+ "id": "0031-paris-12044-pages",
+ "about": "Paris BnF lat. 12044 (Cantus 123628: 4,326 melodies with line breaks): the pages the user's browser saved from Gallica, filed by folio and shared; then the zips taken off the disk",
+ "data": [
+  "cantus-csv-2.zip"
+ ],
+ "steps": [
+  [
+   "cantus.py",
+   "collect",
+   "--source",
+   "123628",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools",
+   "--share",
+   "DATA",
+   "--folios",
+   "all",
+   "--width",
+   "1800"
+  ],
+  [
+   "cantus.py",
+   "tidy",
+   "--source",
+   "123628",
+   "--share",
+   "DATA",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools"
+  ]
+ ]
+}
