@@ -605,6 +605,8 @@
       await w.CGEditor.addStaff([70, 430, 1060, 90]);
       const st = w.CGApp.state.doc.pages[0].staves[0];
       st.syllables = [{ text: '', items: [{ g: 'c4' }] }, { text: '', items: [{ g: 'fgh' }, { g: 'gf' }] }];
+      w.CGEditor.draw();
+      if (w.document.getElementById('downloadGabc').disabled) bad.push('the GABC button is off with notes read and no chant');
       const g = w.CGEditor.gabc();
       if (!g || !/%%\n\(c4\) \(fgh gf\)/.test(g.text)) bad.push('saved: ' + JSON.stringify(g));
       st.syllables = [{ text: '', items: [{ g: 'c4' }] }, { text: 'Al', items: [{ g: 'f' }] }, { text: 'le', join: true, items: [{ g: 'gh' }] }];
