@@ -207,3 +207,70 @@ epoch 7 batch 1200: loss 0.205 (2434 s)
 epoch 7 batch 1300: loss 0.204 (2446 s)
 epoch 7 batch 1400: loss 0.203 (2459 s)
 epoch 7 batch 1500: loss 0.204 (2472 s)
+epoch 7 batch 1600: loss 0.204 (2484 s)
+epoch 7 batch 1700: loss 0.205 (2496 s)
+epoch 7 batch 1800: loss 0.205 (2509 s)
+epoch 7 batch 1900: loss 0.204 (2522 s)
+epoch 7 batch 2000: loss 0.204 (2534 s)
+epoch 7 batch 2100: loss 0.204 (2547 s)
+epoch 7 batch 2200: loss 0.203 (2559 s)
+epoch 7 batch 2300: loss 0.202 (2572 s)
+epoch 7 batch 2400: loss 0.202 (2584 s)
+epoch 7 batch 2500: loss 0.201 (2597 s)
+epoch 7 batch 2600: loss 0.202 (2610 s)
+epoch 7 batch 2700: loss 0.202 (2622 s)
+epoch 7 batch 2800: loss 0.201 (2634 s)
+epoch 7 batch 2900: loss 0.201 (2646 s)
+epoch 7: loss 0.201; synthetic test staves: token errors 0.33%, note errors 0.33%; real: token errors 2.55%, note errors 2.55% (2657 s)
+epoch 8 batch 0: loss 0.122 (2658 s)
+epoch 8 batch 100: loss 0.193 (2670 s)
+epoch 8 batch 200: loss 0.199 (2683 s)
+epoch 8 batch 300: loss 0.202 (2695 s)
+epoch 8 batch 400: loss 0.199 (2708 s)
+epoch 8 batch 500: loss 0.202 (2720 s)
+epoch 8 batch 600: loss 0.201 (2733 s)
+epoch 8 batch 700: loss 0.198 (2745 s)
+epoch 8 batch 800: loss 0.197 (2757 s)
+epoch 8 batch 900: loss 0.196 (2770 s)
+epoch 8 batch 1000: loss 0.196 (2782 s)
+epoch 8 batch 1100: loss 0.196 (2794 s)
+epoch 8 batch 1200: loss 0.195 (2807 s)
+epoch 8 batch 1300: loss 0.195 (2820 s)
+epoch 8 batch 1400: loss 0.195 (2833 s)
+epoch 8 batch 1500: loss 0.194 (2845 s)
+epoch 8 batch 1600: loss 0.194 (2857 s)
+epoch 8 batch 1700: loss 0.195 (2869 s)
+epoch 8 batch 1800: loss 0.196 (2882 s)
+epoch 8 batch 1900: loss 0.195 (2894 s)
+epoch 8 batch 2000: loss 0.195 (2907 s)
+epoch 8 batch 2100: loss 0.195 (2920 s)
+epoch 8 batch 2200: loss 0.197 (2932 s)
+epoch 8 batch 2300: loss 0.197 (2945 s)
+epoch 8 batch 2400: loss 0.198 (2957 s)
+epoch 8 batch 2500: loss 0.198 (2970 s)
+epoch 8 batch 2600: loss 0.198 (2982 s)
+epoch 8 batch 2700: loss 0.198 (2995 s)
+epoch 8 batch 2800: loss 0.198 (3007 s)
+epoch 8 batch 2900: loss 0.197 (3020 s)
+epoch 8: loss 0.198; synthetic test staves: token errors 0.34%, note errors 0.34%; real: token errors 2.41%, note errors 2.41% (3031 s)
+
+$ recognizer.py test --model training/data/j0035/best.pt --data training/data/nidaros --real-labels text-realigned.jsonl --held 10
+400 staves: token errors 2.41%, note errors 2.41%
+
+$ recognizer.py test --model training/data/j0035/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 5.86%, note errors 5.86%
+
+$ recognizer.py test --model training/data/j0035/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 6.08%, note errors 6.08%
+
+$ recognizer.py test --model training/data/j0035/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 9.09%, note errors 9.09%
+
+$ recognizer.py test --model training/data/j0035/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 12.41%, note errors 12.41%
+
+$ recognizer.py test --model training/data/j0034/best.pt --data training/data/nidaros --real-labels text-realigned.jsonl --held 10
+400 staves: token errors 3.58%, note errors 3.58%
+
+$ recognizer.py export --model training/data/j0035/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0035-nidaros-round2/chant.onnx (5.6 MB)
