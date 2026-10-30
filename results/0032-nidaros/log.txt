@@ -197,3 +197,72 @@ epoch 10 batch 1700: loss 2.320 (2236 s)
 epoch 10: loss 2.322; synthetic test staves: token errors -, note errors -; real: token errors 79.57%, note errors 79.57% (2249 s)
 epoch 11 batch 0: loss 2.809 (2249 s)
 epoch 11 batch 100: loss 2.377 (2261 s)
+epoch 11 batch 200: loss 2.409 (2273 s)
+epoch 11 batch 300: loss 2.360 (2285 s)
+epoch 11 batch 400: loss 2.335 (2297 s)
+epoch 11 batch 500: loss 2.326 (2309 s)
+epoch 11 batch 600: loss 2.357 (2321 s)
+epoch 11 batch 700: loss 2.360 (2333 s)
+epoch 11 batch 800: loss 2.363 (2345 s)
+epoch 11 batch 900: loss 2.357 (2357 s)
+epoch 11 batch 1000: loss 2.344 (2369 s)
+epoch 11 batch 1100: loss 2.337 (2381 s)
+epoch 11 batch 1200: loss 2.335 (2393 s)
+epoch 11 batch 1300: loss 2.333 (2406 s)
+epoch 11 batch 1400: loss 2.322 (2418 s)
+epoch 11 batch 1500: loss 2.328 (2430 s)
+epoch 11 batch 1600: loss 2.324 (2442 s)
+epoch 11 batch 1700: loss 2.316 (2455 s)
+epoch 11: loss 2.317; synthetic test staves: token errors -, note errors -; real: token errors 79.58%, note errors 79.58% (2467 s)
+epoch 12 batch 0: loss 0.749 (2467 s)
+epoch 12 batch 100: loss 2.297 (2479 s)
+epoch 12 batch 200: loss 2.381 (2491 s)
+epoch 12 batch 300: loss 2.337 (2503 s)
+epoch 12 batch 400: loss 2.321 (2515 s)
+epoch 12 batch 500: loss 2.322 (2527 s)
+epoch 12 batch 600: loss 2.339 (2539 s)
+epoch 12 batch 700: loss 2.312 (2551 s)
+epoch 12 batch 800: loss 2.314 (2563 s)
+epoch 12 batch 900: loss 2.310 (2575 s)
+epoch 12 batch 1000: loss 2.311 (2588 s)
+epoch 12 batch 1100: loss 2.306 (2600 s)
+epoch 12 batch 1200: loss 2.308 (2612 s)
+epoch 12 batch 1300: loss 2.320 (2624 s)
+epoch 12 batch 1400: loss 2.319 (2636 s)
+epoch 12 batch 1500: loss 2.310 (2648 s)
+epoch 12 batch 1600: loss 2.315 (2660 s)
+epoch 12 batch 1700: loss 2.321 (2672 s)
+epoch 12: loss 2.315; synthetic test staves: token errors -, note errors -; real: token errors 79.68%, note errors 79.68% (2684 s)
+
+$ recognizer.py test --model training/data/j0032/best.pt --data training/data/nidaros --real-labels text.jsonl --held 10
+400 staves: token errors 79.41%, note errors 79.41%
+
+$ recognizer.py test --model training/data/j0032/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 7.45%, note errors 7.45%
+
+$ recognizer.py test --model training/data/j0032/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 9.56%, note errors 9.56%
+
+$ recognizer.py test --model training/data/j0032/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 11.12%, note errors 11.12%
+
+$ recognizer.py test --model training/data/j0032/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 13.93%, note errors 13.93%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/nidaros --real-labels text.jsonl --held 10
+400 staves: token errors 100.00%, note errors 100.00%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 5.21%, note errors 5.21%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 6.12%, note errors 6.12%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 8.22%, note errors 8.22%
+
+$ recognizer.py test --model training/data/j0029/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 11.74%, note errors 11.74%
+
+$ recognizer.py export --model training/data/j0032/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0032-nidaros/chant.onnx (5.6 MB)
