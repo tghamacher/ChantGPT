@@ -953,6 +953,7 @@
         ns.length > 1 ? { label: k ? `Split the neume before note ${k + 1}` : 'Split the neume (point at a later note)', disabled: !k, title: 'Two neumes from here: the notes before this one, and this one on', run: () => splitNeume(k) } : null,
         { label: 'Change its GABC…', key: 'G', run: () => focusItem() },
         { label: 'Join to the next neume', key: 'J', disabled: !nxt || kd !== 'neume' || C.kind(nxt.g) !== 'neume', title: 'This neume and the next one in the syllable as one', run: joinNext },
+        { label: 'Play from here', key: 'Space', run: () => listen({ staff: st.id, s: item.s, i: item.i }) },
         { label: 'Accept', key: 'Enter', run: acceptNeume },
         { label: 'Next doubtful', key: 'Tab', run: () => nextNeume(1) },
         { label: st.syllables[item.s].text && item.i === 0 ? 'Change the text under it…' : 'Text under this neume…', key: 'T', title: 'Type the syllable sung to it (from this neume on, if its syllable began before)', run: textHere },
@@ -983,6 +984,7 @@
       ctx.menu([
         { title: `Staff ${n}` },
         { label: 'Read the notes', disabled: busy, run: () => readNotes(false) },
+        { label: 'Play from this staff', disabled: !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
         { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
         typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
@@ -1002,6 +1004,7 @@
     ctx.menu([
       { title: `Page ${ctx.state.page + 1}` },
       { label: 'Find the staves', disabled: busy, run: findHere },
+      { label: 'Play the page', disabled: !list.some(v => v.syllables.length), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
       { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
       '-',
@@ -1052,6 +1055,33 @@
     commit(before);
     draw();
   }
+  // ---------------------------------------------------------------- hearing it
+  // The page as played (CGChant.perform, its staves in order), from a place on it (a staff, syllable and item) or from
+  // the start; the neume sounding marked on the page as it plays.
+  let playing = null;
+  function performance(from) {
+    const all = C.perform(page().staves);
+    if (!from) return all;
+    const order = page().staves.map(v => v.id), k = all.findIndex(e => {
+      const a = order.indexOf(e.staff), b = order.indexOf(from.staff);
+      return a > b || (a === b && (e.s > from.s || (e.s === from.s && e.i >= from.i)));
+    });
+    return k < 0 ? [] : all.slice(k);
+  }
+  function mark(e) {
+    playing = e ? { staff: e.staff, s: e.s, i: e.i } : null;
+    for (const r of ctx.svg.querySelectorAll('.neume.playing')) r.classList.remove('playing');
+    if (playing) { const r = ctx.svg.querySelector(`.neume[data-staff="${playing.staff}"][data-s="${playing.s}"][data-i="${playing.i}"]`); if (r) r.classList.add('playing'); }
+  }
+  // played from a place (null: the page's start); the app's player does the sounding
+  function listen(from) {
+    const events = performance(from);
+    if (!events.length) { ctx.say('Nothing to play here yet: read the notes or place a chant first.', true); return; }
+    if (ctx.play) ctx.play(events);
+  }
+  // where Play starts: the selected neume, else the selected staff, else the page's start
+  const playFrom = () => item && selected ? { staff: selected, s: item.s, i: item.i } : selected && staffOf(selected) ? { staff: selected, s: 0, i: 0 } : null;
+
   // The selected item's GABC written anew: a neume, a clef, a bar, anything GABC writes (several, "fg h", become
   // several, after it). Clefs and notes keep their places on the staff: GABC's letters are places, not pitches, so a
   // clef changed reads the same notes as other pitches. False, and said, if it isn't GABC this can take.
@@ -1328,7 +1358,7 @@
       st.syllables.forEach((syl, s) => syl.items.forEach((it, i) => {
         if (!it.box) return;
         const w = Math.max(it.box[2], 8 * u), x = it.box[0] + it.box[2] / 2 - w / 2;
-        el('rect', { x, y: it.box[1], width: w, height: it.box[3], class: 'neume' + (sel && item && item.s === s && item.i === i ? ' on' : ''), 'data-act': 'neume', 'data-staff': st.id, 'data-s': s, 'data-i': i }, g);
+        el('rect', { x, y: it.box[1], width: w, height: it.box[3], class: 'neume' + (sel && item && item.s === s && item.i === i ? ' on' : '') + (playing && playing.staff === st.id && playing.s === s && playing.i === i ? ' playing' : ''), 'data-act': 'neume', 'data-staff': st.id, 'data-s': s, 'data-i': i }, g);
       }));
       if (!sel || item || word !== null) continue;
       // the dots no bigger than a third of a space, so the bar between them can still be grabbed
@@ -1508,7 +1538,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

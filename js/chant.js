@@ -260,6 +260,41 @@
   const staves = doc => (doc.pages || []).flatMap(p => p.staves || []);
 
   // the items of a staff with the clef in force at each, starting from the clef before it (or the staff's own)
+  // ---------------------------------------------------------------- how it sounds
+  // Staves as played: for each note (and each bar, a rest) its MIDI pitch and length in beats, with where it is (staff,
+  // syllable, item). A flat, natural or sharp holds for its place on the staff to the end of the word or the next bar;
+  // a clef with a flat (cb3) flattens every B on its staff. A mora doubles a note, an episema lengthens it, a
+  // liquescent is short; bars rest, the longer the bar, the longer the rest.
+  const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const REST = { ',': 0.5, '`': 0.5, ';': 1, ':': 1.5, '::': 2.5 };
+  function perform(staves) {
+    const out = [];
+    let clef = null, acc = {};
+    staves.forEach(st => st.syllables.forEach((syl, s) => {
+      const next = st.syllables[s + 1];
+      syl.items.forEach((it, i) => {
+        const kd = kind(it.g);
+        if (kd === 'clef') { clef = it.g; acc = {}; return; }
+        if (kd === 'bar') { acc = {}; out.push({ staff: st.id, s, i, midi: null, beats: REST[it.g.replace(/[0-9?'_]/g, '')] || 1 }); return; }
+        if (kd !== 'neume' && kd !== 'accidental') return;
+        for (const n of notes(it.g)) {
+          if (n.acc) { acc[n.p] = n.acc; continue; }
+          const q = pitch(n.p, clef);
+          if (!q) continue;
+          const a = acc[n.p] || (/^[cf]b/.test(clef) && q.step === 'B' ? 'x' : null);
+          const midi = 12 * (q.octave + 1) + SEMI[q.step] + (a === 'x' ? -1 : a === '#' ? 1 : 0);
+          let beats = 1 + (n.signs.match(/\./g) || []).length;
+          if (/_/.test(n.signs)) beats *= 1.4;
+          if (n.liquescent) beats *= 0.7;
+          out.push({ staff: st.id, s, i, midi, beats, acc: a });
+        }
+      });
+      // (a word's end: what the accidentals hold to; a word running on to the next staff goes on there)
+      if (next ? !next.join : false) acc = {};
+    }));
+    return out;
+  }
+
   function withClefs(staff, clef = null) {
     const out = [];
     staff.syllables.forEach((syl, s) => syl.items.forEach((it, i) => {
@@ -318,7 +353,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, perform, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

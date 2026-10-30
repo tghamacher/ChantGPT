@@ -65,6 +65,20 @@
       same('split: signs stay with their notes', C().splitAt('f.g_h', 1), ['f.', 'g_h']),
       same('nothing to split before the first note', C().splitAt('fgh', 0), null),
       same('joined', C().joinG('fgh', 'ihg'), 'fghihg')) },
+    { name: 'played: pitches under the clef; a flat holds to the word\'s end or a bar; a clef\'s flat; moras and rests', unit: () => {
+      const st = (syls) => ({ id: 's1', syllables: syls.map(([text, gs, join]) => ({ text, join, items: gs.map(g => ({ g })) })) });
+      const mid = e => e.filter(v => v.midi !== null).map(v => v.midi);
+      const a = C().perform([st([['', ['c4']], ['Al', ['gixi']], ['le', ['ii'], true], ['lu', ['i.'], false], ['', [';']], ['ia', ['ixi', 'i']]])]);
+      const b = C().perform([st([['', ['cb3']], ['A', ['ghg']]])]);
+      return [].concat(
+        // c4 (its line middle C): g is G3 (55), i is B3; flat on i: B♭ (58) through the word "Alle", natural again at "lu"
+        same('a flat to the word\'s end', mid(a).slice(0, 5), [55, 58, 58, 58, 59]),
+        same('a mora doubles', a.find(v => v.s === 3).beats, 2),
+        same('a bar rests', a.filter(v => v.midi === null).map(v => v.beats), [1]),
+        same('after the bar: flat again only where written', mid(a).slice(5), [58, 58]),
+        // cb3: h is middle C (60), g is B♭3 (58)
+        same('a clef\'s flat', mid(b), [58, 60, 58]));
+    } },
     { name: 'gabc in: headers, syllables, words, bars', unit: () => {
       const r = C().fromGabc(GLORIA), syl = r.staves[0].syllables;
       return [].concat(
@@ -670,6 +684,26 @@
       w.CGEditor.selectNeume(st.id, 1, 1);
       w.CGEditor.textHere();
       bad.push(...same('from a later neume: a new syllable', doc.pages[0].staves[0].syllables.map(y => y.items.map(v => v.g)), [['c4'], ['f'], ['g'], ['h']]));
+      return bad;
+    } },
+    { name: 'app: played from a neume, each neume marked as it sounds, then stopped', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [];
+      w.CGEditor.selected = st.id;
+      await w.CGEditor.placeChant('(c4) Al(f)le(gh)lú(hj)ia.(h.) (::)');
+      const s = st.syllables.findIndex(y => y.text === 'le');
+      bad.push(...same('from "le": its notes on', w.CGEditor.performance({ staff: st.id, s, i: 0 }).filter(e => e.midi !== null).map(e => e.midi), [55, 57, 57, 60, 57]));
+      w.document.getElementById('tempo').value = 300;
+      w.CGEditor.listen({ staff: st.id, s, i: 0 });
+      await new Promise(r => setTimeout(r, 350));
+      const on = w.document.querySelectorAll('.neume.playing');
+      if (on.length !== 1) bad.push(`${on.length} neumes marked as playing`);
+      if (w.document.getElementById('stopPlay').disabled) bad.push('■ not on while playing');
+      w.document.getElementById('stopPlay').click();
+      await new Promise(r => setTimeout(r, 50));
+      bad.push(...same('stopped: nothing marked', w.document.querySelectorAll('.neume.playing').length, 0));
+      bad.push(...same('▶ again', w.document.getElementById('play').textContent, '▶'));
       return bad;
     } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {
