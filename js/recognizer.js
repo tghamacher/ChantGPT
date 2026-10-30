@@ -35,6 +35,26 @@
     }
     return { data, W, x0, step };
   }
+  // The words under a staff, cut as a strip the text reader reads: rows from meta.from to meta.to staff spaces below
+  // the top line (the bottom line is 3; the words' baseline is about 5), following the staff's slope and bends; the
+  // columns at meta.across to a staff space (fewer than the rows have: letters are taller than a note is wide).
+  const TEXT = { height: 64, from: 3.3, to: 6.3, across: 12, left: 0.6, right: 0.4 };
+  function textBand(gray, w, h, lines, meta = TEXT) {
+    const H = meta.height, xs = S().xsOf(lines[3]);
+    const mid = (xs[0] + xs[xs.length - 1]) / 2, g = (S().yAt(lines[3], mid) - S().yAt(lines[0], mid)) / 3;
+    const x0 = xs[0] - meta.left * g, x1 = xs[xs.length - 1] + meta.right * g;
+    const W = Math.max(1, Math.round((x1 - x0) / g * meta.across)), step = g / meta.across;
+    const data = new Float32Array(H * W);
+    const at = (l, x) => { const v = S().xsOf(l); return S().yAt(l, Math.min(v[v.length - 1], Math.max(v[0], x))); };
+    for (let u = 0; u < W; u++) {
+      const cx = x0 + (u + 0.5) * step, top = at(lines[0], cx), bot = at(lines[3], cx), sp = (bot - top) / 3;
+      for (let v = 0; v < H; v++) {
+        const s = meta.from + (v + 0.5) / H * (meta.to - meta.from);
+        data[v * W + u] = 1 - sample(gray, w, h, cx, top + s * sp) / 255;
+      }
+    }
+    return { data, W, x0, step };
+  }
   function sample(img, w, h, px, py) {
     if (px < 0 || px > w - 1 || py < 0 || py > h - 1) return 255;
     const x0 = Math.min(w - 2, Math.floor(px)), y0 = Math.min(h - 2, Math.floor(py)), fx = px - x0, fy = py - y0;
@@ -124,7 +144,7 @@
     return gs.map(v => ({ g: v.g, x0: xOf(v.from) - half, x1: xOf(v.to) + half, conf: Math.round(v.conf * 100) / 100 }));
   }
 
-  const api = { straighten, decode, groups, read, load, get meta() { return meta; } };
+  const api = { straighten, textBand, TEXT, decode, groups, read, load, get meta() { return meta; } };
   global.CGRecognizer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
