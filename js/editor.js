@@ -846,18 +846,38 @@
     return { name: `${base}, page ${pg.n}.mei`, text: X.mei(doc, ctx.state.page) };
   }
 
-  // the chant the selected staff belongs to (or the first), as GABC with the source's line breaks
-  // (no chant placed, only notes read: this page's staves that have any, top to bottom)
-  function gabc(opts = {}) {
-    const doc = ctx.state.doc;
-    let chant = doc.chants.find(c => c.staves.includes(selected)) || doc.chants[0];
-    if (!chant) {
-      const ids = page().staves.filter(st => st.syllables.length).map(st => st.id);
-      if (!ids.length) { ctx.say('Nothing to save yet: read the notes or place a chant first.', true); return null; }
-      const base = (doc.source.name || 'chant').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
-      chant = { headers: { name: `${base}, page ${page().n}` }, staves: ids };
+  // The document's chants as GABC, one file each: the chants placed, and from the notes read on staves no chant is
+  // placed on, a chant from each beginning marked (a staff that begins one, B; or part way along, where it's marked)
+  // to the next, page after page, each as one line of GABC (the page's line breaks aren't the music's). opts: words,
+  // lines (as toGabc). [{ name, text, staves }], in the book's order.
+  function gabcFiles(opts = {}) {
+    const doc = ctx.state.doc, base = (doc.source.name || 'chant').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
+    const pageOf = new Map(doc.pages.flatMap(p => p.staves.map(st => [st.id, p.n])));
+    const placed = new Set(doc.chants.flatMap(c => c.staves));
+    const parts = doc.chants.map(c => ({ chant: c, at: C.staves(doc).findIndex(st => st.id === c.staves[0]) }));
+    let cur = null;
+    C.staves(doc).forEach((st, k) => {
+      if (placed.has(st.id) || !st.syllables.length) { if (placed.has(st.id)) cur = null; return; }
+      if (!cur || st.begins === true) { cur = { chant: { headers: {}, staves: [] }, at: k }; parts.push(cur); }
+      cur.chant.staves.push(st.id);
+      if (typeof st.beginsAt === 'number') { cur = { chant: { headers: {}, staves: [st.id], startsAt: st.beginsAt }, at: k + 0.5 }; parts.push(cur); }
+    });
+    parts.sort((a, b) => a.at - b.at);
+    const out = [];
+    for (const part of parts) {
+      const name = part.chant.headers.name || `${base}, p. ${pageOf.get(part.chant.staves[0])}, chant ${out.length + 1}`;
+      const chant = Object.assign({}, part.chant, { headers: Object.assign({}, part.chant.headers, { name }) });
+      const text = C.toGabc(doc, { chant, lines: !!opts.lines, words: opts.words !== false });
+      if (!/\(/.test(text.slice(text.indexOf('%%')))) continue;     // (nothing of it read: the part of a staff before a mark, say)
+      out.push({ name: chant.headers.name, text, staves: chant.staves });
     }
-    return { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true, words: opts.words !== false }) };
+    return out;
+  }
+  // the chant the selected staff is in (or the first) as GABC; null, and said, if there's nothing to save
+  function gabc(opts = {}) {
+    const files = gabcFiles(opts);
+    if (!files.length) { ctx.say('Nothing to save yet: read the notes or place a chant first.', true); return null; }
+    return files.find(f => f.staves.includes(selected)) || files[0];
   }
 
   // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away
@@ -1424,7 +1444,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },

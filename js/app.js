@@ -347,9 +347,14 @@
   // Enter in a syllable's field: done with it, back to the page
   for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });
   $('downloadGabc').addEventListener('click', () => {
-    const g = E.gabc({ words: $('gabcWords').checked });
-    if (!g) return;
-    download(new Blob([g.text], { type: 'text/plain' }), (g.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'chant') + '.gabc');
+    // one file for each chant; several in a zip
+    const files = E.gabcFiles({ words: $('gabcWords').checked });
+    if (!files.length) { E.gabc(); return; }
+    const named = f => (f.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'chant') + '.gabc';
+    if (files.length === 1) { download(new Blob([files[0].text], { type: 'text/plain' }), named(files[0])); return; }
+    const base = (state.doc.source.name || 'chants').replace(/\.[^.]+$/, '').replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'chants';
+    download(CGExport.zip(files.map(f => ({ name: named(f), data: new TextEncoder().encode(f.text) }))), base + ' (GABC).zip');
+    say(`${files.length} chants saved, one GABC file each, in a zip.`);
   });
   // GABC with the words or without (kept for next time)
   try { if (localStorage.getItem('cg-gabc-words') === 'no') $('gabcWords').checked = false; } catch (e) { }

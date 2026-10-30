@@ -534,7 +534,7 @@
       for (const t of truth.slice(0, 2)) { const ys = t.flatMap(l => l.filter((v, i) => i & 1)); await w.CGEditor.addStaff([70, Math.min(...ys) - 20, 1060, Math.max(...ys) - Math.min(...ys) + 40]); }
       const staves = w.CGApp.state.doc.pages[0].staves;
       w.CGEditor.selected = staves[0].id;
-      const src = 'name: Two lines;\n%%\n(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (z) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)';
+      const src = 'name: Two lines;\n%%\n(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)';
       if (!(await w.CGEditor.placeChant(src))) return ['Not placed: ' + w.document.getElementById('status').textContent];
       bad.push(...same('on both staves', staves.map(s => s.syllables.length > 0), [true, true]));
       bad.push(...same('one chant, over both', w.CGApp.state.doc.chants.map(c => [c.headers.name, c.staves.length]), [['Two lines', 2]]));
@@ -546,7 +546,7 @@
       bad.push(...same('words drawn (the * too)', w.document.querySelectorAll('#overlay .syl').length, 13));
       bad.push(...same('checks', w.CGChant.check(w.CGApp.state.doc), []));
       const out = w.CGEditor.gabc();
-      bad.push(...same('GABC out', out && out.text.slice(out.text.indexOf('%%') + 2).trim(), '(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (z) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)'));
+      bad.push(...same('GABC out', out && out.text.slice(out.text.indexOf('%%') + 2).trim(), '(c4) KY(f)ri(gh)e(h) *(,) e(hjh)lé(gh)i(g)son.(f.) (::) (c3) A(e)ve(fg) Ma(g)rí(h)a,(g.) (::)'));
       // the staff moved: its chant goes with it
       const x = staves[0].syllables[1].items[0].box[0];
       w.CGEditor.selected = staves[0].id;
@@ -613,6 +613,23 @@
       const none = w.CGEditor.gabc({ words: false });
       if (!none || !/%%\n\(c4\) \(f\) \(gh\)\n$/.test(none.text)) bad.push('saved without words: ' + JSON.stringify(none));
       if (!/\(c4\) Al\(f\)le\(gh\)/.test(w.CGEditor.gabc().text)) bad.push('saved with words: ' + w.CGEditor.gabc().text);
+      return bad;
+    } },
+    { name: 'app: GABC, a file for each chant begun on the page (at a staff, and part way along one, with the clef in force); one line', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      for (const y of [200, 320, 430, 545]) await w.CGEditor.addStaff([70, y, 1060, 90]);
+      const doc = w.CGApp.state.doc, sts = doc.pages[0].staves, bad = [], C = w.CGChant;
+      const x0 = C.staves(doc)[2].lines[0][0], mid = x0 + 300;
+      const put = (st, gs) => { st.syllables = gs.map((g, k) => ({ text: '', items: [{ g, box: [x0 + 100 * k, 0, 50, 10] }] })); };
+      put(sts[0], ['c4', 'f', 'g']); put(sts[1], ['c4', 'h', 'h']); put(sts[2], ['c4', 'g', 'f', 'e', 'd', 'e']); put(sts[3], ['c3', 'd', 'c']);
+      sts[0].begins = true; sts[1].begins = false; sts[2].begins = false; sts[3].begins = true;
+      sts[2].beginsAt = mid;
+      const files = w.CGEditor.gabcFiles({ words: false });
+      const bodies = files.map(f => f.text.slice(f.text.indexOf('%%') + 3).trim());
+      bad.push(...same('three chants, the clef said again only where it changes', bodies, ['(c4) (f) (g) (h) (h) (g) (f)', '(c4) (e) (d) (e)', '(c3) (d) (c)']));
+      bad.push(...same('names', files.map(f => f.name.replace(/^.*, p/, 'p')), ['p. 1, chant 1', 'p. 1, chant 2', 'p. 1, chant 3']));
+      const lined = w.CGEditor.gabcFiles({ words: false, lines: true });
+      bad.push(...same('with the line breaks', lined[0].text.slice(lined[0].text.indexOf('%%') + 3).trim(), '(c4) (f) (g) (z) (c4) (h) (h) (z) (c4) (g) (f)'));
       return bad;
     } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {

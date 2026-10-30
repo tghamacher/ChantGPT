@@ -205,6 +205,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **0.16.0, GABC out** (asked for by the user): a file per chant (several in a zip): the chants placed, and from notes read with no chant placed, a chant from each beginning marked (B, or part way along a staff, its clef carried over) to the next, across pages (`CGEditor.gabcFiles`). One continuous line each: the page's line breaks aren't written (the user: they "should not matter"; the renderer breaks lines at its own margins), and a clef only where it changes. A "with words" box leaves the text out. `toGabc`'s `lines` option is still there for code.
 - **0.15.1, notes and neumes** (asked for by the user): right-click a note in a neume to set its shape (the note found by where it's drawn, then by pitch within a ligature; Shift-drag the same), or split the neume before it (`CGChant.splitAt`, an accidental going with its note); J or the menu joins a neume to the next in its syllable.
 - **0.15.0, the layout** (asked for by the user: "too text-heavy and scholarly looking"; they chose a toolbar and an
   inspector for large-scale work, and want a step-by-step wizard kept in reserve for someone with a page or two):

@@ -215,19 +215,26 @@
     return x === null || x < staff.beginsAt - 0.5;
   }
 
-  // opts: chant (else the first, else every staff), lines (the source's line breaks as (z)), words (false: the notes
-  // alone, no text under them)
+  // opts: chant (else the first, else every staff), lines (the source's line breaks as (z), each staff's clef kept;
+  // else the music runs on and only a clef that changes is written), words (false: the notes alone, no text under them)
   function toGabc(doc, opts = {}) {
     const chant = opts.chant || (doc.chants && doc.chants[0]) || null;
     const all = staves(doc), byId = new Map(all.map(s => [s.id, s]));
     const list = chant && chant.staves ? chant.staves.map(id => byId.get(id)).filter(Boolean) : all;
     const headers = Object.assign({ name: '' }, chant && chant.headers);
     let out = Object.entries(headers).map(([k, v]) => `${k}: ${v};`).join('\n') + '\n%%\n';
-    let body = '';
+    let body = '', clef = null;
     list.forEach((staff, si) => {
       for (const syl of staff.syllables) {
-        if (chant && !owns(staff, chant, syl)) continue;
-        const gs = syl.items.map(it => it.g).filter(g => kind(g) !== 'custos');
+        const mine = syl.items.map(it => it.g).filter(g => kind(g) !== 'custos');
+        // (the clef in force: from what comes before, on a staff another chant shares too)
+        if (chant && !owns(staff, chant, syl)) { for (const g of mine) if (kind(g) === 'clef') clef = g; continue; }
+        // a chant begun part way along a staff: the staff's clef put first, if it has none of its own
+        if (!body && clef && mine.length && kind(mine[0]) !== 'clef') body = `(${clef})`;
+        if (!body) clef = null;
+        // (without the line breaks, a clef that only says again what the last one said is left out)
+        const gs = mine.filter(g => opts.lines || kind(g) !== 'clef' || g !== clef);
+        for (const g of gs) if (kind(g) === 'clef') clef = g;
         const text = opts.words === false ? '' : syl.text;
         if (!gs.length && !text) continue;
         body += (body && (!syl.join || !text) ? ' ' : '') + text + '(' + gs.join(' ') + ')';
