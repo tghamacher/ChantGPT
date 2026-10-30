@@ -205,6 +205,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **0.15.1, notes and neumes** (asked for by the user): right-click a note in a neume to set its shape (the note found by where it's drawn, then by pitch within a ligature; Shift-drag the same), or split the neume before it (`CGChant.splitAt`, an accidental going with its note); J or the menu joins a neume to the next in its syllable.
 - **0.15.0, the layout** (asked for by the user: "too text-heavy and scholarly looking"; they chose a toolbar and an
   inspector for large-scale work, and want a step-by-step wizard kept in reserve for someone with a page or two):
   a toolbar (open, online, pages, zoom, undo, save, help), a rail of the big actions (find staves, read, accept), the
