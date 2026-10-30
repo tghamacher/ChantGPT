@@ -1,0 +1,30 @@
+job 0029-text-more: The text reader (0027) trained on far more: the Graduale 1961 complete, the Liber usualis, the Liber antiphonarius and the Antiphonale monasticum so far (16,000 lines, GregoBase's text); cleaned and trained again; tested against 0027 on held-out pages of each; exported
+code: 1cb52b4
+
+$ recognizer.py train --data  --real training/data/text-2,training/data/text-3,training/data/text-3a,training/data/text-48,training/data/text-7 --real-labels text-ok.jsonl --resume training/data/j0027/best.pt --width 192 --epochs 15 --lr 6e-4 --batch 32 --real-weight 1 --out training/data/j0029a
+14202 staves to learn from (14202 real, each 1 times), 0 synthetic and 1601 real to test on; 203 left out for tokens the model hasn't; 85 tokens; 1,394,622 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 1.274 (1 s)
+epoch 1 batch 100: loss 1.808 (18 s)
+epoch 1 batch 200: loss 1.607 (34 s)
+epoch 1 batch 300: loss 1.513 (50 s)
+epoch 1 batch 400: loss 1.459 (66 s)
+epoch 1: loss 1.449; synthetic test staves: token errors -, note errors -; real: token errors 10.50%, note errors 10.50% (73 s)
+epoch 2 batch 0: loss 1.937 (73 s)
+epoch 2 batch 100: loss 1.261 (87 s)
+epoch 2 batch 200: loss 1.260 (102 s)
+epoch 2 batch 300: loss 1.261 (116 s)
+epoch 2 batch 400: loss 1.244 (130 s)
+epoch 2: loss 1.263; synthetic test staves: token errors -, note errors -; real: token errors 12.84%, note errors 12.84% (137 s)
+epoch 3 batch 0: loss 1.022 (137 s)
+epoch 3 batch 100: loss 1.289 (151 s)
+epoch 3 batch 200: loss 1.278 (165 s)
+epoch 3 batch 300: loss 1.250 (180 s)
+epoch 3 batch 400: loss 1.247 (194 s)
+epoch 3: loss 1.234; synthetic test staves: token errors -, note errors -; real: token errors 10.53%, note errors 10.53% (201 s)
+epoch 4 batch 0: loss 1.085 (201 s)
+epoch 4 batch 100: loss 1.224 (215 s)
+epoch 4 batch 200: loss 1.233 (230 s)
+epoch 4 batch 300: loss 1.195 (244 s)
+epoch 4 batch 400: loss 1.209 (258 s)
