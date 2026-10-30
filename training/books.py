@@ -76,6 +76,21 @@ def offset(pdf, pages, ia=None):
     return best if n_best >= 5 else None
 
 
+def local(pdf, pages, a, b, d):
+    """The offset for scan pages a..b, as the page numbers printed on them say (a book whose index has pages put in
+    between its numbered ones, the Liber usualis's 262.8, runs on from its first offset); d where they don't say."""
+    at = {p: i for i, p in enumerate(pages)}
+    votes = collections.Counter()
+    for k in range(a, b + 1):
+        text = subprocess.run(['pdftotext', '-f', str(k), '-l', str(k), '-layout', pdf, '-'], capture_output=True, text=True).stdout
+        lines = [l for l in text.splitlines() if l.strip()]
+        for l in lines[:2] + lines[-2:]:
+            for num in re.findall(r'(?<![\w.])(\d{1,4})(?![\w.])', l):
+                if num in at and abs(k - at[num] - d) <= 80: votes[k - at[num]] += 1
+    best = votes.most_common(1)
+    return best[0][0] if best and best[0][1] >= 3 else d
+
+
 def run(o):
     pdf = scan(o.ia)
     book = index(o.source)
@@ -91,12 +106,14 @@ def run(o):
         json.dump(state, open(state_path, 'w'))
     d = state['offset']
     # (align.js: --at, a scan page from 1; --label, the book's page there)
-    first = next(i for i, p in enumerate(pages) if re.fullmatch(r'\d+', p))
-    at, label = first + d, pages[first]
     last = min(pages_in(pdf), (o.to if o.to else len(pages) + d))
     start = max(state['done'] + 1, max(1, d))
     for a in range(start, last + 1, CHUNK):
         b = min(last, a + CHUNK - 1)
+        # (the chunk's own offset: its first page, and the book's page there)
+        dd = d = local(pdf, pages, a, b, d)      # (and the next chunk's guess, so a drifting book is followed)
+        k = min(max(a - dd, 0), len(pages) - 1)
+        at, label = k + dd, pages[k]
         r = subprocess.run(['node', os.path.join(HERE, 'align.js'), '--pdf', pdf, '--book', book, '--at', str(at), '--label', label,
                             '--from', str(a), '--to', str(b), '--out', out], capture_output=True, text=True)
         tail = (r.stdout.strip().splitlines() or [''])[-1]

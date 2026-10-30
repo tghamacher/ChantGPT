@@ -34,6 +34,7 @@ function serve() {
   await p.waitForFunction(() => window.CGApp.state.src && window.CGApp.state.book, null, { timeout: 300000 });
   const count = await p.evaluate(() => CGApp.state.src.count);
   await p.evaluate(n => CGApp.show(n - 1), AT);
+  await p.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));   // (the book's panel is in the inspector's folded sections)
   await p.fill('#bookPage', LABEL);
   await p.click('#setBookPage');
   const labels = fs.createWriteStream(path.join(OUT, 'labels.jsonl'), { flags: 'a' });
