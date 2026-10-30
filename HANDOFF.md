@@ -212,7 +212,9 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
   Export folded; the instructions moved into a help dialog (?). Right-click menus on neumes (shape: punctum, virga,
   inclinatum, quilisma, oriscus, via `CGChant.reshape`; climacus as diamonds; accept, delete), syllables, staves
   (read, accept, a chant begins here, find lines, space evenly, straighten, delete) and the page. Mid-line chant
-  beginnings (a chant starting part way along a staff, as in manuscripts) are proposed, not yet built.
+  beginnings (asked for by the user): right-click a staff, "A chant begins here, at this point": `staff.beginsAt`,
+  the chant beginning there `startsAt`; the staff is shared, its syllables split at the point (`CGChant.owns`) for
+  the GABC, Volpiano and the checks; a chant placed above stops at the point, one placed on the staff starts from it.
 
 - **Step 6, manuscripts** (branch `step-6-manuscripts`): IIIF manuscripts in the app (open a manifest, save its pages),
   two-column pages, staves ruled in red found in the red ink alone (hand-ruled, unevenly spaced, notes on a line

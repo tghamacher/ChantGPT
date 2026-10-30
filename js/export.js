@@ -22,7 +22,7 @@
     const ev = [];
     entry.staves.forEach((v, k) => {
       if (k) ev.push({ t: 'line' });
-      v.staff.syllables.forEach((syl, s) => {
+      v.staff.syllables.filter(syl => C().owns(v.staff, entry.chant, syl)).forEach((syl, s) => {
         ev.push({ t: 'syl', join: !!syl.join, first: s === 0 && k === 0 });
         syl.items.forEach((it, i) => {
           const kind = C().kind(it.g);

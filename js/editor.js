@@ -480,28 +480,65 @@
     if (r.staves.length > 1) return order.slice(from, from + r.staves.length);
     if (last === undefined) last = order.slice(from + 1).some(v => v.staff.begins === true) ? Infinity : order[from].page;
     let to = from + 1;
-    while (to < order.length && order[to].staff.begins !== true && order[to].page <= last) to++;
+    // (a staff another chant begins part way along: this one ends on it, at that point)
+    while (to < order.length && order[to].staff.begins !== true && order[to].page <= last) { to++; if (typeof order[to - 1].staff.beginsAt === 'number') break; }
     return order.slice(from, to);
+  }
+  // the part of a staff a chant placed on staves goes on: [from, to] across it. On a staff a chant begins part way
+  // along (beginsAt): from that point, for the chant that begins there (the first of its staves); up to it, for one
+  // that runs on to it from the staves before.
+  function span(staff, first) {
+    const xs = S.xsOf(staff.lines[0]);
+    let a = xs[0], b = xs[xs.length - 1];
+    if (typeof staff.beginsAt === 'number') { if (first) a = staff.beginsAt; else b = staff.beginsAt; }
+    return [a, b];
+  }
+  // a staff's lines cut to run from xa to xb only
+  function cut(lines, xa, xb) {
+    return S.atXs(lines, [xa, ...S.xsOf(lines[0]).filter(x => x > xa + 1 && x < xb - 1), xb]);
   }
   // the chant put on those staves (spread over them as printed, if it has no line breaks) and listed in the
   // document's chants (taken off any chant they were part of); no undo recorded. Returns how many staves it went on.
   function put(st, r, last, seen) {
-    let targets = staves(st, r, last), lines;
+    let targets = staves(st, r, last).map(v => v.staff), lines;
+    // the part of each staff it goes on (all of it, but where a chant begins part way along one)
+    const spans = targets.map((t, k) => span(t, k === 0)), cuts = targets.map((t, k) => cut(t.lines, ...spans[k]));
+    const whole = targets.map((t, k) => typeof t.beginsAt !== 'number');
     if (r.staves.length > 1) lines = r.staves.map(v => v.syllables);
     else if (targets.length > 1) {
       const syls = r.staves[0].syllables, starts = seen && seen.length === targets.length ? N.breaks(syls, seen) : null;
-      lines = N.spread(syls, targets.map(v => v.staff.lines), starts || undefined);
+      lines = N.spread(syls, cuts, starts || undefined);
     } else lines = [r.staves[0].syllables];
-    targets = targets.map(v => v.staff);
+    const startsAt = typeof st.beginsAt === 'number' ? st.beginsAt : null;
     targets.forEach((t, k) => {
-      t.syllables = JSON.parse(JSON.stringify(lines[k]));
-      N.place(t);
+      const mine = JSON.parse(JSON.stringify(lines[k]));
+      N.place({ lines: cuts[k], syllables: mine });
+      // on a staff it shares, the other chant's syllables (those outside its part) kept
+      const [a, b] = spans[k], kept = whole[k] ? [] : t.syllables.filter(syl => { const x = C.sylX(syl); return x !== null && (x < a - 0.5 || x >= b - 0.5); });
+      // (in order along the staff: the kept ones before this chant's, or after)
+      t.syllables = !kept.length ? mine : k === 0 ? kept.concat(mine) : mine.concat(kept);
     });
-    const ids = targets.map(t => t.id);
-    for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => !ids.includes(id));
+    const ids = targets.map(t => t.id), shared = new Set(targets.filter((t, k) => !whole[k]).map(t => t.id));
+    for (const c of ctx.state.doc.chants) c.staves = (c.staves || []).filter(id => {
+      if (!ids.includes(id)) return true;
+      if (!shared.has(id)) return false;
+      // a shared staff stays with the chant on its other part: the one before the point, if this one begins there
+      const begins = typeof c.startsAt === 'number' && c.staves[0] === id;
+      return id === st.id && startsAt !== null ? !begins : begins;
+    });
     ctx.state.doc.chants = ctx.state.doc.chants.filter(c => c.staves.length);
-    ctx.state.doc.chants.push({ headers: r.headers, staves: ids });
+    ctx.state.doc.chants.push(Object.assign({ headers: r.headers, staves: ids }, startsAt !== null ? { startsAt } : {}));
     return targets.length;
+  }
+  // a chant begins part way along the selected staff, at x (or no longer, with x null): marked, or the mark taken off
+  function beginsAt(x) {
+    const st = staffOf(selected);
+    if (!st) return;
+    const before = snapshot();
+    if (x === null) delete st.beginsAt; else st.beginsAt = Math.round(x * 100) / 100;
+    commit(before);
+    draw();
+    ctx.say(x === null ? 'The mark is off this staff.' : 'A chant begins here, part way along the staff: select the staff and place the chant (it goes on from the mark), and a chant placed on the staves before ends at it.');
   }
 
   // What each of these staves ({ staff, page }) carries, read from the page's ink (S.carries): for finding where a
@@ -884,7 +921,9 @@
         { title: `Staff ${n}` },
         { label: 'Read the notes', disabled: busy, run: () => readNotes(false) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
-        { label: st.begins === true ? 'A chant begins here ✓' : 'A chant begins here', key: 'B', run: () => toggleBegins() },
+        { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
+        typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
+          : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
         '-',
         { label: 'Find its lines again', key: 'F', run: refit },
         { label: 'Space the lines evenly', key: 'E', run: evenly },
@@ -1132,6 +1171,14 @@
         el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
         el('title', {}, m).textContent = 'A chant begins here';
       }
+      // a chant begins part way along: a flag at the point
+      if (typeof st.beginsAt === 'number') {
+        const x = st.beginsAt, y0 = S.yAt(l[0], x) - 2 * s, y1 = S.yAt(l[3], x) + 2 * s;
+        const m = el('g', { class: 'begins mid' }, g);
+        el('line', { x1: x, y1: y0, x2: x, y2: y1 }, m);
+        el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
+        el('title', {}, m).textContent = 'A chant begins here, part way along the staff';
+      }
       // the chant: its glyphs where they are, along the staff (tilted with it); its words under it
       if (st.syllables.some(syl => syl.items.some(it => it.box))) {
         const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
@@ -1329,7 +1376,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

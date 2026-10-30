@@ -50,10 +50,10 @@
       let clef = null, prev = null, custos = null, lastBar = true;
       const notes = [];
       staves.forEach((v, k) => {
-        const st = v.staff, first = st.syllables.flatMap(syl => syl.items)[0];
+        const st = v.staff, first = st.syllables.filter(syl => C().owns(st, chant, syl)).flatMap(syl => syl.items)[0];
         if (first && C().kind(first.g) !== 'clef')
           at(v, 0, 0, 'clef', clef ? 'note' : 'warn', clef ? `This staff doesn't begin with a clef, as printed books do on every line; its notes are read with the clef before (${clef}).` : 'No clef before these notes, so their pitches are unknown.');
-        st.syllables.forEach((syl, s) => syl.items.forEach((it, i) => {
+        st.syllables.forEach((syl, s) => C().owns(st, chant, syl) && syl.items.forEach((it, i) => {
           const kind = C().kind(it.g);
           if (kind === 'clef') { clef = it.g; return; }
           if (kind === 'bar') { lastBar = true; return; }
