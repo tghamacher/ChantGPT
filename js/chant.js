@@ -215,6 +215,8 @@
     return x === null || x < staff.beginsAt - 0.5;
   }
 
+  // opts: chant (else the first, else every staff), lines (the source's line breaks as (z)), words (false: the notes
+  // alone, no text under them)
   function toGabc(doc, opts = {}) {
     const chant = opts.chant || (doc.chants && doc.chants[0]) || null;
     const all = staves(doc), byId = new Map(all.map(s => [s.id, s]));
@@ -226,8 +228,9 @@
       for (const syl of staff.syllables) {
         if (chant && !owns(staff, chant, syl)) continue;
         const gs = syl.items.map(it => it.g).filter(g => kind(g) !== 'custos');
-        if (!gs.length && !syl.text) continue;
-        body += (body && !syl.join ? ' ' : '') + syl.text + '(' + gs.join(' ') + ')';
+        const text = opts.words === false ? '' : syl.text;
+        if (!gs.length && !text) continue;
+        body += (body && (!syl.join || !text) ? ' ' : '') + text + '(' + gs.join(' ') + ')';
       }
       if (opts.lines && si < list.length - 1) body += ' (z)';
     });
