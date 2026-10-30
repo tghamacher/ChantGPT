@@ -145,6 +145,7 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-overlay .glyph { font-family: "greciliae"; fill: var(--notation-ink); }
 .cg-overlay .glyph.doubt { fill: var(--doubt); }
 .cg-overlay .glyph.ok, .cg-overlay .syl.ok { fill: var(--checked); }
+.cg-overlay .glyph.custos { fill: var(--notation-ink); opacity: 0.35; }
 .cg-overlay .glyph.on { fill: var(--sel); }
 .cg-overlay .chant .syl { pointer-events: auto; cursor: grab; }
 .cg-overlay .mark { cursor: pointer; }
