@@ -1,0 +1,29 @@
+job 0034-nidaros-realigned: The Gothic-taught reader (0033) trained on the Nidaros Breviary's own lines, their text re-aligned to what 0033 reads on them (32,592 kept), with the synthetic Gothic lines and the printed books' clean lines beside them; tested on held-out pages of Nidaros (0033 too) and of the books (0029: 5.2 / 6.1 / 8.2 / 11.7%); exported
+code: 3ee4cb2
+
+$ recognizer.py train --data training/data/gothic --real training/data/nidaros,training/data/text-2,training/data/text-3,training/data/text-48 --real-labels text-realigned.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl --resume training/data/j0033/best.pt --width 192 --epochs 10 --lr 5e-4 --batch 32 --real-weight 1 --out training/data/j0034
+74817 staves to learn from (38509 real, each 1 times), 1144 synthetic and 4084 real to test on; 3270 left out for tokens the model hasn't; 85 tokens; 1,394,622 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.456 (1 s)
+epoch 1 batch 100: loss 0.507 (16 s)
+epoch 1 batch 200: loss 0.481 (30 s)
+epoch 1 batch 300: loss 0.444 (44 s)
+epoch 1 batch 400: loss 0.424 (58 s)
+epoch 1 batch 500: loss 0.408 (72 s)
+epoch 1 batch 600: loss 0.392 (85 s)
+epoch 1 batch 700: loss 0.378 (99 s)
+epoch 1 batch 800: loss 0.368 (114 s)
+epoch 1 batch 900: loss 0.757 (128 s)
+epoch 1 batch 1000: loss 0.710 (141 s)
+epoch 1 batch 1100: loss 0.672 (155 s)
+epoch 1 batch 1200: loss 0.639 (169 s)
+epoch 1 batch 1300: loss 0.611 (183 s)
+epoch 1 batch 1400: loss 0.587 (196 s)
+epoch 1 batch 1500: loss 0.567 (210 s)
+epoch 1 batch 1600: loss 0.548 (224 s)
+epoch 1 batch 1700: loss 0.533 (237 s)
+epoch 1 batch 1800: loss 0.519 (251 s)
+epoch 1 batch 1900: loss 0.506 (265 s)
+epoch 1 batch 2000: loss 0.494 (279 s)
+epoch 1 batch 2100: loss 0.483 (294 s)
