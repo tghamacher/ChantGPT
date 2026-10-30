@@ -1,0 +1,29 @@
+job 0036-books-back: 0035 (reads the Nidaros Breviary: 2.4% held out) eased back toward the printed books, which it reads a little worse than 0029 (5.9 / 6.1 / 9.1 / 12.4% vs 5.2 / 6.1 / 8.2 / 11.7%): the synthetic lines dropped, the books counted three times, a lower rate; tested on Nidaros and the books; exported
+code: 3ee4cb2
+
+$ recognizer.py train --data  --real training/data/nidaros,training/data/text-2,training/data/text-3,training/data/text-48,training/data/text-2,training/data/text-3,training/data/text-48,training/data/text-2,training/data/text-3,training/data/text-48 --real-labels text-realigned.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl --resume training/data/j0035/best.pt --width 192 --epochs 5 --lr 2e-4 --batch 32 --real-weight 1 --out training/data/j0036
+68824 staves to learn from (68824 real, each 1 times), 0 synthetic and 7692 real to test on; 2238 left out for tokens the model hasn't; 85 tokens; 1,394,622 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.428 (1 s)
+epoch 1 batch 100: loss 0.245 (17 s)
+epoch 1 batch 200: loss 0.248 (31 s)
+epoch 1 batch 300: loss 0.249 (45 s)
+epoch 1 batch 400: loss 0.249 (60 s)
+epoch 1 batch 500: loss 0.251 (74 s)
+epoch 1 batch 600: loss 0.250 (88 s)
+epoch 1 batch 700: loss 0.250 (102 s)
+epoch 1 batch 800: loss 0.251 (116 s)
+epoch 1 batch 900: loss 0.251 (130 s)
+epoch 1 batch 1000: loss 0.251 (144 s)
+epoch 1 batch 1100: loss 0.250 (158 s)
+epoch 1 batch 1200: loss 0.251 (172 s)
+epoch 1 batch 1300: loss 0.251 (185 s)
+epoch 1 batch 1400: loss 0.250 (200 s)
+epoch 1 batch 1500: loss 0.250 (213 s)
+epoch 1 batch 1600: loss 0.250 (228 s)
+epoch 1 batch 1700: loss 0.250 (242 s)
+epoch 1 batch 1800: loss 0.249 (255 s)
+epoch 1 batch 1900: loss 0.250 (269 s)
+epoch 1 batch 2000: loss 0.251 (283 s)
+epoch 1 batch 2100: loss 0.250 (297 s)
