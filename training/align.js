@@ -79,8 +79,11 @@ function serve() {
           // (a chant's first letter is its initial, set large before the staff: not in the strip)
           if (v.staff.id === ch.staves[0] && typeof ch.startsAt !== 'number') text = text.replace(/^\p{L}/u, '').replace(/^\s+/, '');
           let tpng = null;
+          // (more letters than the strip could hold: the chant wasn't broken where the page breaks it, the words aren't these)
+          const tb0 = text && CGRecognizer.textBand(px.gray, px.w, px.h, L);
+          if (tb0 && text.length > 3 * tb0.W / CGRecognizer.TEXT.across) text = '';
           if (text) {
-            const tb = CGRecognizer.textBand(px.gray, px.w, px.h, L), tc = document.createElement('canvas');
+            const tb = tb0, tc = document.createElement('canvas');
             tc.width = tb.W; tc.height = CGRecognizer.TEXT.height;
             const tx = tc.getContext('2d'), ti = tx.createImageData(tb.W, tc.height);
             for (let i = 0; i < tb.data.length; i++) { const q = Math.round((1 - tb.data[i]) * 255); ti.data[4 * i] = ti.data[4 * i + 1] = ti.data[4 * i + 2] = q; ti.data[4 * i + 3] = 255; }
