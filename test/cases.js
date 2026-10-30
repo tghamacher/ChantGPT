@@ -607,6 +607,10 @@
       st.syllables = [{ text: '', items: [{ g: 'c4' }] }, { text: '', items: [{ g: 'fgh' }, { g: 'gf' }] }];
       const g = w.CGEditor.gabc();
       if (!g || !/%%\n\(c4\) \(fgh gf\)/.test(g.text)) bad.push('saved: ' + JSON.stringify(g));
+      st.syllables = [{ text: '', items: [{ g: 'c4' }] }, { text: 'Al', items: [{ g: 'f' }] }, { text: 'le', join: true, items: [{ g: 'gh' }] }];
+      const none = w.CGEditor.gabc({ words: false });
+      if (!none || !/%%\n\(c4\) \(f\) \(gh\)\n$/.test(none.text)) bad.push('saved without words: ' + JSON.stringify(none));
+      if (!/\(c4\) Al\(f\)le\(gh\)/.test(w.CGEditor.gabc().text)) bad.push('saved with words: ' + w.CGEditor.gabc().text);
       return bad;
     } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {

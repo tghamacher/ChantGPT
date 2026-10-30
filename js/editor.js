@@ -848,7 +848,7 @@
 
   // the chant the selected staff belongs to (or the first), as GABC with the source's line breaks
   // (no chant placed, only notes read: this page's staves that have any, top to bottom)
-  function gabc() {
+  function gabc(opts = {}) {
     const doc = ctx.state.doc;
     let chant = doc.chants.find(c => c.staves.includes(selected)) || doc.chants[0];
     if (!chant) {
@@ -857,7 +857,7 @@
       const base = (doc.source.name || 'chant').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
       chant = { headers: { name: `${base}, page ${page().n}` }, staves: ids };
     }
-    return { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true }) };
+    return { name: chant.headers.name || '', text: C.toGabc(doc, { chant, lines: true, words: opts.words !== false }) };
   }
 
   // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away

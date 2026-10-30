@@ -347,10 +347,13 @@
   // Enter in a syllable's field: done with it, back to the page
   for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });
   $('downloadGabc').addEventListener('click', () => {
-    const g = E.gabc();
+    const g = E.gabc({ words: $('gabcWords').checked });
     if (!g) return;
     download(new Blob([g.text], { type: 'text/plain' }), (g.name.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'chant') + '.gabc');
   });
+  // GABC with the words or without (kept for next time)
+  try { if (localStorage.getItem('cg-gabc-words') === 'no') $('gabcWords').checked = false; } catch (e) { }
+  $('gabcWords').addEventListener('change', e => { try { localStorage.setItem('cg-gabc-words', e.target.checked ? 'yes' : 'no'); } catch (x) { } });
   // how see-through the notation is (kept for next time)
   const opacity = v => { $('overlay').style.setProperty('--notation', v); try { localStorage.setItem('cg-notation', v); } catch (e) { } };
   try { const v = localStorage.getItem('cg-notation'); if (v) $('opacity').value = v; } catch (e) { }
