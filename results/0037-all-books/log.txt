@@ -133,3 +133,61 @@ epoch 6 batch 1900: loss 0.229 (1513 s)
 epoch 6: loss 0.229; synthetic test staves: token errors -, note errors -; real: token errors 2.13%, note errors 2.13% (1521 s)
 epoch 7 batch 0: loss 0.354 (1521 s)
 epoch 7 batch 100: loss 0.209 (1533 s)
+epoch 7 batch 200: loss 0.215 (1546 s)
+epoch 7 batch 300: loss 0.216 (1559 s)
+epoch 7 batch 400: loss 0.216 (1571 s)
+epoch 7 batch 500: loss 0.216 (1584 s)
+epoch 7 batch 600: loss 0.216 (1597 s)
+epoch 7 batch 700: loss 0.215 (1609 s)
+epoch 7 batch 800: loss 0.214 (1622 s)
+epoch 7 batch 900: loss 0.216 (1634 s)
+epoch 7 batch 1000: loss 0.217 (1647 s)
+epoch 7 batch 1100: loss 0.218 (1659 s)
+epoch 7 batch 1200: loss 0.219 (1672 s)
+epoch 7 batch 1300: loss 0.220 (1685 s)
+epoch 7 batch 1400: loss 0.220 (1697 s)
+epoch 7 batch 1500: loss 0.220 (1710 s)
+epoch 7 batch 1600: loss 0.221 (1722 s)
+epoch 7 batch 1700: loss 0.220 (1735 s)
+epoch 7 batch 1800: loss 0.221 (1747 s)
+epoch 7 batch 1900: loss 0.222 (1760 s)
+epoch 7: loss 0.222; synthetic test staves: token errors -, note errors -; real: token errors 2.16%, note errors 2.16% (1768 s)
+epoch 8 batch 0: loss 0.092 (1768 s)
+epoch 8 batch 100: loss 0.215 (1780 s)
+epoch 8 batch 200: loss 0.217 (1793 s)
+epoch 8 batch 300: loss 0.221 (1806 s)
+epoch 8 batch 400: loss 0.220 (1818 s)
+epoch 8 batch 500: loss 0.223 (1831 s)
+epoch 8 batch 600: loss 0.222 (1844 s)
+epoch 8 batch 700: loss 0.222 (1856 s)
+epoch 8 batch 800: loss 0.222 (1868 s)
+epoch 8 batch 900: loss 0.220 (1881 s)
+epoch 8 batch 1000: loss 0.218 (1893 s)
+epoch 8 batch 1100: loss 0.218 (1906 s)
+epoch 8 batch 1200: loss 0.217 (1918 s)
+epoch 8 batch 1300: loss 0.217 (1931 s)
+epoch 8 batch 1400: loss 0.218 (1943 s)
+epoch 8 batch 1500: loss 0.219 (1956 s)
+epoch 8 batch 1600: loss 0.220 (1968 s)
+epoch 8 batch 1700: loss 0.219 (1981 s)
+epoch 8 batch 1800: loss 0.220 (1993 s)
+epoch 8 batch 1900: loss 0.220 (2006 s)
+epoch 8: loss 0.220; synthetic test staves: token errors -, note errors -; real: token errors 2.16%, note errors 2.16% (2014 s)
+
+$ recognizer.py test --model training/data/j0037/best.pt --data training/data/nidaros --real-labels text-realigned.jsonl --held 10
+400 staves: token errors 2.13%, note errors 2.13%
+
+$ recognizer.py test --model training/data/j0037/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 6.67%, note errors 6.67%
+
+$ recognizer.py test --model training/data/j0037/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 6.74%, note errors 6.74%
+
+$ recognizer.py test --model training/data/j0037/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+205 staves: token errors 9.44%, note errors 9.44%
+
+$ recognizer.py test --model training/data/j0037/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+110 staves: token errors 12.14%, note errors 12.14%
+
+$ recognizer.py export --model training/data/j0037/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0037-all-books/chant.onnx (5.6 MB)
