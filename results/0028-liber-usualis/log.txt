@@ -1,0 +1,28 @@
+job 0028-liber-usualis: The Liber usualis 1949 (5,798 staves aligned with GregoBase, plain labels, cleaned here first) and the whole Graduale Romanum 1961 (cleaned again): the manuscript model (0026) trained with them and all the rest; tested against 0026 on held-out pages of each, and exported
+code: 1cb52b4
+
+$ recognizer.py clean --model training/data/j0026/best.pt --data training/data/book-2 --real-labels labels-plain.jsonl
+5288 staves kept, 352 dropped -> training/data/book-2\labels-plain-clean.jsonl
+
+$ recognizer.py clean --model training/data/j0026/best.pt --data training/data/book-3 --real-labels labels-plain.jsonl
+4982 staves kept, 816 dropped -> training/data/book-3\labels-plain-clean.jsonl
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/book-3 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl --resume training/data/j0026/best.pt --width 192 --epochs 12 --lr 6e-4 --batch 32 --out training/data/j0028
+125356 staves to learn from (28450 real, each 3 times), 1177 synthetic and 3240 real to test on; 36 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.203 (1 s)
+epoch 1 batch 100: loss 0.206 (22 s)
+epoch 1 batch 200: loss 0.195 (43 s)
+epoch 1 batch 300: loss 0.193 (63 s)
+epoch 1 batch 400: loss 0.195 (83 s)
+epoch 1 batch 500: loss 0.196 (103 s)
+epoch 1 batch 600: loss 0.198 (122 s)
+epoch 1 batch 700: loss 0.198 (140 s)
+epoch 1 batch 800: loss 0.199 (160 s)
+epoch 1 batch 900: loss 0.200 (178 s)
+epoch 1 batch 1000: loss 0.200 (197 s)
+epoch 1 batch 1100: loss 0.199 (216 s)
+epoch 1 batch 1200: loss 0.198 (235 s)
+epoch 1 batch 1300: loss 0.198 (253 s)
+epoch 1 batch 1400: loss 0.198 (272 s)
