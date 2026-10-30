@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.16.1">
+<link rel="stylesheet" href="css/site.css?v=0.16.2">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.16.1">0.16.1</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.16.2">0.16.2</span>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
     <button type="button" class="cg-tb" id="iiifToggle" title="Open a manuscript online, from a library's IIIF manifest"><span aria-hidden="true">🌐</span> Online</button>
@@ -171,6 +171,7 @@
     <li>Drag a staff to move it; drag a line's dot to move that end; drag the bar at either end to lengthen, shorten or tilt it. Double-click a staff to bend it there; double-click a bend's bar to straighten it.</li>
     <li>Drag a neume up or down by steps (its GABC changes with it), or along the staff. Shift-drag moves one note.</li>
     <li>Right-click a note in a neume to make it a punctum, virga, inclinatum, quilisma or oriscus, or to split the neume before it. J joins a neume to the next.</li>
+    <li>Right-click a neume for the text sung to it (T), or to make it part of the syllable before (a melisma).</li>
     <li>Select a neume or a clef to type its GABC in the panel (fgh, f3); right-click a clef to make it another (C1–C4, F1–F4, with a flat).</li>
     <li>Click the words under a neume to correct them, or drag them into place.</li>
   </ul>
@@ -187,6 +188,7 @@
     <dt>B</dt><dd>a chant begins on this staff</dd>
     <dt>J</dt><dd>join the neume to the next one</dd>
     <dt>G</dt><dd>type the selected neume's or clef's GABC</dd>
+    <dt>T</dt><dd>type the text under the selected neume</dd>
     <dt>F · E</dt><dd>find the staff's lines again · space them evenly</dd>
     <dt>[ ]</dt><dd>move a syllable to the line before or after</dd>
     <dt>Esc</dt><dd>let go</dd>
@@ -195,15 +197,15 @@
   <p class="cg-hint" id="about">ChantGPT reads Gregorian chant from scans of printed books and manuscripts into GABC (the format of Gregorio), and points out the places it isn't sure of. It's an early version: check what the recognizer says. <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a></p>
 </dialog>
 
-<script src="js/chant.js?v=0.16.1"></script>
-<script src="js/staves.js?v=0.16.1"></script>
-<script src="js/greciliae.js?v=0.16.1"></script>
-<script src="js/neumes.js?v=0.16.1"></script>
-<script src="js/checks.js?v=0.16.1"></script>
-<script src="js/export.js?v=0.16.1"></script>
-<script src="js/viewer.js?v=0.16.1"></script>
-<script src="js/recognizer.js?v=0.16.1"></script>
-<script src="js/editor.js?v=0.16.1"></script>
-<script src="js/app.js?v=0.16.1"></script>
+<script src="js/chant.js?v=0.16.2"></script>
+<script src="js/staves.js?v=0.16.2"></script>
+<script src="js/greciliae.js?v=0.16.2"></script>
+<script src="js/neumes.js?v=0.16.2"></script>
+<script src="js/checks.js?v=0.16.2"></script>
+<script src="js/export.js?v=0.16.2"></script>
+<script src="js/viewer.js?v=0.16.2"></script>
+<script src="js/recognizer.js?v=0.16.2"></script>
+<script src="js/editor.js?v=0.16.2"></script>
+<script src="js/app.js?v=0.16.2"></script>
 </body>
 </html>

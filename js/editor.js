@@ -396,6 +396,25 @@
     commit(before);
     draw();
   }
+  // The selected neume's syllable, its text to be typed: a new syllable from this neume, if it isn't its syllable's
+  // first; the text field in the side panel ready
+  function textHere() {
+    const st = staffOf(selected);
+    if (!st || !item) return;
+    if (item.i > 0) splitHere();
+    else { word = item.s; item = null; draw(); }
+    const f = document.getElementById('sylText');
+    if (f) { f.focus(); f.select(); }
+  }
+  // the selected neume's syllable (with no text of its own) put into the one before it: its neumes sung to that
+  function joinBack() {
+    const st = staffOf(selected);
+    if (!st || !item || item.s === 0 || item.i !== 0 || st.syllables[item.s].text) return;
+    const s = item.s, i = st.syllables[s - 1].items.length;
+    word = s; joinPrev();
+    word = null; item = { s: s - 1, i };
+    draw();
+  }
   function acceptWord() {
     const syl = sylOf();
     if (!syl) return;
@@ -936,6 +955,8 @@
         { label: 'Join to the next neume', key: 'J', disabled: !nxt || kd !== 'neume' || C.kind(nxt.g) !== 'neume', title: 'This neume and the next one in the syllable as one', run: joinNext },
         { label: 'Accept', key: 'Enter', run: acceptNeume },
         { label: 'Next doubtful', key: 'Tab', run: () => nextNeume(1) },
+        { label: st.syllables[item.s].text && item.i === 0 ? 'Change the text under it…' : 'Text under this neume…', key: 'T', title: 'Type the syllable sung to it (from this neume on, if its syllable began before)', run: textHere },
+        { label: 'Part of the syllable before', disabled: item.s === 0 || item.i !== 0 || !!st.syllables[item.s].text, title: 'Sung to the syllable before: one syllable with its neumes (a melisma)', run: joinBack },
         { label: 'New syllable here', disabled: item.i === 0, run: splitHere },
         { label: 'Delete', key: 'Del', run: removeNeume },
         '-',
@@ -1229,6 +1250,7 @@
       if (k === 'Delete' || k === 'Backspace') { removeNeume(); return true; }
       if (k === 'j' || k === 'J') { joinNext(); return true; }
       if (k === 'g' || k === 'G') { focusItem(); return true; }
+      if (k === 't' || k === 'T') { textHere(); return true; }
       return false;
     }
     if (!selected) return false;
@@ -1486,7 +1508,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
