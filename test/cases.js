@@ -79,6 +79,13 @@
         // cb3: h is middle C (60), g is B♭3 (58)
         same('a clef\'s flat', mid(b), [58, 60, 58]));
     } },
+    { name: 'Latin broken into syllables as the Solesmes books break it', unit: () => {
+      const want = { 'Dómine': 'Dó-mi-ne', 'invocárem': 'in-vo-cá-rem', 'exaudísti': 'ex-au-dí-sti', 'sanctus': 'san-ctus', 'patris': 'pa-tris',
+        'omnes': 'o-mnes', 'magnus': 'ma-gnus', 'loqui': 'lo-qui', 'eius': 'e-ius', 'saéculum': 'saé-cu-lum', 'mihi': 'mi-hi', 'inimíci': 'in-i-mí-ci',
+        'sustínui': 'sus-tí-nu-i', 'relaxa': 're-la-xa', 'Allelúia': 'Al-le-lú-ia', 'nostra': 'no-stra', 'demónstra': 'de-món-stra', 'Deus': 'De-us',
+        'meam.': 'me-am.', 'cui': 'cui', 'Kýrie': 'Ký-ri-e' };
+      return [].concat(...Object.entries(want).map(([w, h]) => same(w, C().syllables(w).join('-'), h)));
+    } },
     { name: 'gabc in: headers, syllables, words, bars', unit: () => {
       const r = C().fromGabc(GLORIA), syl = r.staves[0].syllables;
       return [].concat(
@@ -704,6 +711,23 @@
       await new Promise(r => setTimeout(r, 50));
       bad.push(...same('stopped: nothing marked', w.document.querySelectorAll('.neume.playing').length, 0));
       bad.push(...same('▶ again', w.document.getElementById('play').textContent, '▶'));
+      return bad;
+    } },
+    { name: 'app: words read put under the notes: Latin syllables, each to the neume nearest its vowel; melismas joined', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      await w.CGEditor.addStaff([70, 430, 1060, 90]);
+      const doc = w.CGApp.state.doc, st = doc.pages[0].staves[0], bad = [], x0 = st.lines[0][0], sp = 10;
+      // notes read, no words: a clef, then neumes at these places (the last two a melisma on "a")
+      const at = [60, 100, 140, 200, 240, 280, 320, 330];
+      st.syllables = [{ text: '', items: [{ g: 'c4', box: [x0 + 5, 0, 8, 10] }] }].concat(['f', 'g', 'h', 'h', 'g', 'gh', 'f', 'e'].map((g, k) => ({ text: '', items: [{ g, box: [x0 + at[k], 0, 8, 10] }] })));
+      // the reader's letters: about a staff space left of their notes, as it reads them
+      const letters = [];
+      const put = (word, xs) => { if (letters.length) letters.push({ t: ' ', x: xs[0] - 5 }); [...word].forEach((t, k) => letters.push({ t, x: x0 + xs[k] - sp })); };
+      put('Allelúia', [60, 64, 96, 100, 136, 140, 200, 204]);     // Al-le-lú-ia: vowels under 60, 100, 140, 200
+      put('Patria', [236, 240, 274, 277, 280, 320]);                // Pa-tri-a: 240, 280, 320 (and 330 a melisma on it)
+      w.CGEditor.wordsInto(st, letters, sp);
+      bad.push(...same('syllables and their neumes', st.syllables.map(y => (y.join ? '-' : '') + y.text + '(' + y.items.map(v => v.g).join(' ') + ')'),
+        ['(c4)', 'Al(f)', '-le(g)', '-lú(h)', '-ia(h)', 'Pa(g)', '-tri(gh)', '-a(f e)']));
       return bad;
     } },
     { name: 'app: a neume split in two where its note is drawn, and joined again (undone)', browser: true, unit: async app => {

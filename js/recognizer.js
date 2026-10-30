@@ -8,7 +8,7 @@
   const S = () => global.CGStaves;
   // models/chant.onnx and models/chant.json (its tokens and how it cuts a staff): printed books; models/chant-ms.*:
   // manuscripts (a page whose staves are ruled in red, as viewer.js's pixels() tells), if there is one
-  const BASES = { print: 'models/chant', ms: 'models/chant-ms' };
+  const BASES = { print: 'models/chant', ms: 'models/chant-ms', text: 'models/text' };
 
   // ---------------------------------------------------------------- the staff, straightened
   // gray: the page in grey (w × h), lines: the staff's four lines in the same pixels; meta: as models/chant.json says.
@@ -113,6 +113,7 @@
       if (!global.crossOriginIsolated) global.ort.env.wasm.numThreads = 1;
       const r = await fetch(BASES[kind] + '.json');
       if (!r.ok) {
+        if (kind === 'text') throw new Error('No text reader here yet (models/text.json).');
         if (kind !== 'print') return load('print');
         throw new Error('No recognizer model here yet (models/chant.json).');
       }
@@ -144,7 +145,22 @@
     return gs.map(v => ({ g: v.g, x0: xOf(v.from) - half, x1: xOf(v.to) + half, conf: Math.round(v.conf * 100) / 100 }));
   }
 
-  const api = { straighten, textBand, TEXT, decode, groups, read, load, get meta() { return meta; } };
+  // The words under a staff, read: each letter (a space between words) with where it is along the page (x, page
+  // units) and how sure the reader is of it; and the staff's space, in page units.
+  async function readText(px, lines) {
+    const { session: s, meta: m } = await load('text');
+    const L = lines.map(l => l.map(v => v * px.scale));
+    const tb = textBand(px.gray, px.w, px.h, L);
+    const W = tb.W + ((-tb.W) % m.stride + m.stride) % m.stride, data = new Float32Array(m.height * W);
+    for (let v = 0; v < m.height; v++) data.set(tb.data.subarray(v * tb.W, (v + 1) * tb.W), v * W);
+    const out = await s.run({ staff: new global.ort.Tensor('float32', data, [1, 1, m.height, W]) });
+    const sc = out.scores, T = sc.dims[2], T0 = Math.floor(tb.W / m.stride);
+    const xOf = t => (tb.x0 + (t * m.stride + m.stride / 2) * tb.step) / px.scale;
+    const letters = decode(sc.data, T, m.vocab).filter(r => r.from < T0).map(r => ({ t: r.t, x: xOf((r.from + r.to) / 2), p: Math.round(r.p * 100) / 100 }));
+    return { letters, space: TEXT.across * tb.step / px.scale };
+  }
+
+  const api = { straighten, textBand, TEXT, decode, groups, read, readText, load, get meta() { return meta; } };
   global.CGRecognizer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

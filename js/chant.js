@@ -260,6 +260,54 @@
   const staves = doc => (doc.pages || []).flatMap(p => p.staves || []);
 
   // the items of a staff with the clef in force at each, starting from the clef before it (or the staff's own)
+  // ---------------------------------------------------------------- Latin in syllables
+  // A word broken into its syllables as the Solesmes books break it (measured against GregoBase's): the consonants
+  // between two vowels split so that the next syllable begins with as many of them as a Latin word can begin with
+  // (Dó-mi-ne, pa-tris, no-stra, san-ctus, o-mnes, ma-gnus; de-món-stra); ae, oe and au are one sound, accent or not
+  // (saé-cu-la); i between vowels, or a word's first before a vowel, is a consonant (e-ius, Ie-su); u after q, or ng,
+  // before a vowel is part of the consonant (lo-qui, san-guis); a prefix before a vowel stays whole (in-i-quus, ex-áu-di,
+  // ab-é-sse; sus-tí-ne-o, ob-lí-vi-o). Marks (: , . * †) stay with their letters.
+  const VOWEL = /[aeiouyáéíóúýǽæœÆŒAEIOUYÁÉÍÓÚÝ]/;
+  const ONSET = /^([bcdfgpt][lr]|ch|ph|th|gn|qu|gu|st|sc|sp|ct|pt|mn|ps|tr|str|scr|spr|spl|chr|phr|thr|sch)$/;
+  const PREFIX = /^(?:(in|ex|ab|ob|sub|ad|red|prod|inter|super|circum|trans|per|post)(?=[aeiouyáéíóúýh])|(sus|abs|dis|ob)(?=[bcdfgjklmnpqrstv])|(os)(?=t))/i;
+  function syllables(word) {
+    const w = String(word), low = w.toLowerCase(), n = w.length;
+    const letter = i => /\p{L}/u.test(w[i] || '');
+    const glide = i => low[i] === 'u' && (low[i - 1] === 'q' || (low[i - 1] === 'g' && low[i - 2] === 'n')) && VOWEL.test(w[i + 1] || '');
+    const vowel = i => {
+      if (!VOWEL.test(w[i] || '') || glide(i)) return false;
+      // (i before a vowel, after one or at the word's start: a consonant, unless it bears the accent)
+      if (low[i] === 'i' && VOWEL.test(w[i + 1] || '') && (!letter(i - 1) || (VOWEL.test(w[i - 1]) && !glide(i - 1)))) return false;
+      return true;
+    };
+    const nuclei = [];
+    for (let i = 0; i < n; i++) {
+      if (!vowel(i)) continue;
+      const pair = (low[i] + (low[i + 1] || '')).normalize('NFD').replace(/\u0301/g, '');
+      if (vowel(i + 1) && /^(ae|oe|au)$/.test(pair)) { nuclei.push([i, i + 1]); i++; continue; }
+      nuclei.push([i, i]);
+    }
+    if (nuclei.length < 2 || /^(cui|huic)$/i.test(w.replace(/[^\p{L}]/gu, ''))) return [w];
+    const pre = PREFIX.exec(w), cuts = [];
+    for (let k = 0; k + 1 < nuclei.length; k++) {
+      const a = nuclei[k][1] + 1, b = nuclei[k + 1][0];          // the consonants between: a .. b-1
+      if (pre && a <= pre[0].length && pre[0].length <= b) { cuts.push(pre[0].length); continue; }
+      const cons = low.slice(a, b).replace(/h/g, '');
+      let take = cons.length ? 1 : 0;
+      for (let m = cons.length; m >= 2; m--) if (ONSET.test(cons.slice(-m))) { take = m; break; }
+      // (back over the consonants that begin the next syllable, h not counted)
+      let at = b, got = 0;
+      while (at > a && got < take) { at--; if (low[at] !== 'h' || at === a) got++; }
+      if (low[at - 1] === 'h' && at - 1 >= a) at--;          // (h goes with the vowel after it: mi-hi)
+      cuts.push(at);
+    }
+    const out = [];
+    let from = 0;
+    for (const c of cuts) { if (c > from) { out.push(w.slice(from, c)); from = c; } }
+    out.push(w.slice(from));
+    return out.filter(Boolean);
+  }
+
   // ---------------------------------------------------------------- how it sounds
   // Staves as played: for each note (and each bar, a rest) its MIDI pitch and length in beats, with where it is (staff,
   // syllable, item). A flat, natural or sharp holds for its place on the staff to the end of the word or the next bar;
@@ -353,7 +401,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, perform, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, perform, syllables, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

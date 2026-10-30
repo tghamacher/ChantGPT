@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.17.0">
+<link rel="stylesheet" href="css/site.css?v=0.18.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.17.0">0.17.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.18.0">0.18.0</span>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
     <button type="button" class="cg-tb" id="iiifToggle" title="Open a manuscript online, from a library's IIIF manifest"><span aria-hidden="true">🌐</span> Online</button>
@@ -60,6 +60,7 @@
     <button type="button" id="stopFinding" hidden><span aria-hidden="true">■</span>Stop</button>
     <button type="button" id="readPage" title="Read the notes on every staff of this page"><span aria-hidden="true">♪</span>Read page</button>
     <button type="button" id="readStaff" title="Read the notes on the selected staff"><span aria-hidden="true">♩</span>Read staff</button>
+    <button type="button" id="readText" title="Read the words under the notes: the selected staff, or every staff on the page"><span aria-hidden="true">Aa</span>Read text</button>
     <button type="button" id="acceptStaff" title="Accept the selected staff: its neumes and words not yet checked (Shift+Enter)"><span aria-hidden="true">✓</span>Accept</button>
     <label class="cg-rail-slider" title="How see-through the notation drawn over the page is (hold H to hide it)"><span aria-hidden="true">◐</span><input type="range" id="opacity" min="0.15" max="1" step="0.05" value="0.7" aria-label="Notation opacity"></label>
   </nav>
@@ -177,6 +178,7 @@
     <li>Drag a staff to move it; drag a line's dot to move that end; drag the bar at either end to lengthen, shorten or tilt it. Double-click a staff to bend it there; double-click a bend's bar to straighten it.</li>
     <li>Drag a neume up or down by steps (its GABC changes with it), or along the staff. Shift-drag moves one note.</li>
     <li>Right-click a note in a neume to make it a punctum, virga, inclinatum, quilisma or oriscus, or to split the neume before it. J joins a neume to the next.</li>
+    <li><strong>Read text</strong> reads the words under the notes and puts each syllable under its neume (the selected staff, or the whole page). For printed books so far.</li>
     <li>▶ in the toolbar (or Space) plays the page from what's selected, marking each neume as it sounds: a flat holds to the word's end or the next bar, as chant has it. Listen for a wrong note or a missing flat.</li>
     <li>Right-click a neume for the text sung to it (T), or to make it part of the syllable before (a melisma).</li>
     <li>Select a neume or a clef to type its GABC in the panel (fgh, f3); right-click a clef to make it another (C1–C4, F1–F4, with a flat).</li>
@@ -205,16 +207,16 @@
   <p class="cg-hint" id="about">ChantGPT reads Gregorian chant from scans of printed books and manuscripts into GABC (the format of Gregorio), and points out the places it isn't sure of. It's an early version: check what the recognizer says. <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">GitHub</a></p>
 </dialog>
 
-<script src="js/chant.js?v=0.17.0"></script>
-<script src="js/staves.js?v=0.17.0"></script>
-<script src="js/greciliae.js?v=0.17.0"></script>
-<script src="js/neumes.js?v=0.17.0"></script>
-<script src="js/checks.js?v=0.17.0"></script>
-<script src="js/export.js?v=0.17.0"></script>
-<script src="js/viewer.js?v=0.17.0"></script>
-<script src="js/recognizer.js?v=0.17.0"></script>
-<script src="js/playback.js?v=0.17.0"></script>
-<script src="js/editor.js?v=0.17.0"></script>
-<script src="js/app.js?v=0.17.0"></script>
+<script src="js/chant.js?v=0.18.0"></script>
+<script src="js/staves.js?v=0.18.0"></script>
+<script src="js/greciliae.js?v=0.18.0"></script>
+<script src="js/neumes.js?v=0.18.0"></script>
+<script src="js/checks.js?v=0.18.0"></script>
+<script src="js/export.js?v=0.18.0"></script>
+<script src="js/viewer.js?v=0.18.0"></script>
+<script src="js/recognizer.js?v=0.18.0"></script>
+<script src="js/playback.js?v=0.18.0"></script>
+<script src="js/editor.js?v=0.18.0"></script>
+<script src="js/app.js?v=0.18.0"></script>
 </body>
 </html>

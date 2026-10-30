@@ -670,6 +670,93 @@
     ctx.say(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.`);
   }
 
+  // ---------------------------------------------------------------- the words under the notes
+  // The letters read under a staff (CGRecognizer.readText) put into its syllables. The words (between spaces) are
+  // broken into syllables as the books break Latin (CGChant.syllables), each placed where its vowel was read; a mark
+  // standing alone (: * †) goes with what's before it. Then each goes to a syllable with neumes, in order, the one
+  // whose first note its vowel lies nearest (several to one if need be, but dearly). A syllable of neumes left
+  // without words is sung to the one before (a melisma): its neumes go into that one. Only a staff whose syllables
+  // have no words yet. Returns how many syllables got words.
+  function wordsInto(st, letters, sp) {
+    const words = [];
+    let cur = null;
+    for (const l of letters.concat([{ t: ' ' }])) {
+      if (l.t === ' ') { if (cur) words.push(cur); cur = null; continue; }
+      if (!cur) cur = [];
+      cur.push(l);
+    }
+    const marks = [];
+    for (const w of words) {
+      const text = w.map(l => l.t).join('');
+      if (!/[\p{L}\p{N}]/u.test(text)) { if (marks.length) marks[marks.length - 1].text += ' ' + text; continue; }
+      let k = 0;
+      C.syllables(text).forEach((sy, j) => {
+        const ls = w.slice(k, k + sy.length); k += sy.length;
+        const v = ls.find(l => /[aeiouyáéíóúýæœǽ]/i.test(l.t)) || ls[0];
+        marks.push({ text: sy, x0: v.x, x1: v.x, word: j === 0 });
+      });
+    }
+    const sylls = st.syllables.map((syl, s) => ({ s, it: syl.items.find(v => v.box && C.kind(v.g) === 'neume') })).filter(v => v.it);
+    if (!marks.length || !sylls.length) return 0;
+    // (order kept, each chunk to a syllable at or after the last one's: the nearest overall)
+    // (where the reader places a letter runs about a staff space left of the note it's under: measured on the
+    // Graduale's pages, a syllable's vowel against its neume's left edge)
+    const cost = (c, v) => Math.abs(v.it.box[0] - sp - c.x0);
+    const n = marks.length, S = sylls.length, INF = 1e18, d = Array.from({ length: n }, () => new Float64Array(S).fill(INF)), from = Array.from({ length: n }, () => new Int32Array(S).fill(-1));
+    for (let k = 0; k < S; k++) d[0][k] = cost(marks[0], sylls[k]);
+    for (let c = 1; c < n; c++) {
+      let best = INF, arg = -1;
+      for (let k = 0; k < S; k++) {
+        const same = d[c - 1][k] + 3 * sp;                       // (two syllables to one neume: allowed, but dear)
+        if (best + cost(marks[c], sylls[k]) < same + cost(marks[c], sylls[k])) { d[c][k] = best + cost(marks[c], sylls[k]); from[c][k] = arg; }
+        else { d[c][k] = same + cost(marks[c], sylls[k]); from[c][k] = k; }
+        if (d[c - 1][k] < best) { best = d[c - 1][k]; arg = k; }
+      }
+    }
+    let k = 0;
+    for (let j = 1; j < S; j++) if (d[n - 1][j] < d[n - 1][k]) k = j;
+    const to = new Array(n);
+    for (let c = n - 1; c >= 0; c--) { to[c] = k; k = from[c][k]; }
+    const got = new Map();
+    marks.forEach((c, j) => { const s = sylls[to[j]].s; if (!got.has(s)) got.set(s, []); got.get(s).push(c); });
+    for (const [s, cs] of got) {
+      const syl = st.syllables[s];
+      syl.text = cs.map((c, j) => (j && c.word ? ' ' : '') + c.text).join('');
+      syl.join = !cs[0].word;
+      delete syl.checked;
+    }
+    // melismas: a syllable of neumes alone, after words, into the one before
+    const first = Math.min(...got.keys());
+    for (let s = st.syllables.length - 1; s > first; s--) {
+      const syl = st.syllables[s];
+      if (!syl.text && syl.items.length && syl.items.every(v => ['neume', 'accidental'].includes(C.kind(v.g)))) {
+        st.syllables[s - 1].items.push(...syl.items);
+        st.syllables.splice(s, 1);
+      }
+    }
+    return got.size;
+  }
+  // The words under the selected staff (all: every staff on the page) read and put under its notes: staves with
+  // notes and no words yet. One undo for all of it.
+  async function readWords(all) {
+    const list = (all ? page().staves.slice() : [staffOf(selected)].filter(Boolean));
+    if (!list.length) { ctx.say(all ? 'No staves on this page: find them first.' : 'Select a staff first.', true); return; }
+    const todo = list.filter(st => st.syllables.some(y => y.items.some(v => C.kind(v.g) === 'neume')) && !st.syllables.some(y => y.text));
+    if (!todo.length) { ctx.say(list.some(st => st.syllables.some(y => y.text)) ? 'These staves have their words already.' : 'Read the notes first: the words go under them.', true); return; }
+    if (busy) return;
+    busy = true;
+    ctx.say('Reading the words … (the first time, the text reader is loaded)');
+    const before = snapshot(), pg = ctx.state.page;
+    let n = 0, done = 0;
+    try {
+      const px = await ctx.pixels(pg);
+      for (const st of todo) { const r = await R.readText(px, st.lines); n += wordsInto(st, r.letters, r.space); done++; }
+    } catch (e) { ctx.say(`Couldn't read the words: ${e.message || e}`, true); }
+    busy = false;
+    if (done) { commit(before); letGo(); draw(); ctx.say(`Words read under ${done === 1 ? 'the staff' : `${done} staves`}: ${n} syllables. Check them: click a word to correct it.`); }
+    else info();
+  }
+
   // ---------------------------------------------------------------- a book's chants, from its index
   // The book's index (GregoBase's, made by training/gregobase.py book): its pages, as numbered, and the chants on
   // each in order, with how many pages each runs over. doc.book.first: the scan's page (from 0) that is the index's
@@ -984,6 +1071,7 @@
       ctx.menu([
         { title: `Staff ${n}` },
         { label: 'Read the notes', disabled: busy, run: () => readNotes(false) },
+        { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
         { label: 'Play from this staff', disabled: !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
         { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
@@ -1004,6 +1092,7 @@
     ctx.menu([
       { title: `Page ${ctx.state.page + 1}` },
       { label: 'Find the staves', disabled: busy, run: findHere },
+      { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) },
       { label: 'Play the page', disabled: !list.some(v => v.syllables.length), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
       { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
@@ -1424,6 +1513,7 @@
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
       document.getElementById('readStaff').disabled = !st || busy;
       document.getElementById('readPage').disabled = !list.length || busy;
+      document.getElementById('readText').disabled = !list.some(v => v.syllables.length) || busy;
       document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
       document.getElementById('downloadGabc').disabled = !ctx.state.doc.chants.length && !list.some(s => s.syllables.length);
       const chant = st && ctx.state.doc.chants.find(c => c.staves.includes(st.id)), it = itemOf(), syl = sylOf();
@@ -1538,7 +1628,7 @@
 
   global.CGEditor = {
     init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
-    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
+    setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
