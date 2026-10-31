@@ -1,0 +1,28 @@
+job 0041-hufnagel-f-clefs: 0040 again with the f1 and f2 clefs added to the model's tokens (--grow-vocab): until now every staff under them — most of Köln's, real and made up — was left out of training; from 0040; tested against 0026 on Köln and every manuscript; exported
+code: 6ada2d0
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels.jsonl,labels.jsonl,labels.jsonl --grow-vocab --resume training/data/j0040/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0041
+143225 staves to learn from (24708 real, each 3 times), 2088 synthetic and 2848 real to test on; 0 left out for tokens the model hasn't; 257 tokens; 1,427,818 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 7.527 (1 s)
+epoch 1 batch 100: loss 7.256 (17 s)
+epoch 1 batch 200: loss 6.079 (33 s)
+epoch 1 batch 300: loss 5.040 (48 s)
+epoch 1 batch 400: loss 4.220 (63 s)
+epoch 1 batch 500: loss 3.602 (78 s)
+epoch 1 batch 600: loss 3.138 (92 s)
+epoch 1 batch 700: loss 2.778 (107 s)
+epoch 1 batch 800: loss 2.496 (121 s)
+epoch 1 batch 900: loss 2.271 (135 s)
+epoch 1 batch 1000: loss 2.084 (150 s)
+epoch 1 batch 1100: loss 1.928 (164 s)
+epoch 1 batch 1200: loss 1.801 (179 s)
+epoch 1 batch 1300: loss 1.688 (194 s)
+epoch 1 batch 1400: loss 1.592 (209 s)
+epoch 1 batch 1500: loss 1.506 (223 s)
+epoch 1 batch 1600: loss 1.431 (237 s)
+epoch 1 batch 1700: loss 1.364 (252 s)
+epoch 1 batch 1800: loss 1.306 (267 s)
+epoch 1 batch 1900: loss 1.253 (281 s)
+epoch 1 batch 2000: loss 1.204 (295 s)
