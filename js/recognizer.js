@@ -156,7 +156,9 @@
     const out = await s.run({ staff: new global.ort.Tensor('float32', data, [1, 1, m.height, W]) });
     const sc = out.scores, T = sc.dims[2], T0 = Math.floor(tb.W / m.stride);
     const xOf = t => (tb.x0 + (t * m.stride + m.stride / 2) * tb.step) / px.scale;
-    const letters = decode(sc.data, T, m.vocab).filter(r => r.from < T0).map(r => ({ t: r.t, x: xOf((r.from + r.to) / 2), p: Math.round(r.p * 100) / 100 }));
+    // (letters and spaces only: the reader also knows a few marks — a hyphen, a dagger, the Nidaros print's
+    // abbreviation signs — that aren't words to put under notes)
+    const letters = decode(sc.data, T, m.vocab).filter(r => r.from < T0 && (r.t === ' ' || /^[A-Za-zÀ-ɏ]$/.test(r.t))).map(r => ({ t: r.t, x: xOf((r.from + r.to) / 2), p: Math.round(r.p * 100) / 100 }));
     return { letters, space: TEXT.across * tb.step / px.scale };
   }
 
