@@ -1,0 +1,24 @@
+job 0039-koeln: Köln, Dombibliothek Cod. 1161 (Cistercian antiphoner, German Gothic notes on staves with only the red F line and one other inked; Cantus 601861): 271 staves found by their red line and paired with Cantus's lines in order (training/redstaves.py), counted three times, with everything 0026 learnt from; from 0026; tested against 0026 on held-out pages of Köln and of every manuscript; exported (0038 again: it listed book-2-2.zip, since folded into book-2-1.zip)
+code: 8360d1f
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels.jsonl,labels.jsonl,labels.jsonl --resume training/data/j0026/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0039
+112246 staves to learn from (24080 real, each 3 times), 1177 synthetic and 2742 real to test on; 633 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.114 (1 s)
+epoch 1 batch 100: loss 0.175 (22 s)
+epoch 1 batch 200: loss 0.171 (41 s)
+epoch 1 batch 300: loss 0.173 (60 s)
+epoch 1 batch 400: loss 0.176 (79 s)
+epoch 1 batch 500: loss 0.175 (98 s)
+epoch 1 batch 600: loss 0.174 (118 s)
+epoch 1 batch 700: loss 0.185 (136 s)
+epoch 1 batch 800: loss 0.184 (155 s)
+epoch 1 batch 900: loss 0.184 (173 s)
+epoch 1 batch 1000: loss 0.181 (192 s)
+epoch 1 batch 1100: loss 0.182 (211 s)
+epoch 1 batch 1200: loss 0.181 (230 s)
+epoch 1 batch 1300: loss 0.181 (249 s)
+epoch 1 batch 1400: loss 0.182 (266 s)
+epoch 1 batch 1500: loss 0.182 (284 s)
+epoch 1 batch 1600: loss 0.182 (302 s)
