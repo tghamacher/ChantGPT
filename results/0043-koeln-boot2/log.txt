@@ -262,3 +262,47 @@ epoch 6 batch 1300: loss 0.224 (3542 s)
 epoch 6 batch 1400: loss 0.225 (3555 s)
 epoch 6 batch 1500: loss 0.225 (3569 s)
 epoch 6 batch 1600: loss 0.224 (3582 s)
+epoch 6 batch 1700: loss 0.224 (3596 s)
+epoch 6 batch 1800: loss 0.224 (3609 s)
+epoch 6 batch 1900: loss 0.224 (3622 s)
+epoch 6 batch 2000: loss 0.225 (3635 s)
+epoch 6 batch 2100: loss 0.225 (3648 s)
+epoch 6 batch 2200: loss 0.224 (3661 s)
+epoch 6 batch 2300: loss 0.224 (3674 s)
+epoch 6 batch 2400: loss 0.224 (3688 s)
+epoch 6 batch 2500: loss 0.224 (3701 s)
+epoch 6 batch 2600: loss 0.223 (3714 s)
+epoch 6 batch 2700: loss 0.223 (3727 s)
+epoch 6 batch 2800: loss 0.223 (3740 s)
+epoch 6 batch 2900: loss 0.224 (3753 s)
+epoch 6 batch 3000: loss 0.224 (3767 s)
+epoch 6 batch 3100: loss 0.224 (3781 s)
+epoch 6 batch 3200: loss 0.224 (3795 s)
+epoch 6 batch 3300: loss 0.224 (3808 s)
+epoch 6 batch 3400: loss 0.224 (3822 s)
+epoch 6 batch 3500: loss 0.224 (3835 s)
+epoch 6 batch 3600: loss 0.224 (3848 s)
+epoch 6 batch 3700: loss 0.224 (3861 s)
+epoch 6 batch 3800: loss 0.223 (3874 s)
+epoch 6 batch 3900: loss 0.223 (3887 s)
+epoch 6 batch 4000: loss 0.223 (3901 s)
+epoch 6 batch 4100: loss 0.223 (3914 s)
+epoch 6 batch 4200: loss 0.223 (3928 s)
+epoch 6 batch 4300: loss 0.223 (3941 s)
+epoch 6 batch 4400: loss 0.223 (3954 s)
+epoch 6 batch 4500: loss 0.223 (3967 s)
+epoch 6 batch 4600: loss 0.222 (3980 s)
+epoch 6: loss 0.223; synthetic test staves: token errors 3.43%, note errors 3.78%; real: token errors 5.90%, note errors 6.41% (3995 s)
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-601861r --real-labels labels-order.jsonl --held 10
+Traceback (most recent call last):
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 383, in <module>
+    {'train': train, 'test': test, 'export': export, 'clean': clean, 'rebreak': rebreak}[o.what](o)
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 256, in test
+    rows = load(o.data, o.real_labels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 63, in load
+    for l in open(os.path.join(data, labels), encoding='utf-8'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'training/data/ms-601861r\\labels-order.jsonl'
+(step 2 failed: exit 1)
