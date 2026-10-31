@@ -182,6 +182,10 @@ def train(o):
     dml = device.type == 'privateuseone'                     # DirectML
     old = torch.load(o.resume, map_location='cpu', weights_only=True) if o.resume else None
     vocab = old['vocab'] if old else vocab_of(rows + real)
+    # (resuming, tokens the old model hasn't — a clef it never saw, as f1 and f2 in a German book — are added to the
+    # end of its vocabulary, their scores new; with --grow-vocab, else such staves are left out as before)
+    grown = [t for t in vocab_of(rows + real) if t not in set(vocab)] if old and o.grow_vocab else []
+    vocab = vocab + grown
     index = {t: k + 1 for k, t in enumerate(vocab)}
     known = lambda r: all(t in index for t in r['tokens'])
     unknown = sum(not known(r) for r in rows + real)
@@ -189,7 +193,14 @@ def train(o):
     rows = rows + real * o.real_weight                       # the real staves count for more: they are few
     rng = random.Random(1)
     model = Reader(len(vocab), o.width).to(device)
-    if old: model.load_state_dict(old['model'])
+    if old:
+        sd = dict(old['model'])
+        if grown:                                                # (the old tokens' scores kept, the new ones' fresh)
+            for k in ('out.weight', 'out.bias'):
+                new = model.state_dict()[k].clone()
+                new[:sd[k].shape[0]] = sd[k]
+                sd[k] = new
+        model.load_state_dict(sd)
     opt = torch.optim.AdamW(model.parameters(), lr=o.lr, weight_decay=1e-4, foreach=False if dml else None)
     steps = o.epochs * math.ceil(len(rows) / o.batch)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=o.lr, total_steps=steps, pct_start=0.1)
@@ -360,6 +371,7 @@ if __name__ == '__main__':
     a.add_argument('--real-labels', default='labels.jsonl', help='the real staves\' labels (clean: those the model agrees with); one for each --real folder, by commas, or one for all')
     a.add_argument('--held', type=int, help='test: only the pages kept out (every so many)')
     a.add_argument('--resume')
+    a.add_argument('--grow-vocab', action='store_true', help='train --resume: add tokens the old model hasn\'t (else staves with them are left out)')
     a.add_argument('--onnx', default=os.path.join(HERE, '..', 'models', 'chant.onnx'))
     a.add_argument('--epochs', type=int, default=20)
     a.add_argument('--batch', type=int, default=16)
