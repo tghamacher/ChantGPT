@@ -398,8 +398,98 @@
       const red = cols.map((c, k) => findIn(lines, w, h, c, skip, trace && (trace.each[k].red = {}), true));
       const n = a => a.reduce((t, c) => t + c.length, 0);
       if (n(red) && n(red) >= n(found) / 2) return red.flat();
+      // (or only the F line red, the others scored or barely inked, as German and Cistercian books rule them: each
+      // staff found by its red line, when that finds more)
+      const byF = byRedLine(gray, lines, w, h, skip);
+      if (trace) trace.byRedLine = byF.length;
+      if (byF.length > n(found)) return byF;
     }
     return found.flat();
+  }
+
+  // Staves found by their red F line alone (Köln, Dombibliothek, Cod. 1161 and its like: the F line red, one other
+  // inked, two only scored): long thin runs of red ink traced across the page (red initials are short and thick; a
+  // page ruled all in red is found by findIn on its red ink, before this is tried); the spacing from the inked line
+  // nearest it (the sharpest thin row of ink a space away); the words are written just under every staff, so its
+  // lowest line is the last of the red line's, at whole spaces from it, above them. A first guess, to be corrected by
+  // hand where it is wrong (Space evenly, the lines dragged). As training/redstaves.py, which cut Köln's staves.
+  function byRedLine(gray, red, w, h, skip = []) {
+    const S = Math.max(12, Math.round(w / 45)), thin = Math.max(4, Math.round(w / 300));
+    const segs = [];
+    for (let x = 0; x + S <= w; x += S) {
+      const at = [];
+      let run = 0;
+      for (let y = 0; y <= h; y++) {
+        let on = false;
+        if (y < h) { let c = 0; for (let i = x, o = y * w + x; i < x + S; i++, o++) if (red[o] < 255) c++; on = c > 0.35 * S; }
+        if (on) run++;
+        else { if (run && run <= thin) at.push(y - run / 2 - 0.5); run = 0; }
+      }
+      segs.push(at.map(y => [x + S / 2, y]));
+    }
+    let ls = [];
+    for (const at of segs) for (const [x, y] of at) {
+      let best = null;
+      for (const l of ls) {
+        const [lx, ly] = l[l.length - 1], dx = x - lx;
+        if (dx > 0 && dx <= 8 * S && Math.abs(y - ly) < 4 + dx / S && (!best || Math.abs(y - ly) < Math.abs(y - best[best.length - 1][1]))) best = l;
+      }
+      if (best) best.push([x, y]); else ls.push([[x, y]]);
+    }
+    ls = ls.filter(l => l[l.length - 1][0] - l[0][0] > 0.25 * w && l.length >= 5);
+    // the paper and the ink
+    const sample = [];
+    for (let i = 0; i < gray.length; i += 97) sample.push(gray[i]);
+    sample.sort((a, b) => a - b);
+    const paper = sample[Math.floor(sample.length * 0.75)], dark = i => Math.max(0, paper - gray[i]);
+    const cut = 0.5 * (paper - sample[Math.floor(sample.length * 0.03)]);
+    const R = Math.round(0.05 * w), gLo = 0.0067 * w, gHi = 0.0167 * w;
+    const out = [];
+    for (const l of ls) {
+      const prof = new Float64Array(2 * R + 1), cover = new Float64Array(2 * R + 1);
+      for (const [x, y] of l) for (let d = -R; d <= R; d++) {
+        const yy = Math.round(y + d);
+        if (yy < 0 || yy >= h) continue;
+        let s = 0, c = 0;
+        for (let i = Math.max(0, Math.round(x - S / 2)); i < Math.min(w, Math.round(x + S / 2)); i++) { const v = dark(yy * w + i); s += v; if (v > cut) c++; }
+        prof[d + R] += s / S; cover[d + R] += c / S;
+      }
+      // the spacing: the sharpest thin row of ink a space from the red line
+      const sharp = prof.map((v, i) => { let m = 0, k = 0; for (let j = Math.max(0, i - 4); j <= Math.min(2 * R, i + 4); j++) { m += prof[j]; k++; } return v - m / k; });
+      let kb = -1;
+      for (let i = 0; i <= 2 * R; i++) { const d = Math.abs(i - R); if (d >= gLo && d <= gHi && (kb < 0 || sharp[i] > sharp[kb])) kb = i; }
+      if (kb < 0 || sharp[kb] * l.length <= 2 * l.length) continue;
+      const g = Math.abs(kb - R);
+      // the words: the first rows below it, a few on end, covered by ink as writing covers a row
+      let top = 0; for (let i = R + 1; i <= 2 * R; i++) top = Math.max(top, cover[i]);
+      let words = -1;
+      for (let i = R; i <= 2 * R - 6 && words < 0; i++) { let ok = true; for (let d = 0; d < 6; d++) if (!(cover[i + d] > 0.6 * top)) { ok = false; break; } if (ok) words = i - R; }
+      if (words < 0) continue;
+      const j = Math.max(0, Math.min(3, Math.floor((words - 0.4 * g) / g)));
+      if (j * g > words) continue;
+      // the four lines along the red one's course (its points, every few strips)
+      const pts = l.filter((p, i) => i % 3 === 0 || i === l.length - 1);
+      const lines4 = [-3, -2, -1, 0].map(k => pts.flatMap(([x, y]) => [x, y + (j + k) * g]));
+      const midY = (lines4[0][1] + lines4[3][1]) / 2, midX = (pts[0][0] + pts[pts.length - 1][0]) / 2;
+      if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && midX > b[0] && midX < b[0] + b[2])) continue;
+      out.push({ lines: lines4, spacing: g });
+    }
+    // (a staff with next to no notes on it: a red line in a margin, or under ruling left empty)
+    const inkOn = st => { let t = 0; const top = st.lines[0], bot = st.lines[3];
+      for (let i = 0; i < top.length; i += 2) { const x = Math.round(top[i]), a = Math.max(0, Math.round(top[i + 1])), b = Math.min(h - 1, Math.round(bot[i + 1]));
+        for (let y = a; y < b; y++) for (let xx = Math.max(0, x - (S >> 1)); xx < Math.min(w, x + (S >> 1)); xx++) t += dark(y * w + xx); }
+      return t; };
+    const inks = out.map(inkOn), mid = inks.slice().sort((a, b) => a - b)[inks.length >> 1];
+    for (let i = out.length - 1; i >= 0; i--) if (inks[i] <= 0.25 * mid) out.splice(i, 1);
+    // (one staff found twice, from two red lines in it or one in pieces: the longer kept)
+    const len = s => s.lines[0][s.lines[0].length - 2] - s.lines[0][0];
+    const kept = [];
+    for (const s of out.sort((a, b) => len(b) - len(a))) {
+      const clash = kept.some(k => { const a = Math.max(s.lines[0][0], k.lines[0][0]), b = Math.min(s.lines[0][s.lines[0].length - 2], k.lines[0][k.lines[0].length - 2]), x = b > a ? (a + b) / 2 : (s.lines[0][0] + s.lines[0][s.lines[0].length - 2]) / 2;
+        return yAt(s.lines[0], x) < yAt(k.lines[3], x) + 0.5 * s.spacing && yAt(s.lines[3], x) > yAt(k.lines[0], x) - 0.5 * s.spacing; });
+      if (!clash) kept.push(s);
+    }
+    return kept.sort((a, b) => (a.lines[0][0] > 0.55 * w) - (b.lines[0][0] > 0.55 * w) || a.lines[0][1] - b.lines[0][1]);
   }
   function findIn(gray, w, h, [xa, xb, ia = xa, ib = xb], skip, trace, loose = false) {
     // (the band within where the column's writing runs; narrower in a map of hand ruling: each staff was ruled at its
@@ -639,7 +729,7 @@
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, columns, order, beginnings, fitStaff, fit, grey, ruling };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, columns, order, beginnings, fitStaff, fit, grey, ruling };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
