@@ -1,0 +1,3 @@
+job 0038-koeln: Köln, Dombibliothek Cod. 1161 (Cistercian antiphoner, German Gothic notes on staves with only the red F line and one other inked; Cantus 601861): 271 staves found by their red line and paired with Cantus's lines in order (training/redstaves.py), counted three times, with everything 0026 learnt from; from 0026; tested against 0026 on held-out pages of Köln and of every manuscript; exported
+code: 8360d1f
+(the job could not run: no book-2-2.zip on training-data)
