@@ -398,12 +398,13 @@ def edits(a, b):
     return d[len(b)]
 
 
-def fit_clef(read, line, custos):
+def fit_clef(read, line, custos, clefs=CLEFS):
     """The clef under which a line's notes (Cantus's pitches) sit where the model read notes on the staff: (clef,
-    GABC items, the share of notes that differ). read: the tokens the model read."""
+    GABC items, the share of notes that differ). read: the tokens the model read; clefs: those to try (a staff whose
+    clef is known, as redstaves.py knows it from the red F line: that one)."""
     seen = positions([t for t in read if not t.endswith('+')])
     best = None
-    for clef in CLEFS:
+    for clef in clefs:
         items = gabc(line, clef, custos)
         if not items: continue
         want = positions(staffdata_tokens(items[1:-1] if items[-1].endswith('+') else items[1:]))
@@ -474,7 +475,7 @@ def labels(o):
             for r in rows:
                 x, n = recognizer.collate([recognizer.ink(recognizer.image(o.staves, r['file']))])
                 with torch.no_grad(): reads.append(recognizer.greedy(m(x), n, s['vocab'])[0][0])
-            fits = [[fit_clef(rd, line, c) for line, c in zip(p['lines'], custos)] for rd in reads]
+            fits = [[fit_clef(rd, line, c, [r['clef']] if r.get('clef') else CLEFS) for line, c in zip(p['lines'], custos)] for rd, r in zip(reads, rows)]
             worth = o.worth if p['complete'] else o.worth * 2 / 3
             pairs = pair([[v[2] for v in row] for row in fits], worth)
             run, last = 0, None
