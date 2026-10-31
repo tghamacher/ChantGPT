@@ -36,7 +36,7 @@ def melodies():
     return out
 
 
-def draw_staff(items, rng, fonts, words):
+def draw_staff(items, rng, fonts, words, style='hufnagel'):
     clef = items[0]
     W = 40 + 18 * len(items) + rng.randint(0, 40)
     S = 3                                                    # (drawn at 3×, then shrunk: smoother strokes)
@@ -48,17 +48,26 @@ def draw_staff(items, rng, fonts, words):
     inked = (red - 2) if red >= 2 else red + 2
     for k, y in enumerate(rows):
         shade = rng.randint(140, 175) if k == red else rng.randint(70, 120) if k == inked else rng.randint(200, 235)
-        if k not in (red, inked) and rng.random() < .4: continue
+        if style == 'points': shade = rng.randint(150, 190)      # (all four ruled alike, pale)
+        elif k not in (red, inked) and rng.random() < .4: continue
         wob = rng.uniform(-1.2, 1.2)
         d.line([(0, (y + wob) * S), (W * S, (y - wob) * S)], fill=shade, width=max(1, int(S * rng.uniform(.6, 1.2))))
     ink = rng.randint(10, 60)
     # the clef: its letter on its line
     F = ImageFont.truetype(rng.choice(fonts), int(SPACE * 2.2 * S))
     cy = TOP + (4 - int(clef[1])) * SPACE
-    d.text((4 * S, cy * S), clef[0], font=F, fill=ink, anchor='lm')
+    d.text((4 * S, cy * S), clef[0].upper() if style == 'points' and clef[0] == 'f' else clef[0], font=F, fill=ink, anchor='lm')
     x = 18 + rng.uniform(0, 4)
     head = rng.uniform(4.5, 6.5); stem = rng.uniform(1.6, 2.4) * SPACE; thick = rng.uniform(2.2, 3.2); slope = rng.uniform(.25, .6)
+    if style == 'points':                                     # (the ruled line the words are written on, below)
+        y5 = TOP + 4 * SPACE + rng.uniform(-1, 1)
+        d.line([(0, y5 * S), (W * S, y5 * S)], fill=rng.randint(150, 190), width=max(1, int(S * .8)))
     def note(x, y, kind):
+        if style == 'points':                                 # a point (now and then a stroke rising from it)
+            r = rng.uniform(1.2, 1.9)
+            d.ellipse([((x + 2 - r) * S, (y - r) * S), ((x + 2 + r) * S, (y + r) * S)], fill=ink)
+            if rng.random() < .12: d.line([((x + 2 + r * .6) * S, y * S), ((x + 2 + r * .6) * S, (y - SPACE * 1.4) * S)], fill=ink, width=max(2, int(S * .7)))
+            return
         # the head: a short thick stroke rising to the right, its top at the note's row; the stem down from its left
         d.line([(x * S, (y + 1) * S), ((x + head) * S, (y + 1 - head * slope) * S)], fill=ink, width=int(thick * S))
         if kind != 'punctum' or rng.random() < .85:
@@ -112,7 +121,7 @@ def main(o):
             items = C.gabc(line, clef, custos)
             if not items or len(items) < 4: continue
             if len(items) > 40: items = items[:40]
-            im = draw_staff(items, rng, fonts, words)
+            im = draw_staff(items, rng, fonts, words, o.style)
             name = f'{n:06d}.jpg'
             im.save(os.path.join(o.out, name), quality=90)
             f.write(json.dumps({'file': name, 'items': items}) + '\n'); n += 1
@@ -125,5 +134,6 @@ if __name__ == '__main__':
     a.add_argument('--text', required=True, help='words for under the staves (the Nidaros edition, as gothic.py)')
     a.add_argument('--count', type=int, default=30000)
     a.add_argument('--seed', type=int, default=1)
+    a.add_argument('--style', default='hufnagel', choices=['hufnagel', 'points'], help='points: notes as points on staves ruled evenly, all four lines pale (Paris lat. 12044)')
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'hufnagel'))
     main(a.parse_args())
