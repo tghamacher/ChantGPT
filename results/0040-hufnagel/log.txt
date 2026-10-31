@@ -1,0 +1,18 @@
+job 0040-hufnagel: 0039 (Köln's 271 staves, which it learnt little from: 93% of notes wrong on Köln held out) trained on with 30,000 made-up staves of German Gothic notes (Hufnagel) ruled as in Köln (training/hufnagel.py); tested against 0026 on Köln and every manuscript; exported
+code: 8360d1f
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels.jsonl,labels.jsonl,labels.jsonl --resume training/data/j0039/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0040
+130051 staves to learn from (24080 real, each 3 times), 1725 synthetic and 2742 real to test on; 11918 left out for tokens the model hasn't; 241 tokens; 1,424,730 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.389 (1 s)
+epoch 1 batch 100: loss 0.472 (23 s)
+epoch 1 batch 200: loss 0.433 (44 s)
+epoch 1 batch 300: loss 0.444 (65 s)
+epoch 1 batch 400: loss 0.418 (86 s)
+epoch 1 batch 500: loss 0.407 (105 s)
+epoch 1 batch 600: loss 0.382 (125 s)
+epoch 1 batch 700: loss 0.373 (146 s)
+epoch 1 batch 800: loss 0.362 (165 s)
+epoch 1 batch 900: loss 0.353 (184 s)
+epoch 1 batch 1000: loss 0.343 (204 s)
