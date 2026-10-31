@@ -22,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import staffdata as S
 
+GAP, SPAN = 8, 0.25                          # a red line traced across gaps of so many strips; so much of the page
 STRIP = 40                                          # columns to a strip, tracing a line across the page
 
 
@@ -58,10 +59,10 @@ def red_lines(red, W):
             best = None
             for l in lines:
                 lx, ly = l[-1]
-                if 0 < x - lx <= 4 * STRIP and abs(y - ly) < 4 and (best is None or abs(y - ly) < abs(y - best[-1][1])): best = l
+                if 0 < x - lx <= GAP * STRIP and abs(y - ly) < 4 + (x - lx) / STRIP and (best is None or abs(y - ly) < abs(y - best[-1][1])): best = l
             if best is not None: best.append((x, y))
             else: lines.append([(x, y)])
-    return [l for l in lines if l[-1][0] - l[0][0] > 0.3 * W and len(l) >= 6]
+    return [l for l in lines if l[-1][0] - l[0][0] > SPAN * W and len(l) >= 5]
 
 
 def staff_of(dark, line, W):
@@ -127,10 +128,19 @@ def page(path):
         typical = float(np.median(ink))
         out = [s for s, v in zip(out, ink) if v > 0.25 * typical]
     out.sort(key=lambda s: (s[0][0][0] > W * 0.55, s[0][0][1]))
-    # (two red lines a staff apart can be one staff found twice: the same lines)
+    # (one staff found twice, from two red lines in it or one traced in pieces: staves overlapping where both run,
+    # the longer kept)
+    def span(s): return s[0][0][0], s[0][0][-2]
+    def at(s, x, i): l = s[0][i]; return float(np.interp(x, l[0::2], l[1::2]))
     keep = []
-    for s in out:
-        if not any(abs(s[0][0][1] - k[0][0][1]) < 2 * s[1] and abs(s[0][0][0] - k[0][0][0]) < W / 3 for k in keep): keep.append(s)
+    for s in sorted(out, key=lambda s: -(span(s)[1] - span(s)[0])):
+        clash = False
+        for k in keep:
+            a, b = max(span(s)[0], span(k)[0]), min(span(s)[1], span(k)[1])
+            x = (a + b) / 2 if b > a else (span(s)[0] + span(s)[1]) / 2
+            if at(s, x, 0) < at(k, x, 3) + 0.5 * s[1] and at(s, x, 3) > at(k, x, 0) - 0.5 * s[1] and (b > a or abs(at(s, x, 0) - at(k, x, 0)) < s[1]): clash = True; break
+        if not clash: keep.append(s)
+    keep.sort(key=lambda s: (s[0][0][0] > W * 0.55, s[0][0][1]))
     return gray, keep
 
 
