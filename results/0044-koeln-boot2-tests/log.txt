@@ -1,0 +1,59 @@
+job 0044-koeln-boot2-tests: 0043's tests and export (0043 trained, then its first test looked for labels-order.jsonl, which isn't on this PC: the Köln in-order labels are ms-601861r/labels.jsonl here)
+code: 6ada2d0
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-601861r --real-labels labels.jsonl --held 10
+40 staves: token errors 48.83%, note errors 52.37%
+
+$ recognizer.py test --model training/data/j0042/best.pt --data training/data/ms-601861r --real-labels labels.jsonl --held 10
+40 staves: token errors 61.09%, note errors 64.96%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-601861r --real-labels labels-boot2.jsonl --held 10
+100 staves: token errors 26.09%, note errors 28.26%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-601861r --real-labels labels-boot2.jsonl --held 10
+7 staves: token errors 39.69%, note errors 44.19%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+376 staves: token errors 6.13%, note errors 7.59%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+375 staves: token errors 6.07%, note errors 7.44%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+372 staves: token errors 3.51%, note errors 3.75%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+371 staves: token errors 3.39%, note errors 3.58%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.82%, note errors 12.65%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.48%, note errors 12.03%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+359 staves: token errors 10.43%, note errors 13.21%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+357 staves: token errors 10.14%, note errors 12.70%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.42%, note errors 2.76%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.59%, note errors 2.92%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 8.17%, note errors 7.32%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 8.30%, note errors 7.48%
+
+$ recognizer.py test --model training/data/j0043/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.49%, note errors 14.73%
+
+$ recognizer.py test --model training/data/j0026/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.32%, note errors 14.55%
+
+$ recognizer.py export --model training/data/j0043/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0044-koeln-boot2-tests/chant.onnx (5.7 MB)
