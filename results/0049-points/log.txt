@@ -1,0 +1,23 @@
+job 0049-points: The manuscript model (0045) taught point notation on evenly ruled staves (Paris lat. 12044) from 20,000 made-up staves (hufnagel.py --style points), with all it learnt from; from 0045; tested against 0045 on Köln and against 0026 on the rest; exported. Its reads will pair Paris's staves with Cantus
+code: 82ff26a
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel,training/data/points --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl --grow-vocab --resume training/data/j0045/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0049
+174453 staves to learn from (28653 real, each 3 times), 2695 synthetic and 3241 real to test on; 0 left out for tokens the model hasn't; 257 tokens; 1,427,818 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.238 (1 s)
+epoch 1 batch 100: loss 0.272 (17 s)
+epoch 1 batch 200: loss 0.303 (34 s)
+epoch 1 batch 300: loss 0.300 (49 s)
+epoch 1 batch 400: loss 0.293 (65 s)
+epoch 1 batch 500: loss 0.291 (79 s)
+epoch 1 batch 600: loss 0.286 (94 s)
+epoch 1 batch 700: loss 0.285 (109 s)
+epoch 1 batch 800: loss 0.285 (125 s)
+epoch 1 batch 900: loss 0.281 (139 s)
+epoch 1 batch 1000: loss 0.281 (155 s)
+epoch 1 batch 1100: loss 0.279 (170 s)
+epoch 1 batch 1200: loss 0.278 (185 s)
+epoch 1 batch 1300: loss 0.276 (199 s)
+epoch 1 batch 1400: loss 0.276 (214 s)
+epoch 1 batch 1500: loss 0.274 (229 s)
