@@ -205,6 +205,11 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Done
 
+- **0.20.1, ready for testers** (the user: "good enough to start sending to people"): a GitHub link in the toolbar, and
+  in help a "report it on GitHub" link (issues); help no longer says text reading is for printed books only. README
+  opens with what a tester needs: the site's address, five steps to try it, what it reads best and what not yet, and
+  how to report a problem; the feature list follows, brought up to date; credits add ONNX Runtime, Cantus Database,
+  GregoBase and CATMuS Medieval.
 - **0.20.0, Paris lat. 12044 (points on an evenly ruled page)** (the user: "do it all"): `models/chant-ms.*` is job 0053, which reads the French point notation of Paris, BnF lat. 12044 (Cantus 123628) as well as the other manuscripts: Paris held out ~23% of notes wrong (0045 couldn't read it); the others level with or a little better than 0045 (123672 7.61, 123723 3.73, 123606 12.32, 123631 13.05, Köln 14.06; real 2.87, Graduale 7.19, book-48 14.61). Such a book is ruled evenly all down the page in pale red-brown, words and notes alike, each row of words on every fifth line: no staff lines to find in its ink. A page's menu now has **Ruled evenly, words on every fifth line**, a choice for the book (`doc.ruledEvenly`): its staves are then found by `CGStaves.byRuling` (on `tint()`, red less blue), the four ruled lines between each row of words and the one above at fifths, each moved onto the ruling (the ruling is spaced by hand, 31–39 px a space on one staff: an even grid drifted half a space). It is not guessed: no measure of a page told such a book from one ruled a staff at a time reliably, and turned on for other books it finds false staves. How it was trained: `training/hufnagel.py --style points` (20,000 + 20,000 made-up staves: small faint points and ticks), then `training/rulestaves.py` cut Paris's 6,622 staves, paired with Cantus in order on complete pages where staves = lines and by `cantus.py labels`, kept where the two agree (97%) or fit well (labels-boot.jsonl, 4,213 staves; zips ms-123628s-*), rounds 0051–0053. A further round (job 0054, 5,001 Paris staves paired by 0053) gained only 1.25 points on Paris (24.2 → 22.95 on its held-out) and cost 0.3–0.5 elsewhere (Köln, 123723, Graduale): not installed, and Paris rounds stopped there.
 - **0.19.1, manuscript hands, second round**: `models/text.*` is job 0047: from 0046, on the words under all paired staves of the five manuscripts (15,596 lines, the 13,985 that 0046 reads within 30% kept: wrong pairings and strips cut short dropped). Held out (0046 → 0047, on the kept lines): lat. 15181 4.4 → 4.2%, 123606 6.9 → 6.2, 123672 7.5 → 6.9, 123723 4.6 → 4.6, Köln 12.1 → 8.9; Nidaros 2.6 → 2.5. The books' usual test (text-ok-clean) reads 0.5–1 point worse, but that test favours the 0029 line of models; on the lines any of 0037/0046/0047 reads within 15% (sym.py) 0047 is level: Graduale 3.45 → 3.66, Liber antiphonarius 4.23 → 3.85, Antiphonale monasticum 8.05 → 7.04.
 - **0.19.0, German Gothic notes** (the user: "do it all"): `models/chant-ms.*` is job 0045, which reads Hufnagel notation (Köln Cod. 1161) as well as the square-note manuscripts: well-cut Köln staves ~15% of notes wrong held out (0026 couldn't read them); the other manuscripts within ~0.6 point of 0026 (slightly worse: 123672 7.70 vs 7.44, 123723 3.71 vs 3.58, 123606 12.43 vs 12.03, 123631 13.26 vs 12.70; the printed Liber/books level). With 0.18.4's `byRedLine` a Köln-type page can now be found and read in the app (staves to check by hand). Its tokens add the f1 and f2 clefs (`recognizer.py train --grow-vocab`; the app already took any c/f clef on lines 1–5).
@@ -489,8 +494,8 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
 - The editing layer's open decisions (above): the chant font, what a drag moves, what "accept" means.
-- GitHub Pages must be switched on by the user once it is on `main`: Settings → Pages → Deploy from a branch → `main`,
-  folder `/ (root)`.
+- The repository clones heavy (~3 GB) because the `training-data` branch holds the zips: testers only need the site,
+  but if people start cloning, move training-data to a repository of its own.
 
 ## Working with the user
 
