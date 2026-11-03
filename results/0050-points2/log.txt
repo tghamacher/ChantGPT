@@ -1,0 +1,9 @@
+job 0050-points2: The manuscript model (0049) taught Paris lat. 12044's point notation again, from 20,000 more made-up staves drawn closer to it (smaller, fainter points and ticks; hufnagel.py --style points --seed 2), with all it learnt from; from 0049; tested against 0049 on Köln and the rest; exported. Its reads will pair Paris's staves with Cantus
+code: 82ff26a
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel,training/data/points,training/data/points2 --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl --grow-vocab --resume training/data/j0049/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0050
+193846 staves to learn from (28653 real, each 3 times), 3302 synthetic and 3241 real to test on; 0 left out for tokens the model hasn't; 258 tokens; 1,428,011 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.704 (1 s)
+epoch 1 batch 100: loss 0.617 (23 s)
