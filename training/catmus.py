@@ -31,7 +31,7 @@ HEIGHT, BODY, FOOT, SQUASH = 64, 20, 31, 12 / (64 / 3)
 
 FIXED = {'ꝑ': 'per', 'ꝓ': 'pro', 'ꝰ': 'us', 'ꝯ': 'con', 'ꝝ': 'rum', 'ꝭ': 'is', '⁊': 'et', '&': 'et', 'ſ': 's', 'ꝛ': 'r',
          'ı': 'i', 'ȷ': 'j', 'ꝺ': 'd', 'ꝼ': 'f', 'ꝩ': 'v', 'æ': 'ae', 'œ': 'oe', 'Æ': 'Ae', 'Œ': 'Oe', 'ƀ': 'b', 'ꝟ': 'v',
-         'ꞇ': 't', 'ꝣ': 'z', 'ʒ': 'z', 'ꝥ': 'th', 'ꝫ': 'et', 'ꝸ': 'um', 'ꝗ': 'q~', 'ꝙ': 'q~', 'ꝕ': 'p~', 'ꝍ': 'o'}
+         'ꞇ': 't', 'ꝣ': 'z', 'ʒ': 'z', 'ꝥ': 'th', 'ꝫ': 'et', 'ꝸ': 'um', 'ꝵ': 'rum', 'ꝶ': 'rum', 'ł': '~l', 'ħ': 'h~', 'đ': 'd~', 'ƀ': 'b~', 'ꝉ': '~l', 'ꝁ': 'k~', 'ꝗ': 'q~', 'ꝙ': 'q~', 'ꝕ': 'p~', 'ꝍ': 'o'}
 USUAL = {'qd': 'quod', 'qm': 'quam', 'qn': 'quando', 'qa': 'quia', 'qi': 'qui', 'scs': 'sanctus', 'sci': 'sancti',
          'sco': 'sancto', 'scm': 'sanctum', 'sca': 'sancta', 'sce': 'sancte', 'scis': 'sanctis', 'scorum': 'sanctorum',
          'oms': 'omnes', 'oma': 'omnia', 'oia': 'omnia', 'omib': 'omnibus', 'nr': 'noster', 'nri': 'nostri', 'nro': 'nostro',
@@ -45,7 +45,9 @@ USUAL = {'qd': 'quod', 'qm': 'quam', 'qn': 'quando', 'qa': 'quia', 'qi': 'qui', 
          'om': 'omnem', 'ois': 'omnis', 'oi': 'omni', 'pr': 'pater', 'pris': 'patris', 'mr': 'mater', 'fr': 'frater',
          'sclm': 'seculum', 'scla': 'secula', 'sclorum': 'seculorum', 'alla': 'alleluia', 'all': 'alleluia',
          'evovae': 'euouae', 'euouae': 'euouae', 'ps': 'psalmus', 'ant': 'antiphona', 'cap': 'capitulum', 'iher': 'iherusalem',
-         'ierlm': 'ierusalem', 'israhl': 'israhel', 'dd': 'david', 'mls': 'multis', 'qs': 'quis', 'q': 'que'}
+         'ierlm': 'ierusalem', 'israhl': 'israhel', 'dd': 'david', 'mls': 'multis', 'qs': 'quis', 'q': 'que',
+         'ti': 'tibi', 'mi': 'mihi', 'si': 'sibi', 'ui': 'ubi', 'h': 'hoc', 'hc': 'hec', 'qa': 'qua', 'qo': 'quo',
+         'qe': 'que', 'qq': 'quoque', 'vl': 'vel', 'ul': 'uel', 'oium': 'omnium', 'oiu': 'omnium', 'oibus': 'omnibus', 'oes': 'omnes'}
 MARKS = {'̃', '̄', '̅', '͠', '͡', '͞', '̆', '̑', '᷑', '̂', '̇',
          '̾', 'ͥ', 'ͤ', 'ͬ', 'ͣ', 'ͦ', 'ͧ', 'ͪ', 'ᷤ', 'ᷚ', '͐',
          '͒'}
@@ -88,11 +90,21 @@ class Expander:
             elif ch in (';', '\uf1ac') and s and s[-1] in 'bB': s += 'us'
             elif ch == '\uf1ac': s += 'us'
             elif '\ue000' <= ch <= '\uf8ff': s += '~'                # (MUFI's other signs: some letters, to be found)
+            elif '\u0363' <= ch <= '\u036f':                          # (a letter written small above: it and some before it)
+                s += '~' + 'aeioucdhmrtvx'[ord(ch) - 0x363]
             elif ch in MARKS or unicodedata.category(ch) == 'Mn': s += '~'
             elif ch.isalpha() and ch.isascii(): s += ch
             elif ch in '.,:;·!?/-=\'"()[]⁘⸫¶': continue
             else: return None                                     # (a sign not known here)
         if '~' not in s: return s if s else None
+        # (a stroke over a vowel: the m or n after it, if that makes a word)
+        # (the commoner of m and n, and only a word that comes often: a rare one is likelier a slip)
+        best = None
+        for nasal in ('m', 'n'):
+            t = re.sub(r'([aeiouy])~', r'\1' + nasal, s)
+            c = self.lex.get(t.lower(), 0) if '~' not in t else 0
+            if c >= 5 and (best is None or c > best[0]): best = (c, t)
+        if best: return best[1]
         # (the commonest, whose letters fit several words: as the books mean them)
         k = s.lower().replace('~', '')
         if k in USUAL: return USUAL[k][0].upper() + USUAL[k][1:] if s[0].isupper() else USUAL[k]
@@ -112,7 +124,7 @@ class Expander:
 
     def line(self, text):
         out = []
-        for w in text.split():
+        for w in re.sub(r'[.:·,;]+(?=\S)', lambda m: m.group() if m.group() == ';' else ' ', text).split():
             e = self.word(w)
             if e is None: return None
             if e: out.append(e)
