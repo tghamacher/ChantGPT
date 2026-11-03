@@ -52,9 +52,9 @@ def draw_staff(items, rng, fonts, words, style='hufnagel'):
         elif k not in (red, inked) and rng.random() < .4: continue
         wob = rng.uniform(-1.2, 1.2)
         d.line([(0, (y + wob) * S), (W * S, (y - wob) * S)], fill=shade, width=max(1, int(S * rng.uniform(.6, 1.2))))
-    ink = rng.randint(10, 60)
+    ink = rng.randint(10, 60) if style != 'points' else rng.randint(40, 120)
     # the clef: its letter on its line
-    F = ImageFont.truetype(rng.choice(fonts), int(SPACE * 2.2 * S))
+    F = ImageFont.truetype(rng.choice(fonts), int(SPACE * (2.2 if style != 'points' else rng.uniform(1.2, 1.8)) * S))
     cy = TOP + (4 - int(clef[1])) * SPACE
     d.text((4 * S, cy * S), clef[0].upper() if style == 'points' and clef[0] == 'f' else clef[0], font=F, fill=ink, anchor='lm')
     x = 18 + rng.uniform(0, 4)
@@ -63,10 +63,13 @@ def draw_staff(items, rng, fonts, words, style='hufnagel'):
         y5 = TOP + 4 * SPACE + rng.uniform(-1, 1)
         d.line([(0, y5 * S), (W * S, y5 * S)], fill=rng.randint(150, 190), width=max(1, int(S * .8)))
     def note(x, y, kind):
-        if style == 'points':                                 # a point (now and then a stroke rising from it)
-            r = rng.uniform(1.2, 1.9)
-            d.ellipse([((x + 2 - r) * S, (y - r) * S), ((x + 2 + r) * S, (y + r) * S)], fill=ink)
-            if rng.random() < .12: d.line([((x + 2 + r * .6) * S, y * S), ((x + 2 + r * .6) * S, (y - SPACE * 1.4) * S)], fill=ink, width=max(2, int(S * .7)))
+        if style == 'points':                                 # a small point or tick (now and then a stroke rising from it)
+            r = rng.uniform(.7, 1.3)
+            if rng.random() < .4:                             # (a short slanting tick, not a round point)
+                dx = rng.uniform(1, 2.5)
+                d.line([((x + 2 - dx) * S, (y + dx * .4) * S), ((x + 2 + dx) * S, (y - dx * .4) * S)], fill=ink, width=max(2, int(S * r)))
+            else: d.ellipse([((x + 2 - r) * S, (y - r) * S), ((x + 2 + r) * S, (y + r) * S)], fill=ink)
+            if rng.random() < .3: d.line([((x + 2 + r * .6) * S, y * S), ((x + 2 + r * .6) * S, (y - SPACE * rng.uniform(1, 1.6)) * S)], fill=ink, width=max(1, int(S * .5)))
             return
         # the head: a short thick stroke rising to the right, its top at the note's row; the stem down from its left
         d.line([(x * S, (y + 1) * S), ((x + head) * S, (y + 1 - head * slope) * S)], fill=ink, width=int(thick * S))
@@ -79,23 +82,32 @@ def draw_staff(items, rng, fonts, words, style='hufnagel'):
             ps = [c for c in neume if c in 'abcdefghijklm']
             for i, p in enumerate(ps):
                 note(x, ROW(p), 'virga')
-                if i + 1 < len(ps): x += rng.uniform(4.5, 7)
+                if i + 1 < len(ps): x += rng.uniform(4.5, 7) if style != 'points' else rng.uniform(3.5, 6)
             x += rng.uniform(6, 9)
-        x += rng.uniform(6, 16)
+        x += rng.uniform(6, 16) if style != 'points' else rng.uniform(8, 28)
     W2 = int(x + 6)
     # words under the staff (and a little of those above)
-    G = ImageFont.truetype(rng.choice(fonts), int(rng.uniform(1.5, 1.9) * SPACE * S))
+    pts = style == 'points'
+    G = ImageFont.truetype(rng.choice(fonts), int(rng.uniform(1.5, 1.9) * SPACE * S if not pts else rng.uniform(1.1, 1.5) * SPACE * S))
+    tink = (lambda: rng.randint(20, 80)) if not pts else (lambda: rng.randint(50, 120))
     wx = rng.uniform(0, 30)
     while wx < W2:
         w = rng.choice(words)
-        d.text((wx * S, (TOP + 3 * SPACE + rng.uniform(5, 8)) * S), w, font=G, fill=rng.randint(20, 80), anchor='lt')
-        wx += G.getlength(w) / S + rng.uniform(4, 30)
-    if rng.random() < .5:
+        if pts: d.text((wx * S, (TOP + 4 * SPACE + rng.uniform(-.5, 1)) * S), w, font=G, fill=tink(), anchor='ls')   # (written on the fifth line)
+        else: d.text((wx * S, (TOP + 3 * SPACE + rng.uniform(5, 8)) * S), w, font=G, fill=tink(), anchor='lt')
+        wx += G.getlength(w) / S + (rng.uniform(4, 30) if not pts else rng.uniform(2, 10))
+    if pts:                                                   # (and the words of the staff above, on the ruled line over this one)
+        wx = rng.uniform(-20, 10)
+        while wx < W2:
+            w = rng.choice(words)
+            d.text((wx * S, (TOP - SPACE + rng.uniform(-.5, 1)) * S), w, font=G, fill=tink(), anchor='ls')
+            wx += G.getlength(w) / S + (rng.uniform(4, 30) if not pts else rng.uniform(2, 10))
+    elif rng.random() < .5:
         wx = rng.uniform(-20, 10)
         while wx < W2:
             w = rng.choice(words)
             d.text((wx * S, (rng.uniform(-6, 2)) * S), w, font=G, fill=rng.randint(20, 80), anchor='lt')
-            wx += G.getlength(w) / S + rng.uniform(4, 30)
+            wx += G.getlength(w) / S + (rng.uniform(4, 30) if not pts else rng.uniform(2, 10))
     im = im.crop((0, 0, W2 * S, HEIGHT * S)).resize((W2, HEIGHT), Image.LANCZOS)
     a = np.asarray(im, np.float32) / 255
     paper = rng.uniform(165, 225)
@@ -117,7 +129,7 @@ def main(o):
     with open(os.path.join(o.out, 'labels.jsonl'), 'w', encoding='utf-8') as f:
         while n < o.count:
             line, custos = rng.choice(mel)
-            clef = rng.choice(['f2', 'f3', 'f1', 'f2', 'f3', 'f4', 'c3', 'c4'])
+            clef = rng.choice(['f2', 'f3', 'f1', 'f2', 'f3', 'f4', 'c3', 'c4'] if o.style != 'points' else ['c3', 'c4', 'c4', 'c2', 'f3', 'f2', 'f4', 'c3'])
             items = C.gabc(line, clef, custos)
             if not items or len(items) < 4: continue
             if len(items) > 40: items = items[:40]
