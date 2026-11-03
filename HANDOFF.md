@@ -483,6 +483,8 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Still open
 
+- **Diastematic neumes, set aside for another day** (the user, 11-03): reading staffless/heighted neumes (St Gall, Laon, Aquitanian and the like) and setting them in GABC's square notes. Their many forms and readings make it a project of its own; the manuscript text reader already reads the words under them. Paris lat. 12044 and Köln (points and Hufnagel on lines) are done as far as rounds help.
+- **Mensural notation, later**: same app and staff finding, but its own model (note values, rests, mensuration, ligatures) and its own document model and export (MEI mensural, not GABC); see the conversation of 11-03.
 - Which print, and which pages, for the first test (suggested: the 1908 *Graduale Romanum*).
 - Versioning: does "stage, commit, and sync" here also bump the version and add release notes and a tag, as in
   Serenissima Press?
