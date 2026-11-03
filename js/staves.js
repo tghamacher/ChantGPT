@@ -390,7 +390,19 @@
   // lines: the page's red ink alone (ruling()), if its staves are ruled in red: the lines are looked for there, where the
   // notes and the words don't get in the way, and in the grey too. If the red finds staves (half as many as the grey
   // or more), they are the page's: on a page ruled in red, the grey's others are rows of words, evenly set.
-  function findStaves(gray, w, h, { skip = [], lines = null, trace } = {}) {
+  // ruled: the book is ruled evenly from top to bottom in pale red-brown, words and notes alike, each row of words on
+  // every fifth ruled line (as Paris, BnF lat. 12044), and tint (tint()) shows its ruling: its staves are the four
+  // ruled lines above each row of words (byRuling). The person says so (no measure of a single page tells such a
+  // book from one ruled a staff at a time reliably enough to choose for them).
+  function findStaves(gray, w, h, { skip = [], lines = null, tint = null, ruled = false, trace } = {}) {
+    if (ruled && tint) {
+      const byR = byRuling(gray, tint, w, h, skip);
+      if (trace) trace.byRuling = byR.length;
+      if (byR.length) return byR;
+    }
+    return byInk(gray, w, h, skip, lines, trace);
+  }
+  function byInk(gray, w, h, skip, lines, trace) {
     const cols = columns(gray, w, h);
     if (trace) Object.assign(trace, { columns: cols, each: cols.map(() => ({})) });
     const found = cols.map((c, k) => findIn(gray, w, h, c, skip, trace && trace.each[k]));
@@ -405,6 +417,93 @@
       if (byF.length > n(found)) return byF;
     }
     return found.flat();
+  }
+
+  // Staves of a page ruled evenly in pale red-brown from top to bottom, the words written on every fifth ruled line
+  // and the notes on the four between (Paris, BnF lat. 12044): the dark ink makes no staff lines to find. The rows of
+  // words found by their ink, and how far apart they are (five spaces) gives the spacing near enough; the ruling
+  // itself then found by its colour (redder than ink and paper: red less blue), strip by strip across the page, the
+  // lines evenly spaced in each, followed from strip to strip; over each row of words, the four ruled lines above
+  // the one it is written on. As training/rulestaves.py, which cut Paris's staves.
+  function byRuling(gray, tint, w, h, skip = []) {
+    const u = w / 1800, sample = [];
+    for (let i = 0; i < gray.length; i += 97) sample.push(gray[i]);
+    sample.sort((a, b) => a - b);
+    const paper = sample[Math.floor(sample.length * 0.8)], inkAt = i => paper - gray[i] > 60;
+    const smooth = (v, k) => { const o = new Float64Array(v.length), r = k >> 1; let t = 0;
+      for (let i = 0; i < v.length + r; i++) { if (i < v.length) t += v[i]; if (i - k >= 0) t -= v[i - k]; const c = i - r; if (c >= 0 && c < v.length) o[c] = t / k; } return o; };
+    const median = a => { const b = Float64Array.from(a).sort(); return b.length ? b[b.length >> 1] : 0; };
+    // the written block: the columns with ink
+    const colInk = new Float64Array(w);
+    for (let y = 0; y < h; y += 2) for (let x = 0, o = y * w; x < w; x++, o++) if (inkAt(o)) colInk[x]++;
+    const cs = smooth(colInk.map(v => v / (h / 2)), Math.max(3, Math.round(31 * u)) | 1);
+    let bx0 = -1, bx1 = -1;
+    for (let x = 0; x < w; x++) if (cs[x] > 0.01) { if (bx0 < 0) bx0 = x; bx1 = x; }
+    if (bx0 < 0 || bx1 - bx0 < 100 * u) return [];
+    // the rows of words: bands where dark ink covers much of the row, in the middle of the block; each written on a
+    // ruled line near its foot
+    const xa = Math.round(bx0 + 0.15 * (bx1 - bx0)), xb = Math.round(bx1 - 0.15 * (bx1 - bx0));
+    const cover = new Float64Array(h);
+    for (let y = 0; y < h; y++) { let c = 0; for (let x = xa, o = y * w + xa; x < xb; x++, o++) if (inkAt(o)) c++; cover[y] = c / (xb - xa); }
+    const sm = smooth(cover, Math.max(3, Math.round(9 * u)) | 1), sorted = Array.from(sm).sort((a, b) => a - b);
+    const on = Math.max(0.05, 0.35 * sorted[Math.floor(0.99 * (h - 1))]), minRun = Math.max(3, Math.round(8 * u));
+    const mids = [], feet = [];
+    for (let y = 0; y < h;) { if (sm[y] > on) { let e = y; while (e < h && sm[e] > on) e++; if (e - y >= minRun) { mids.push((y + e) / 2); feet.push(e); } y = e; } else y++; }
+    const gaps = mids.slice(1).map((r, i) => r - mids[i]).filter(d => d >= 5 * 22 * u && d <= 5 * 52 * u).sort((a, b) => a - b);
+    if (gaps.length < 2) return [];
+    const g0 = gaps[gaps.length >> 1] / 5;
+    // the ruling in each strip (each row's median redness, less its surroundings), its lines evenly spaced there:
+    // for the ruling's slope across the page
+    const STRIP = Math.round(150 * u), xs = [];
+    for (let x = bx0; x < bx1 - STRIP / 2; x += STRIP) xs.push(x);
+    const profs = xs.map(x => { const x1 = Math.min(w, x + STRIP), v = new Float64Array(h), col = new Float64Array(x1 - x);
+      for (let y = 0; y < h; y++) { for (let i = x, o = y * w + x; i < x1; i++, o++) col[i - x] = tint[o]; col.sort(); v[y] = col[col.length >> 1]; }
+      const m = smooth(v, Math.max(5, Math.round(21 * u)) | 1); return v.map((a, i) => a - m[i]); });
+    const at = (p, y) => { const i = Math.floor(y), f = y - i; return i >= 0 && i + 1 < p.length ? p[i] * (1 - f) + p[i + 1] * f : 0; };
+    const score = (p, ph, g) => { let t = 0, n = 0; for (let y = ph; y < h - 1; y += g) { t += at(p, y); n++; } return t / n; };
+    const gs = profs.map(p => { let best = -Infinity, bg = g0; for (let g = 0.9 * g0; g < 1.1 * g0; g += 0.25) for (let ph = 0; ph < g; ph++) { const s = score(p, ph, g); if (s > best) { best = s; bg = g; } } return bg; });
+    const g = median(gs);
+    const phases = profs.map(p => { let best = -Infinity, bp = 0; for (let ph = 0; ph < g; ph += 0.5) { const s = score(p, ph, g); if (s > best) { best = s; bp = ph; } } return bp; });
+    const un = [phases[0]];
+    for (const p of phases.slice(1)) un.push(p + g * Math.round((un[un.length - 1] - p) / g));
+    const centres = xs.map(x => x + STRIP / 2);
+    // (straight, ruled with a rule: a line through the strips' fits, a strip far off it left out)
+    let slope = 0;
+    if (centres.length >= 3) {
+      const fitOf = idx => { const n = idx.length, mx = idx.reduce((t, i) => t + centres[i], 0) / n, my = idx.reduce((t, i) => t + un[i], 0) / n;
+        let sxy = 0, sxx = 0; for (const i of idx) { sxy += (centres[i] - mx) * (un[i] - my); sxx += (centres[i] - mx) ** 2; }
+        const b = sxx ? sxy / sxx : 0; return { b, f: x => my + b * (x - mx) }; };
+      let fit = fitOf(centres.map((c, i) => i));
+      const near = centres.map((c, i) => i).filter(i => Math.abs(un[i] - fit.f(centres[i])) < 0.25 * g);
+      if (near.length >= 2) fit = fitOf(near);
+      slope = fit.b;
+    }
+    // a line moved onto the ruling near where it is put: the redness along it (at the ruling's slope, across the
+    // block) against a third of a space either side, at offsets up to reach
+    const sa = Math.round(bx0 + 0.1 * (bx1 - bx0)), sb = Math.round(bx1 - 0.1 * (bx1 - bx0)), xm = (sa + sb) / 2;
+    const along = y0 => { const v = []; for (let x = sa; x < sb; x += 3) { const y = Math.round(y0 + slope * (x - xm)); if (y >= 0 && y < h) v.push(tint[y * w + x]); } return median(v); };
+    const snap = (y, reach) => { let best = -Infinity, bd = 0;
+      for (let d = -reach; d <= reach; d += 0.5) { const v = along(y + d) - 0.5 * (along(y + d - g / 3) + along(y + d + g / 3)); if (v > best) { best = v; bd = d; } }
+      return bd; };
+    // the staff over each row of words: the four ruled lines between its foot and the foot of the row above, at
+    // fifths of the way (the ruling is spaced by hand, not evenly down the page), each moved onto the ruling unless
+    // that would leave it far from its fellows' spacing; the first row's a usual staff's height above it
+    const diffs = feet.slice(1).map((f, i) => f - feet[i]).filter(d => d > 4 * g && d < 7 * g);
+    const period = diffs.length ? median(diffs) : 5 * g, out = [];
+    feet.forEach((f, n) => {
+      const above = n && f - feet[n - 1] > 4 * g && f - feet[n - 1] < 7 * g ? feet[n - 1] : f - period, q = (f - above) / 5;
+      const ys = [1, 2, 3, 4].map(i => above + i * q), moved = ys.map(y => y + snap(y, 0.22 * q));
+      for (let i = 0; i < 4; i++) {
+        const prev = i ? moved[i - 1] : above, next = i < 3 ? moved[i + 1] : f;
+        if (!(moved[i] - prev > 0.7 * q && moved[i] - prev < 1.3 * q && next - moved[i] > 0.7 * q && next - moved[i] < 1.3 * q)) moved[i] = ys[i];
+      }
+      if (moved[0] < 0) return;
+      const lines4 = moved.map(y => centres.flatMap(c => [c, y + slope * (c - xm)]));
+      const midY = (moved[0] + moved[3]) / 2;
+      if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && xm > b[0] && xm < b[0] + b[2])) return;
+      out.push({ lines: lines4, spacing: (moved[3] - moved[0]) / 3 });
+    });
+    return out;
   }
 
   // Staves found by their red F line alone (Köln, Dombibliothek, Cod. 1161 and its like: the F line red, one other
@@ -644,6 +743,14 @@
     return red > 0.004 * n && red < 0.2 * n ? out : null;
   }
 
+  // How much redder than blue each pixel is (red less blue, 128 where they are equal): pale red-brown ruling shows in
+  // it where it is too faint and too brown to count as red ink (ruling())
+  function tint(rgba) {
+    const out = new Uint8Array(rgba.length / 4);
+    for (let i = 0, j = 0; j < out.length; i += 4, j++) out[j] = Math.max(0, Math.min(255, 128 + rgba[i] - rgba[i + 2]));
+    return out;
+  }
+
   // RGBA pixels (from a canvas) to grey, one byte a pixel
   function grey(rgba) {
     const out = new Uint8Array(rgba.length / 4);
@@ -729,7 +836,7 @@
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, columns, order, beginnings, fitStaff, fit, grey, ruling };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, byRuling, tint, columns, order, beginnings, fitStaff, fit, grey, ruling };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

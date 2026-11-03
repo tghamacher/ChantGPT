@@ -136,7 +136,7 @@
     const px = await ctx.pixels(pg);
     if (stale()) return null;
     const skip = ctx.state.doc.pages[pg].staves.map(st => st.box.map(v => v * px.scale));
-    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines });
+    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines, tint: px.tint, ruled: !!ctx.state.doc.ruledEvenly });
     return stale() ? null : found.map(r => r.lines.map(l => l.map(v => v / px.scale)));
   }
   function addFound(pg, found) {
@@ -1096,6 +1096,11 @@
     ctx.menu([
       { title: `Page ${ctx.state.page + 1}` },
       { label: 'Find the staves', disabled: busy, run: findHere },
+      // (a book ruled evenly all down the page, the words on every fifth line: its staves aren't inked to be found)
+      { label: `${ctx.state.doc.ruledEvenly ? '✓ ' : ''}Ruled evenly, words on every fifth line`, disabled: busy, run: () => {
+        ctx.state.doc.ruledEvenly = !ctx.state.doc.ruledEvenly;
+        ctx.say(ctx.state.doc.ruledEvenly ? 'Staves will be found as the four ruled lines above each row of words (a book ruled evenly all down the page, like Paris lat. 12044). Delete any found wrongly, then Find the staves.' : 'Staves will be found by their own lines again.');
+      } },
       { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) },
       { label: 'Play the page', disabled: !list.some(v => v.syllables.length), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
