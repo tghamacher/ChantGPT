@@ -269,3 +269,90 @@ epoch 8 batch 300: loss 0.273 (2916 s)
 epoch 8 batch 400: loss 0.263 (2929 s)
 epoch 8 batch 500: loss 0.269 (2943 s)
 epoch 8 batch 600: loss 0.275 (2957 s)
+epoch 8 batch 700: loss 0.276 (2970 s)
+epoch 8 batch 800: loss 0.272 (2983 s)
+epoch 8 batch 900: loss 0.271 (2997 s)
+epoch 8 batch 1000: loss 0.269 (3011 s)
+epoch 8 batch 1100: loss 0.268 (3024 s)
+epoch 8 batch 1200: loss 0.267 (3037 s)
+epoch 8 batch 1300: loss 0.264 (3051 s)
+epoch 8 batch 1400: loss 0.263 (3065 s)
+epoch 8 batch 1500: loss 0.263 (3078 s)
+epoch 8 batch 1600: loss 0.263 (3091 s)
+epoch 8 batch 1700: loss 0.262 (3105 s)
+epoch 8 batch 1800: loss 0.262 (3118 s)
+epoch 8 batch 1900: loss 0.262 (3131 s)
+epoch 8 batch 2000: loss 0.262 (3145 s)
+epoch 8 batch 2100: loss 0.266 (3158 s)
+epoch 8 batch 2200: loss 0.266 (3172 s)
+epoch 8 batch 2300: loss 0.266 (3185 s)
+epoch 8 batch 2400: loss 0.267 (3198 s)
+epoch 8 batch 2500: loss 0.266 (3212 s)
+epoch 8 batch 2600: loss 0.267 (3226 s)
+epoch 8 batch 2700: loss 0.268 (3239 s)
+epoch 8 batch 2800: loss 0.268 (3253 s)
+epoch 8 batch 2900: loss 0.269 (3266 s)
+epoch 8: loss 0.269; synthetic test staves: token errors -, note errors -; real: token errors 2.51%, note errors 2.51% (3274 s)
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-ms2-123631 --real-labels text-clean.jsonl --held 10
+249 staves: token errors 4.46%, note errors 4.46%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-ms2-123631 --real-labels text-clean.jsonl --held 10
+249 staves: token errors 4.22%, note errors 4.22%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-ms2-123606 --real-labels text-clean.jsonl --held 10
+395 staves: token errors 5.98%, note errors 5.98%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-ms2-123606 --real-labels text-clean.jsonl --held 10
+395 staves: token errors 6.24%, note errors 6.24%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-ms2-123672 --real-labels text-clean.jsonl --held 10
+300 staves: token errors 6.69%, note errors 6.69%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-ms2-123672 --real-labels text-clean.jsonl --held 10
+300 staves: token errors 6.88%, note errors 6.88%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-ms2-123723 --real-labels text-clean.jsonl --held 10
+359 staves: token errors 4.34%, note errors 4.34%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-ms2-123723 --real-labels text-clean.jsonl --held 10
+359 staves: token errors 4.57%, note errors 4.57%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-ms2-601861 --real-labels text-clean.jsonl --held 10
+86 staves: token errors 9.00%, note errors 9.00%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-ms2-601861 --real-labels text-clean.jsonl --held 10
+86 staves: token errors 8.93%, note errors 8.93%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 7.70%, note errors 7.70%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-2 --real-labels text-ok-clean.jsonl --held 10
+400 staves: token errors 7.43%, note errors 7.43%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 7.33%, note errors 7.33%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-3 --real-labels text-ok-clean.jsonl --held 10
+340 staves: token errors 7.09%, note errors 7.09%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+206 staves: token errors 10.67%, note errors 10.67%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-48 --real-labels text-ok-clean.jsonl --held 10
+206 staves: token errors 10.46%, note errors 10.46%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+111 staves: token errors 12.56%, note errors 12.56%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/text-7 --real-labels text-ok-clean.jsonl --held 10
+111 staves: token errors 12.35%, note errors 12.35%
+
+$ recognizer.py test --model training/data/j0057/best.pt --data training/data/nidaros --real-labels text-realigned.jsonl --held 10
+400 staves: token errors 2.46%, note errors 2.46%
+
+$ recognizer.py test --model training/data/j0047/best.pt --data training/data/nidaros --real-labels text-realigned.jsonl --held 10
+400 staves: token errors 2.50%, note errors 2.50%
+
+$ recognizer.py export --model training/data/j0057/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0057-text-catmus-spread/chant.onnx (5.6 MB)
