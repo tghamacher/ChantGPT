@@ -1,0 +1,53 @@
+job 0057-text-catmus-spread: The text reader (0047) taught Gothic manuscript hands from CATMuS Medieval's 4,589 Latin lines, spread out as words under chant are (training/spread.py) and weighed once, not twice: 0055 (close-set lines ×2) dropped lat. 15181's wide spaces (3.06 → 3.41% on lines either reads well) while Köln and 123606 improved; from 0047; tested against 0047; exported. Clears old note data from this computer's disk.
+code: 7d2ec0d
+removed training/data/points
+removed training/data/points2
+removed training/data/hufnagel
+removed training/data/ms-123628r
+removed training/data/staves-ms
+removed training/data/staves
+removed training/data/j0001
+removed training/data/j0003
+removed training/data/j0004
+removed training/data/j0005
+removed training/data/j0006
+removed training/data/j0007
+removed training/data/j0008
+removed training/data/j0015
+removed training/data/j0020
+removed training/data/j0022
+removed training/data/j0023
+removed training/data/j0024
+removed training/data/j0025
+removed training/data/j0027
+removed training/data/j0028
+removed training/data/j0029
+removed training/data/j0030
+removed training/data/j0032
+removed training/data/j0033
+removed training/data/j0034
+removed training/data/j0035
+removed training/data/j0036
+removed training/data/j0037
+removed training/data/j0039
+removed training/data/j0040
+removed training/data/j0041
+removed training/data/j0042
+removed training/data/j0043
+removed training/data/j0048
+removed training/data/j0049
+removed training/data/j0050
+removed training/data/j0051
+removed training/data/j0052
+removed training/data/text-catmus
+
+$ recognizer.py train --data  --real training/data/nidaros,training/data/text-2,training/data/text-3,training/data/text-3a,training/data/text-48,training/data/text-7,training/data/text-2,training/data/text-3,training/data/text-3a,training/data/text-48,training/data/text-7,training/data/text-ms2-123631,training/data/text-ms2-123606,training/data/text-ms2-123672,training/data/text-ms2-123723,training/data/text-ms2-601861,training/data/text-ms2-123631,training/data/text-ms2-123606,training/data/text-ms2-123672,training/data/text-ms2-123723,training/data/text-ms2-601861,training/data/text-catmus-sp --real-labels text-realigned.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-ok-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text-clean.jsonl,text.jsonl --grow-vocab --resume training/data/j0047/best.pt --width 192 --epochs 8 --lr 3e-4 --batch 32 --real-weight 1 --out training/data/j0057
+94375 staves to learn from (94375 real, each 1 times), 0 synthetic and 10510 real to test on; 0 left out for tokens the model hasn't; 98 tokens; 1,397,131 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.358 (1 s)
+epoch 1 batch 100: loss 0.373 (20 s)
+epoch 1 batch 200: loss 0.343 (38 s)
+epoch 1 batch 300: loss 0.348 (56 s)
+epoch 1 batch 400: loss 0.338 (73 s)
+epoch 1 batch 500: loss 0.330 (91 s)
