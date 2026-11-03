@@ -488,6 +488,7 @@ as checking it, and the app records how each was confirmed (alone, edited, or wi
 
 ## Still open
 
+- **Text reader and CATMuS Medieval (not installed, the user to choose)**: `training/catmus.py` (Latin Gothic book hands from CATMuS Medieval, CC BY 4.0, abbreviations written out; 4,589 well-scaled lines) and `training/spread.py` (word gaps widened as under chant). On lines either reader reads within 15% (lat. 15181 / Köln / 123606 / 123672 / 123723): 0047 (installed) 3.06 / 7.65 / 4.13 / 5.42 / 2.95; 0055 (close-set lines ×2) 3.41 / 7.18 / 3.84 / 4.87 / 2.58; 0056 (0055 eased back) no better; 0057 (spread lines ×1) 3.22 / 7.13 / 3.86 / 5.22 / 2.77. CATMuS helps Köln and the other manuscripts, but costs lat. 15181 a little (0.16 points with 0057, ~11 characters in 7,000: near the noise).
 - **Diastematic neumes, set aside for another day** (the user, 11-03): reading staffless/heighted neumes (St Gall, Laon, Aquitanian and the like) and setting them in GABC's square notes. Their many forms and readings make it a project of its own; the manuscript text reader already reads the words under them. Paris lat. 12044 and Köln (points and Hufnagel on lines) are done as far as rounds help.
 - **Mensural notation, later**: same app and staff finding, but its own model (note values, rests, mensuration, ligatures) and its own document model and export (MEI mensural, not GABC); see the conversation of 11-03.
 - Which print, and which pages, for the first test (suggested: the 1908 *Graduale Romanum*).
