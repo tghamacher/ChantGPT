@@ -11,7 +11,8 @@ queue/<id>.json on that branch:
      "data": ["real-labels.zip"],                      # zips on training-data, unpacked into this repository first
      "steps": [["recognizer.py", "train", "--resume", "training/data/model3/best.pt", "--epochs", "8", ...],
                ["recognizer.py", "export", "--model", "training/data/model6/best.pt", "--onnx", "OUT/chant.onnx"]],
-     "keep": ["training/data/model6/best.pt"]}         # files copied back with the log
+     "keep": ["training/data/model6/best.pt"],         # files copied back with the log
+     "remove": ["training/data/model3"]}               # folders straight under training/data deleted first (disk)
 
 Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect, tidy),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
@@ -93,6 +94,26 @@ def unpack(data, names):
         json.dump(done, open(done_file, 'w'), indent=1)
 
 
+def remove(paths, note):
+    """Folders under training/data the job says are no longer wanted, deleted to keep the disk free (each a folder
+    straight under training/data, nothing else); the zips unpacked into each forgotten, so that a later job wanting one
+    fetches it again from training-data."""
+    if not paths: return
+    root = os.path.realpath(os.path.join(REPO, 'training', 'data'))
+    done_file = os.path.join(root, '.unpacked.json')
+    done = json.load(open(done_file)) if os.path.exists(done_file) else {}
+    for rel in paths:
+        if not re.fullmatch(r'training/data/[\w.-]+', rel) or rel.endswith(('/.', '/..')): raise ValueError(f'not a folder to remove: {rel}')
+        p = os.path.realpath(os.path.join(REPO, rel))
+        if os.path.dirname(p) != root: raise ValueError(f'not a folder to remove: {rel}')
+        base = os.path.basename(p)
+        if os.path.isdir(p):
+            shutil.rmtree(p, onerror=lambda f, q, e: (os.chmod(q, 0o700), f(q)))
+            note(f'removed {rel}')
+        for n in [n for n in done if n == base + '.zip' or re.fullmatch(re.escape(base) + r'-[\w]+\.zip', n)]: del done[n]
+    json.dump(done, open(done_file, 'w'), indent=1)
+
+
 def push(jobs, message):
     """The results so far, committed and pushed; a failure only said (a job never stops for it)."""
     try:
@@ -124,6 +145,7 @@ def run(job, jobs, data):
             git(REPO, 'checkout', '--quiet', 'main')
             git(REPO, 'merge', '--quiet', '--ff-only', 'origin/main')
             note(f'job {jid}: {job.get("about", "")}\ncode: {git(REPO, "rev-parse", "--short", "HEAD", quiet=True).stdout.strip()}')
+            remove(job.get('remove', []), note)
             unpack(data, job.get('data', []))
             for k, step in enumerate(job.get('steps', [])):
                 cmd = checked(step, out, data)
