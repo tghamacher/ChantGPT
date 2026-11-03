@@ -46,6 +46,8 @@ body { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; overflow
 .cg-top { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
 .cg-top h1 { font: 600 19px/1 var(--textfont); margin: 0; letter-spacing: .02em; }
 .cg-top .ver { font-size: 10px; font-weight: 600; letter-spacing: .06em; color: var(--muted); }
+.cg-top .cg-repo { font-size: 11px; color: var(--muted); text-decoration: none; margin-left: 8px; white-space: nowrap; }
+.cg-top .cg-repo:hover, .cg-top .cg-repo:focus-visible { color: inherit; text-decoration: underline; }
 .cg-tools { display: flex; align-items: center; gap: 4px; flex: 1; flex-wrap: wrap; }
 .cg-tbgroup { display: inline-flex; align-items: center; gap: 4px; }
 .cg-top nav { display: flex; align-items: center; gap: 4px; }

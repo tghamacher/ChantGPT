@@ -1,16 +1,47 @@
 # ChantGPT
 
-**Version 0.20.0** · a working title
+**Version 0.20.1** · early test version
 
-ChantGPT will read scans of Gregorian chant, from printed books and manuscripts, and give you the music in GABC (the
+ChantGPT reads scans of Gregorian chant, from printed books and manuscripts, and gives you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
-against the page. Renaissance mensural notation comes after that.
+against the page. Everything runs in your browser: your scans are never uploaded.
 
-Everything runs in your browser. Your scans are never uploaded.
+**Try it: [tghamacher.github.io/ChantGPT](https://tghamacher.github.io/ChantGPT/)** (a recent Chrome, Edge, Firefox
+or Safari on a computer; it isn't made for phones).
 
-## What it does now
+## Testing it
 
-These are the first steps. You can:
+1. **Open** a PDF or page images of a chant book (📂 Open, or drop the files on the page), or a manuscript a library
+   puts online (🌐 Online: paste its IIIF manifest's address, from Gallica, e-codices, the Bayerische
+   Staatsbibliothek and others).
+2. **Find staves** (☰). Drag any line that's off into place, delete anything that isn't a staff, or drag a box around
+   a staff it missed.
+3. **Read page**: the recognizer reads the notes. Neumes it's unsure of are orange.
+4. **Read text** puts the words under the notes.
+5. Check against the page (hold **H** to see the scan alone, **Space** to hear it), correct what's wrong (drag a neume
+   up or down; click a syllable to retype it), and **save** the GABC.
+
+Press **?** in the app for the mouse and the keys.
+
+**What it reads best so far**
+
+- Printed Solesmes books in square notation (the 1908 *Graduale Romanum*, the *Liber usualis*, the antiphonals).
+- Manuscripts in square notation on red four-line staves (e.g. Paris, BnF lat. 15181; Einsiedeln 611; the
+  Salzinnes Antiphonal), German Gothic (Hufnagel) notation on staves ruled with a red F line (e.g. Köln,
+  Dombibliothek, Cod. 1161), and French point notation on a page ruled evenly in pale ink (e.g. Paris, BnF
+  lat. 12044: turn on *Ruled evenly, words on every fifth line* in a page's right-click menu first).
+- Words in Gothic and other book hands, and Gothic print.
+
+**Not yet:** staffless or heighted neumes (St Gall, Laon, Aquitanian), mensural notation, and pages very unlike the
+ones above. Expect to correct things: it is a first version, and the point of testing is to find where it goes wrong.
+
+**Feedback:** [open an issue on GitHub](https://github.com/tghamacher/ChantGPT/issues/new) (a free account is
+needed), or tell Ted directly. Most useful: which book or manuscript and which page (a link to the library's page is
+ideal), what you did, and what went wrong. A screenshot helps.
+
+## Everything it does
+
+You can:
 
 - open a PDF of a chant book, or photographs or scans of its pages (JPEG, PNG, WebP), or a manuscript a library
   puts online with IIIF (Gallica, the Bayerische Staatsbibliothek, e-codices …): give its manifest's address, and the
@@ -39,12 +70,13 @@ These are the first steps. You can:
   the scan, say once which page of the book a scan page is, and on each page "Place this page's chants" finds the
   staves and where chants begin, and places the chants GregoBase lists for that page, a chant running over the page
   turn included;
-- read the notes from the scan (an early recognizer, trained so far on synthetic pages and on the 1908 Graduale; a
-  page whose staves are ruled in red is read by a second model, for manuscripts, trained on Paris BnF lat. 15181,
-  Einsiedeln 611 and the Salzinnes Antiphonal; choose one or the other beside the Read buttons): on
-  a staff without chant, what it reads is put on the staff; on a staff with chant placed from GregoBase, each neume is
+- read the notes from the scan: one model for printed books, and one for manuscripts (a page whose staves are ruled in
+  red, or a book marked as ruled evenly, is read by the manuscript one; choose either beside the Read buttons). On a
+  staff without chant, what it reads is put on the staff; on a staff with chant placed from GregoBase, each neume is
   moved to where it was seen and those that differ from what was read are marked in orange, with what was read, so
-  you look only at those. Placing a book page's chants does this by itself when the recognizer is there;
+  you look only at those. Placing a book page's chants does this by itself;
+- read the words under the staves (printed books, Gothic print, and manuscripts in Gothic and other book hands) and
+  put each syllable under its neume;
 - correct it on the page: drag a neume up or down by steps (its GABC changes with it) or along the staff to line it
   up with the source; Shift-drag moves a single note; or use the arrow keys, and Enter to accept a neume and go on;
 - correct the words: click a syllable to change its text, give its reading as written (for abbreviations: *dñs* for
@@ -58,8 +90,8 @@ These are the first steps. You can:
   with neumes, each element tied to its place on the page, as DDMAL's Neon reads it;
 - save what you've marked as a document, and open it again with the scan to carry on.
 
-The recognizer is at an early stage: see [training/README.md](training/README.md) for how it is trained and how
-well it reads.
+How the recognizers are trained, and how well they read: [training/README.md](training/README.md) and the
+"Done" list in [HANDOFF.md](HANDOFF.md).
 
 ## Running it on your computer
 
@@ -112,7 +144,13 @@ License 1.1), both of which may be shared with GPL software.
 
 ## Credits
 
-pdf.js by Mozilla, Apache License 2.0 (`vendor/pdfjs/LICENSE`). Greciliae, the chant font of
+pdf.js by Mozilla, Apache License 2.0 (`vendor/pdfjs/LICENSE`). ONNX Runtime Web by Microsoft, MIT License
+(`vendor/onnxruntime`). Greciliae, the chant font of
 [Gregorio](https://gregorio-project.github.io/), by Matthew Spencer and the Gregorio Project, SIL Open Font License 1.1
 (`fonts/OFL-greciliae.txt`); how glyphs are gathered and named follows Gregorio's own code (GPLv3). The test scan is engraved with
 [exsurge](https://github.com/frmatthew/exsurge) by Fr. Matthew Spencer, MIT License.
+
+The recognizers were trained on chant texts and melodies from [Cantus Database](https://cantusdatabase.org/) and
+[GregoBase](https://gregobase.selapa.net/), on scans made public by the libraries that hold the books and manuscripts,
+and on lines from [CATMuS Medieval](https://huggingface.co/datasets/CATMuS/medieval) (Thibault Clérice et al.,
+CC BY 4.0).
