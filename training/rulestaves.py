@@ -25,13 +25,14 @@ def sharp_rows(v, k=21):
     return v - m
 
 
-def ruling(rgb, x0, x1):
-    """The ruled lines' heights in the columns x0..x1: (first, spacing, count) — y = first + i * spacing."""
+def ruling(rgb, x0, x1, lo=22, hi=46):
+    """The ruled lines' heights in the columns x0..x1, the spacing looked for between lo and hi: (first, spacing,
+    score) — y = first + i * spacing."""
     rb = (rgb[:, x0:x1, 0] - rgb[:, x0:x1, 2])
     prof = sharp_rows(np.median(rb, axis=1))
     H = len(prof)
     best = None
-    for g in np.arange(22, 46, 0.25):
+    for g in np.arange(lo, hi, 0.25):
         for ph in np.arange(0, g, 1.0):
             ys = np.arange(ph, H - 1, g)
             s = np.interp(ys, np.arange(H), prof).sum() / len(ys)
@@ -68,8 +69,14 @@ def page(path):
     if len(cols) < 100: return gray, []
     bx0, bx1 = int(cols[0]), int(cols[-1])
     # the ruling, strip by strip; the spacing taken as the strips agree (median), each strip's phase fitted to it
+    # (the rows of words first: written on every fifth ruled line, the staff's four between, so the rows' usual
+    # distance apart is five spaces — which keeps the ruling's fit from settling on a spacing 5/4 or 4/5 of the true)
+    rows = text_rows(rgb, int(bx0 + 0.15 * (bx1 - bx0)), int(bx1 - 0.15 * (bx1 - bx0)))
+    mids = [(a + b) / 2 for a, b in rows]
+    gaps = [d for d in np.diff(mids) if 5 * 22 <= d <= 5 * 52]
+    lo, hi = (0.9 * np.median(gaps) / 5, 1.1 * np.median(gaps) / 5) if len(gaps) >= 2 else (22, 46)
     xs = list(range(bx0, bx1 - STRIP // 2, STRIP))
-    fits = [ruling(rgb, x, min(W, x + STRIP)) for x in xs]
+    fits = [ruling(rgb, x, min(W, x + STRIP), lo, hi) for x in xs]
     g = float(np.median([f[1] for f in fits]))
     phases = []
     for x in xs:
@@ -84,7 +91,6 @@ def page(path):
         un.append(q)
     centres = [x + STRIP / 2 for x in xs]
     mid = len(xs) // 2
-    rows = text_rows(rgb, int(bx0 + 0.15 * (bx1 - bx0)), int(bx1 - 0.15 * (bx1 - bx0)))
     out = []
     for (t0, t1) in rows:
         tm = (t0 + t1) / 2
