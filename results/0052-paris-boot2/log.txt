@@ -392,3 +392,105 @@ epoch 6 batch 2300: loss 0.442 (5485 s)
 epoch 6 batch 2400: loss 0.443 (5499 s)
 epoch 6 batch 2500: loss 0.443 (5514 s)
 epoch 6 batch 2600: loss 0.442 (5527 s)
+epoch 6 batch 2700: loss 0.442 (5541 s)
+epoch 6 batch 2800: loss 0.442 (5555 s)
+epoch 6 batch 2900: loss 0.441 (5568 s)
+epoch 6 batch 3000: loss 0.441 (5583 s)
+epoch 6 batch 3100: loss 0.439 (5596 s)
+epoch 6 batch 3200: loss 0.439 (5611 s)
+epoch 6 batch 3300: loss 0.439 (5625 s)
+epoch 6 batch 3400: loss 0.440 (5638 s)
+epoch 6 batch 3500: loss 0.440 (5653 s)
+epoch 6 batch 3600: loss 0.440 (5667 s)
+epoch 6 batch 3700: loss 0.440 (5681 s)
+epoch 6 batch 3800: loss 0.441 (5696 s)
+epoch 6 batch 3900: loss 0.440 (5710 s)
+epoch 6 batch 4000: loss 0.440 (5724 s)
+epoch 6 batch 4100: loss 0.440 (5738 s)
+epoch 6 batch 4200: loss 0.440 (5752 s)
+epoch 6 batch 4300: loss 0.440 (5765 s)
+epoch 6 batch 4400: loss 0.439 (5779 s)
+epoch 6 batch 4500: loss 0.439 (5793 s)
+epoch 6 batch 4600: loss 0.439 (5807 s)
+epoch 6 batch 4700: loss 0.439 (5821 s)
+epoch 6 batch 4800: loss 0.439 (5835 s)
+epoch 6 batch 4900: loss 0.439 (5849 s)
+epoch 6 batch 5000: loss 0.439 (5863 s)
+epoch 6 batch 5100: loss 0.439 (5877 s)
+epoch 6 batch 5200: loss 0.439 (5892 s)
+epoch 6 batch 5300: loss 0.440 (5907 s)
+epoch 6 batch 5400: loss 0.440 (5921 s)
+epoch 6 batch 5500: loss 0.440 (5934 s)
+epoch 6 batch 5600: loss 0.441 (5948 s)
+epoch 6 batch 5700: loss 0.441 (5963 s)
+epoch 6 batch 5800: loss 0.441 (5977 s)
+epoch 6 batch 5900: loss 0.441 (5990 s)
+epoch 6 batch 6000: loss 0.441 (6004 s)
+epoch 6 batch 6100: loss 0.441 (6019 s)
+epoch 6 batch 6200: loss 0.441 (6033 s)
+epoch 6 batch 6300: loss 0.440 (6047 s)
+epoch 6 batch 6400: loss 0.440 (6060 s)
+epoch 6 batch 6500: loss 0.441 (6074 s)
+epoch 6 batch 6600: loss 0.441 (6088 s)
+epoch 6 batch 6700: loss 0.441 (6102 s)
+epoch 6 batch 6800: loss 0.441 (6115 s)
+epoch 6 batch 6900: loss 0.441 (6129 s)
+epoch 6 batch 7000: loss 0.443 (6143 s)
+epoch 6: loss 0.443; synthetic test staves: token errors 3.66%, note errors 4.08%; real: token errors 6.07%, note errors 6.51% (6147 s)
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-123628r --real-labels labels-boot2.jsonl --held 10
+384 staves: token errors 22.11%, note errors 26.44%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-123628r --real-labels labels-boot2.jsonl --held 10
+384 staves: token errors 27.68%, note errors 31.95%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-601861r --real-labels labels-boot3.jsonl --held 10
+171 staves: token errors 12.76%, note errors 14.67%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-601861r --real-labels labels-boot3.jsonl --held 10
+171 staves: token errors 12.41%, note errors 14.16%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+376 staves: token errors 6.30%, note errors 7.78%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-123672 --real-labels labels-fit-shapes.jsonl --held 10
+376 staves: token errors 6.16%, note errors 7.61%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+372 staves: token errors 3.78%, note errors 3.92%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-123723 --real-labels labels-fit-shapes.jsonl --held 10
+372 staves: token errors 3.39%, note errors 3.59%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.79%, note errors 12.67%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-123606 --real-labels labels-fit-shapes.jsonl --held 10
+400 staves: token errors 9.54%, note errors 12.37%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+359 staves: token errors 10.61%, note errors 13.53%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/ms-123631-v2 --real-labels labels-rebroken-clean-shapes.jsonl --held 10
+359 staves: token errors 10.52%, note errors 13.43%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.55%, note errors 2.80%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/real --real-labels labels-rebroken-clean.jsonl --held 10
+194 staves: token errors 3.47%, note errors 2.70%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 7.97%, note errors 7.20%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/book-2 --real-labels labels-plain-clean.jsonl --held 10
+400 staves: token errors 8.25%, note errors 7.37%
+
+$ recognizer.py test --model training/data/j0052/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.28%, note errors 14.55%
+
+$ recognizer.py test --model training/data/j0051/best.pt --data training/data/book-48 --real-labels labels-plain-clean.jsonl --held 10
+249 staves: token errors 14.29%, note errors 14.55%
+
+$ recognizer.py export --model training/data/j0052/best.pt --onnx OUT/chant.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0052-paris-boot2/chant.onnx (5.7 MB)
