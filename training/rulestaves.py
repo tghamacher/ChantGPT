@@ -91,14 +91,47 @@ def page(path):
         un.append(q)
     centres = [x + STRIP / 2 for x in xs]
     mid = len(xs) // 2
+    # (the ruling straight across the page: a line through the strips' phases, far-off strips left out)
+    cs, us = np.array(centres), np.array(un)
+    fit = np.polyfit(cs, us, 1) if len(cs) >= 3 else None
+    if fit is not None:
+        near = np.abs(us - np.polyval(fit, cs)) < 0.25 * g
+        if near.sum() >= 2: fit = np.polyfit(cs[near], us[near], 1)
+        un = list(np.polyval(fit, cs))
+    rb = rgb[:, :, 0] - rgb[:, :, 2]
+    xa, xb = int(bx0 + 0.1 * (bx1 - bx0)), int(bx1 - 0.1 * (bx1 - bx0))
+    xsamp = np.arange(xa, xb, 3)
+    slope = fit[0] if fit is not None else 0.0
+    def snap(y_mid, reach):
+        # (a hand-ruled page's lines aren't quite evenly spaced: each line moved to where the ruling is, near where
+        # the even grid puts it — the redness along a line of the grid's slope, at offsets up to a third of a space)
+        best, bd = None, 0.0
+        for d in np.arange(-reach, reach + 0.01, 0.5):
+            ys = y_mid + d + slope * (xsamp - (xa + xb) / 2)
+            yi = np.clip(np.round(ys).astype(int), 0, H - 1)
+            v = np.median(rb[yi, xsamp]) - 0.5 * (np.median(rb[np.clip(yi - int(g / 3), 0, H - 1), xsamp]) + np.median(rb[np.clip(yi + int(g / 3), 0, H - 1), xsamp]))
+            if best is None or v > best: best, bd = v, d
+        return bd
+    xm = (xa + xb) / 2
+    # (each row of words written on a ruled line, near the band's foot; the staff the four ruled lines between it and
+    # the row above, at fifths of the way (the first row's, a staff's usual size above it), each moved onto the ruling)
+    feet = [t1 for t0, t1 in rows]
+    period = np.median(np.diff(feet)) if len(feet) > 1 else 5 * g
     out = []
-    for (t0, t1) in rows:
-        tm = (t0 + t1) / 2
-        # the ruled line the words are written on (nearest the band's middle, at the page's middle), and the four above
-        k = round((tm - un[mid]) / g)
-        lines = [[v for c, ph in zip(centres, un) for v in (c, ph + (k - 4 + i) * g)] for i in range(4)]
-        if lines[0][1] < 0: continue
-        out.append((lines, g))
+    for n, f in enumerate(feet):
+        above = feet[n - 1] if n and 4 * g < f - feet[n - 1] < 7 * g else f - period
+        q = (f - above) / 5
+        ys = [above + (i + 1) * q for i in range(4)]
+        moved = [y + snap(y, 0.22 * q) for y in ys]
+        # (a line pulled far from its fellows' spacing was pulled by something else: left where the fifths put it)
+        for i in range(4):
+            prev = moved[i - 1] if i else above
+            nxt = moved[i + 1] if i < 3 else f
+            if not (0.7 * q < moved[i] - prev < 1.3 * q and 0.7 * q < nxt - moved[i] < 1.3 * q): moved[i] = ys[i]
+        ys = moved
+        if ys[0] < 0: continue
+        lines = [[v for c in centres for v in (c, y + slope * (c - xm))] for y in ys]
+        out.append((lines, (ys[3] - ys[0]) / 3))
     return gray, out
 
 
