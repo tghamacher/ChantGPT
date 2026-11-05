@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.20.1** · early test version
+**Version 0.20.2** · early test version
 
 ChantGPT reads scans of Gregorian chant, from printed books and manuscripts, and gives you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
