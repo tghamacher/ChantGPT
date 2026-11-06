@@ -1,0 +1,22 @@
+job 0060-late: The printed-book recognizer (0058) taught the shapes of 17th- and 18th-century chant (Medicaean prints, choirbooks: squares, diamonds, stemmed longae, set apart; red or black lines) from 20,000 made-up staves (training/latechant.py), with all it learnt from; from 0058; tested against 0058 on the printed books, so that it loses nothing there; exported
+code: 6c334c1
+
+$ recognizer.py train --data training/data/staves,training/data/late --real training/data/real,training/data/real,training/data/book-2,training/data/book-3,training/data/book-7,training/data/book-9,training/data/book-48 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl --resume training/data/j0058/best.pt --width 192 --epochs 4 --lr 3e-4 --batch 32 --out training/data/j0060
+74271 staves to learn from (13623 real, each 3 times), 1031 synthetic and 1495 real to test on; 0 left out for tokens the model hasn't; 260 tokens; 1,428,397 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.277 (1 s)
+epoch 1 batch 100: loss 0.972 (19 s)
+epoch 1 batch 200: loss 0.854 (37 s)
+epoch 1 batch 300: loss 0.711 (54 s)
+epoch 1 batch 400: loss 0.611 (71 s)
+epoch 1 batch 500: loss 0.547 (87 s)
+epoch 1 batch 600: loss 0.501 (103 s)
+epoch 1 batch 700: loss 0.468 (120 s)
+epoch 1 batch 800: loss 0.440 (136 s)
+epoch 1 batch 900: loss 0.416 (151 s)
+epoch 1 batch 1000: loss 0.398 (167 s)
+epoch 1 batch 1100: loss 0.383 (184 s)
+epoch 1 batch 1200: loss 0.368 (199 s)
+epoch 1 batch 1300: loss 0.358 (215 s)
+epoch 1 batch 1400: loss 0.350 (232 s)
