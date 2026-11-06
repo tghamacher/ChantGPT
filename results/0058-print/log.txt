@@ -1,0 +1,26 @@
+job 0058-print: A recognizer for printed chant books alone (the app's models/chant.*, still the first one of 10-26: synthetic staves and the 1908 Graduale): from 0053 (the manuscript model, which has seen all the books), on the synthetic printed staves, the 1908 Graduale ×2, and the Graduale 1961, Liber usualis 1949, Antiphonale monasticum, Liber antiphonarius and Antiphonale Romanum with their staves checked by their words (labels-plain-text.jsonl); tested against the app's print model (model2) and 0053 on each book's held-out pages; exported
+code: 6c334c1
+removed training/data/text-catmus-sp
+removed training/data/j0055
+removed training/data/j0056
+
+$ recognizer.py train --data training/data/staves --real training/data/real,training/data/real,training/data/book-2,training/data/book-3,training/data/book-7,training/data/book-9,training/data/book-48 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl,labels-plain-text.jsonl --resume training/data/j0053/best.pt --width 192 --epochs 6 --lr 3e-4 --batch 32 --out training/data/j0058
+54878 staves to learn from (13623 real, each 3 times), 424 synthetic and 1495 real to test on; 0 left out for tokens the model hasn't; 260 tokens; 1,428,397 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.355 (1 s)
+epoch 1 batch 100: loss 0.198 (21 s)
+epoch 1 batch 200: loss 0.192 (40 s)
+epoch 1 batch 300: loss 0.190 (61 s)
+epoch 1 batch 400: loss 0.191 (79 s)
+epoch 1 batch 500: loss 0.191 (97 s)
+epoch 1 batch 600: loss 0.190 (115 s)
+epoch 1 batch 700: loss 0.189 (131 s)
+epoch 1 batch 800: loss 0.189 (148 s)
+epoch 1 batch 900: loss 0.190 (165 s)
+epoch 1 batch 1000: loss 0.189 (180 s)
+epoch 1 batch 1100: loss 0.189 (197 s)
+epoch 1 batch 1200: loss 0.189 (214 s)
+epoch 1 batch 1300: loss 0.189 (231 s)
+epoch 1 batch 1400: loss 0.188 (249 s)
+epoch 1 batch 1500: loss 0.187 (266 s)
