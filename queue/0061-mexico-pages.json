@@ -1,0 +1,37 @@
+{
+ "id": "0061-mexico-pages",
+ "about": "The Mexican choirbook (Stanford, Codex 0734; Cantus 1000019: 96 melodies, five-line staves, late 17th/18th c.): the pages the user's browser saved from Stanford, filed by folio (their labels) and shared; then the zips taken off the disk",
+ "data": [
+  "cantus-csv-3.zip"
+ ],
+ "steps": [
+  [
+   "cantus.py",
+   "collect",
+   "--source",
+   "1000019",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools",
+   "--manifest",
+   "https://purl.stanford.edu/fk104qr6181/iiif/manifest",
+   "--share",
+   "DATA",
+   "--folios",
+   "all",
+   "--width",
+   "1800"
+  ],
+  [
+   "cantus.py",
+   "tidy",
+   "--source",
+   "1000019",
+   "--share",
+   "DATA",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools"
+  ]
+ ],
+ "keep": [],
+ "remove": []
+}
