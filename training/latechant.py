@@ -27,9 +27,15 @@ from hufnagel import melodies, TOP, SPACE, HEIGHT, ROW
 ROMAN = [p for p in glob.glob('/usr/share/fonts/truetype/*/*.ttf') if any(k in p for k in ('LiberationSerif-Regular', 'LiberationSerif-Bold', 'FreeSerif.ttf', 'FreeSerifBold', 'DejaVuSerif.ttf'))]
 
 
-def draw_staff(items, rng, words, style):
+def draw_staff(items, rng, words, style, nlines=4):
     clef = items[0]
     S = 3
+    # (four lines with the top one at row 20, or five with it at 14, as fivestaves.py cuts them; a GABC letter's row from
+    # the top line's: j for four lines, l for five)
+    T = TOP if nlines == 4 else 14
+    LET = 'abcdefghijklm' if nlines == 4 else 'abcdefghijklmnp'
+    topi = 3 + 2 * (nlines - 1)
+    row = lambda p: T + (topi - LET.index(p)) * SPACE / 2
     W = 40 + 26 * len(items) + rng.randint(0, 40)
     im = Image.new('RGB', (W * S, HEIGHT * S), (255, 255, 255))
     d = ImageDraw.Draw(im)
@@ -41,8 +47,8 @@ def draw_staff(items, rng, words, style):
         lw = rng.uniform(.9, 1.6)
     else:
         g = rng.randint(20, 80); line_col = (g, g, g); lw = rng.uniform(.4, .8)
-    for k in range(4):
-        y = TOP + k * SPACE + rng.uniform(-.3, .3)
+    for k in range(nlines):
+        y = T + k * SPACE + rng.uniform(-.3, .3)
         d.line([(0, y * S), (W * S, y * S)], fill=line_col, width=max(1, int(lw * S)))
     col = (ink, ink, ink)
     half = SPACE * rng.uniform(.42, .5)                      # (a note: about a space high, as wide)
@@ -55,7 +61,7 @@ def draw_staff(items, rng, words, style):
         L_ = SPACE * rng.uniform(1.3, 2.0)
         d.line([((x + 2 * half - .4) * S, y * S), ((x + 2 * half - .4) * S, (y - L_ if up else y + L_) * S)], fill=col, width=max(2, int(S * rng.uniform(.6, .9))))
     # the clef: two squares one above the other on its line (C); a diamond and a square before it (F)
-    cy = TOP + (4 - int(clef[1])) * SPACE
+    cy = T + (nlines - int(clef[1])) * SPACE
     x = 4 + rng.uniform(0, 3)
     def cclef(x):
         # (a thin stroke down the left, and two small squares against it, the line between them)
@@ -70,18 +76,18 @@ def draw_staff(items, rng, words, style):
     gap = (lambda: rng.uniform(3, 7)) if not choir else (lambda: rng.uniform(4, 9))
     for it in items[1:]:
         if it.endswith('+'):                                  # the custos: a small square with a tail up
-            y = ROW(it[0]); d.rectangle([(x * S, (y - half * .5) * S), ((x + half) * S, (y + half * .5) * S)], fill=col)
+            y = row(it[0]); d.rectangle([(x * S, (y - half * .5) * S), ((x + half) * S, (y + half * .5) * S)], fill=col)
             d.line([((x + half) * S, y * S), ((x + half + 3) * S, (y - SPACE * 1.2) * S)], fill=col, width=max(1, int(S * .6)))
             x += 10; continue
         if it in (',', ';', ':', '::', '`'):                  # a bar
-            ys = {'`': (TOP - 2, TOP + 6), ',': (TOP, TOP + SPACE * 1.5), ';': (TOP + SPACE * .5, TOP + SPACE * 2.5)}.get(it, (TOP, TOP + 3 * SPACE))
+            ys = {'`': (T - 2, T + 6), ',': (T, T + SPACE * 1.5), ';': (T + SPACE * .5, T + SPACE * 2.5)}.get(it, (T, T + (nlines - 1) * SPACE))
             d.line([((x + 2) * S, ys[0] * S), ((x + 2) * S, ys[1] * S)], fill=col, width=max(2, S))
             if it == '::': d.line([((x + 5) * S, ys[0] * S), ((x + 5) * S, ys[1] * S)], fill=col, width=max(2, S))
             x += 10; continue
-        ps = [c for c in it if c in 'abcdefghijklm']
+        ps = [c for c in it if c in LET]
         for i, p in enumerate(ps):
-            y = ROW(p)
-            falling = i > 0 and 'abcdefghijklm'.index(p) < 'abcdefghijklm'.index(ps[i - 1])
+            y = row(p)
+            falling = i > 0 and LET.index(p) < LET.index(ps[i - 1])
             if falling and rng.random() < .85: diamond(x, y)   # (a descending run's notes after its first)
             elif len(ps) == 1 and rng.random() < .22: square(x, y); stem(x, y)   # (a longa)
             elif i == 0 and len(ps) > 1 and rng.random() < .3: square(x, y); stem(x, y, up=rng.random() < .3)
@@ -95,7 +101,7 @@ def draw_staff(items, rng, words, style):
     while wx < W2:
         w = rng.choice(words)
         if rng.random() < .3: w = w.upper() if rng.random() < .3 else w.capitalize()
-        d.text((wx * S, (TOP + 3 * SPACE + rng.uniform(4, 8)) * S), w, font=G, fill=col, anchor='lt')
+        d.text((wx * S, (T + (nlines - 1) * SPACE + rng.uniform(4, 8)) * S), w, font=G, fill=col, anchor='lt')
         wx += G.getlength(w) / S + rng.uniform(6, 30)
     im = im.crop((0, 0, W2 * S, HEIGHT * S)).resize((W2, HEIGHT), Image.LANCZOS).convert('L')
     a = np.asarray(im, np.float32) / 255
@@ -117,12 +123,13 @@ def main(o):
     with open(os.path.join(o.out, 'labels.jsonl'), 'w', encoding='utf-8') as f:
         while n < o.count:
             line, custos = rng.choice(mel)
-            clef = rng.choice(['c3', 'c4', 'c4', 'c2', 'f3', 'f2', 'c3', 'c1'])
-            items = C.gabc(line, clef, custos)
+            nl = 5 if rng.random() < o.five else 4
+            clef = rng.choice(['c3', 'c4', 'c4', 'c2', 'f3', 'f2', 'c3', 'c1'] if nl == 4 else ['c4', 'c5', 'c3', 'c4', 'f4', 'f3', 'c2'])
+            items = C.gabc(line, clef, custos, lines=nl)
             if not items or len(items) < 4: continue
             if len(items) > 36: items = items[:36]
             style = o.style if o.style != 'mixed' else rng.choice(['print', 'print', 'choirbook'])
-            im = draw_staff(items, rng, words, style)
+            im = draw_staff(items, rng, words, style, nl)
             name = f'{n:06d}.jpg'
             im.save(os.path.join(o.out, name), quality=90)
             f.write(json.dumps({'file': name, 'items': items}) + '\n'); n += 1
@@ -135,5 +142,6 @@ if __name__ == '__main__':
     a.add_argument('--count', type=int, default=20000)
     a.add_argument('--seed', type=int, default=1)
     a.add_argument('--style', default='mixed', choices=['print', 'choirbook', 'mixed'])
+    a.add_argument('--five', type=float, default=0.0, help='the share of staves with five lines (cut as fivestaves.py cuts them: the top line at row 14)')
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'late'))
     main(a.parse_args())

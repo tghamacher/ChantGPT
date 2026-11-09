@@ -342,7 +342,7 @@ def lines(source):
 
 
 # ---------------------------------------------------------------- melodies as GABC, on a staff with its clef
-def shift_for(steps, clef):
+def shift_for(steps, clef, top=12):
     """How many steps up the staff's positions (GABC a = 0 … m = 12) are from Volpiano's: the clef's note (C for a
     c clef, F for an f clef) on its line, at the octave that keeps the most notes on the staff (then the most central)."""
     line = int(clef[-1])
@@ -350,19 +350,22 @@ def shift_for(steps, clef):
     best = None
     for base in ((3, 10, 17) if clef[0] == 'c' else (6, 13)):
         sh = at - base
-        on = sum(0 <= s + sh <= 12 for s in steps)
-        mid = -abs(sum(s + sh for s in steps) / max(1, len(steps)) - 6)
+        on = sum(0 <= s + sh <= top for s in steps)
+        mid = -abs(sum(s + sh for s in steps) / max(1, len(steps)) - top / 2)
         if best is None or (on, mid) > best[0]: best = ((on, mid), sh)
     return best[1]
 
 
-def gabc(line, clef, custos=None):
+def gabc(line, clef, custos=None, lines=4):
     """A line's syllables as GABC groups (one for each syllable; / between neumes), the clef first and the custos (the
-    next line's first note) last; or None when a note falls off the staff."""
+    next line's first note) last; or None when a note falls off the staff. lines: 4, or 5 (a staff of five lines: GABC
+    a to n and p, three above the top line as for four)."""
+    letters = 'abcdefghijklm' if lines == 4 else 'abcdefghijklmnp'
+    top = len(letters) - 1
     steps = [n[1] for s in line for neume in s for n in neume]
     if not steps: return None
-    sh = shift_for(steps + ([custos] if custos is not None else []), clef)
-    pos = lambda st: 'abcdefghijklm'[st + sh] if 0 <= st + sh <= 12 else None
+    sh = shift_for(steps + ([custos] if custos is not None else []), clef, top)
+    pos = lambda st: letters[st + sh] if 0 <= st + sh <= top else None
     items = [clef]
     for s in line:
         g = []
@@ -389,11 +392,12 @@ def first_step(line):
 
 
 CLEFS = ['c1', 'c2', 'c3', 'c4', 'f2', 'f3', 'f4']
+CLEFS5 = ['c1', 'c2', 'c3', 'c4', 'c5', 'f2', 'f3', 'f4', 'f5']
 
 
 def positions(tokens):
     """The staff positions (GABC letters) of the notes among tokens (recognizer.py's or staffdata.py's)."""
-    return [t[0].lower() for t in tokens if re.fullmatch(r'[a-mA-M][vVoOwsr]?[~<>]?', t)]
+    return [t[0].lower() for t in tokens if re.fullmatch(r'[a-npA-NP][vVoOwsr]?[~<>]?', t)]
 
 
 def edits(a, b):
@@ -405,14 +409,14 @@ def edits(a, b):
     return d[len(b)]
 
 
-def fit_clef(read, line, custos, clefs=CLEFS):
+def fit_clef(read, line, custos, clefs=CLEFS, lines=4):
     """The clef under which a line's notes (Cantus's pitches) sit where the model read notes on the staff: (clef,
     GABC items, the share of notes that differ). read: the tokens the model read; clefs: those to try (a staff whose
     clef is known, as redstaves.py knows it from the red F line: that one)."""
     seen = positions([t for t in read if not t.endswith('+')])
     best = None
     for clef in clefs:
-        items = gabc(line, clef, custos)
+        items = gabc(line, clef, custos, lines)
         if not items: continue
         want = positions(staffdata_tokens(items[1:-1] if items[-1].endswith('+') else items[1:]))
         d = edits(seen, want) / max(1, len(want))
