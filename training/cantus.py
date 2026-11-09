@@ -139,8 +139,9 @@ def collect(o):
         have = {r['folio'] for r in chants(o.source)}
         ident = o.manifest
         def folio_of(n, name):
-            m = re.search(r'(\d+)\s*_?([rv])\b', name[5:].rsplit('.', 1)[0])
-            f = m and f'{int(m.group(1)):03d}{m.group(2)}'
+            label = name[5:].rsplit('.', 1)[0]
+            m = re.search(r'(\d+)\s*_?\.?\s*(r|v|recto|verso)\b', label, re.I)
+            f = m and f'{int(m.group(1)):03d}{m.group(2)[0].lower()}'
             return f if f in have else None
     else:
         pages = page_images(o.source)
@@ -151,6 +152,7 @@ def collect(o):
     downloads = o.downloads or os.path.join(os.path.expanduser('~'), 'Downloads')
     zips = [z for z in glob.glob(os.path.join(downloads, '*.zip')) if re.search(r' \d+-\d+\.zip$', z)]
     n = skipped = 0
+    unmatched = []
     def ours(z):                                        # (the app writes the manifest it saved from in source.txt)
         with zipfile.ZipFile(z) as zf:
             return 'source.txt' in zf.namelist() and bool(ident) and ident in zf.read('source.txt').decode('utf-8', 'replace')
@@ -161,7 +163,10 @@ def collect(o):
                 m = re.match(r'(\d{4})\b.*\.(jpe?g|png)$', name)
                 if not m: continue
                 f = folio_of(int(m.group(1)), name)
-                if not f: skipped += 1; continue
+                if not f:
+                    skipped += 1
+                    if len(unmatched) < 12: unmatched.append(name)
+                    continue
                 with open(os.path.join(out, f + '.jpg'), 'wb') as fh: fh.write(zf.read(name))
                 n += 1
     # (the zips used, for tidy: only these are deleted, not one saved since)
@@ -169,6 +174,7 @@ def collect(o):
     before = json.load(open(used)) if os.path.exists(used) else []
     json.dump(sorted(set(before) | {os.path.abspath(z) for z in zips}), open(used, 'w'), indent=1)
     print(f'{n} pages filed by folio -> {out} (from {len(zips)} zips in {downloads}; {skipped} pages with no chant left out)')
+    if unmatched: print('pages not filed, for instance:', '; '.join(unmatched))
     if o.share:
         share(o, out)
 
