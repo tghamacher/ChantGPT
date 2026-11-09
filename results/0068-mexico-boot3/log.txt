@@ -1,0 +1,16 @@
+job 0068-mexico-boot3: The Mexican choirbook round 3: 384 staves (labels-boot3.jsonl, paired through the book by 0067's reading) ×3 with all the rest; from 0067 (installed in 0.21.0); tested on the choirbook's held-out staves and the others against 0067; exported
+code: 80fab1d
+
+$ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel,training/data/points,training/data/points2,training/data/late5 --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-123628s,training/data/ms-123628s,training/data/ms-123628s,training/data/ms-1000019,training/data/ms-1000019,training/data/ms-1000019 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl --resume training/data/j0067/best.pt --width 192 --epochs 4 --lr 3e-4 --batch 32 --out training/data/j0068
+Traceback (most recent call last):
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 383, in <module>
+    {'train': train, 'test': test, 'export': export, 'clean': clean, 'rebreak': rebreak}[o.what](o)
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 180, in train
+    a, b = split(load(d, names[min(k, len(names) - 1)]), 10); real += a; real_test += b
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ChantGPT\changpt-repo\training\recognizer.py", line 63, in load
+    for l in open(os.path.join(data, labels), encoding='utf-8'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'training/data/ms-123628s\\labels-boot3.jsonl'
+(step 1 failed: exit 1)
+(nothing to keep at training/data/j0068/best.pt)
