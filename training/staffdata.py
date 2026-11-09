@@ -17,7 +17,7 @@ from PIL import Image
 SPACE, TOP, HEIGHT = 8, 20, 64          # 2.5 spaces above the top line, 2.5 below the bottom one
 LEFT, RIGHT = 0.6, 0.4                  # spaces before the staff's start and after its end
 
-LETTERS = 'abcdefghijklm'
+LETTERS = 'abcdefghijklmnp'           # (n and p: above a five-line staff; GABC has no o, the oriscus)
 SHAPES = 'vVoOwsr'                      # virga, reversed virga, oriscus, reversed oriscus, quilisma, stropha, cavum
 LIQ = '~<>'
 
@@ -25,7 +25,7 @@ LIQ = '~<>'
 def kind(g):
     """As js/chant.js says what a GABC group is."""
     if re.fullmatch(r'[cf]b?[1-5]', g): return 'clef'
-    if re.fullmatch(r'[a-mA-M]\+', g): return 'custos'
+    if re.fullmatch(r'[a-npA-NP]\+', g): return 'custos'
     if re.fullmatch(r"(::|:\??|;\d?|,\d?|`\d?|\^)['_0-9]*", g) or g in (':', '::', ';', ',', '`'): return 'bar'
     return 'neume'
 
@@ -80,7 +80,7 @@ def tokens(items):
     its letter and +, neume material as neume_tokens(); | between items."""
     out = []
     # (a custos, a bar or a clef written up against other signs, f+::c4, split off them, as js/chant.js does)
-    items = [p for g in items for p in ([g] if kind(g) != 'neume' else re.split(r"([a-mA-M]\+|::|:'?|;[0-9]?|,[0-9]?|`)", g)) if p]
+    items = [p for g in items for p in ([g] if kind(g) != 'neume' else re.split(r"([a-npA-NP]\+|::|:'?|;[0-9]?|,[0-9]?|`)", g)) if p]
     for g in items:
         k = kind(g)
         t = [g] if k in ('clef', 'custos') else [bar(g)] if k == 'bar' else neume_tokens(g)
