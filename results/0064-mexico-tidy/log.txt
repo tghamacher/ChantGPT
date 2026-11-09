@@ -1,0 +1,5 @@
+job 0064-mexico-tidy: The Mexican choirbook's pages are on training-data (cantus-1000019): the zips saved from Stanford and the pages filed on this computer deleted
+code: 19791ea
+
+$ cantus.py tidy --source 1000019 --share DATA --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --manifest https://purl.stanford.edu/fk104qr6181/iiif/manifest
+3 zips of cantus-1000019 on training-data; deleted 4 of the app's zips from C:\Users\Ted Hamacher\Desktop\EMS Tools and 311 pages from D:\ChantGPT\changpt-repo\training\data\scans\1000019
