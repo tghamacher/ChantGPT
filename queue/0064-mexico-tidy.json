@@ -1,0 +1,21 @@
+{
+ "id": "0064-mexico-tidy",
+ "about": "The Mexican choirbook's pages are on training-data (cantus-1000019): the zips saved from Stanford and the pages filed on this computer deleted",
+ "data": [],
+ "steps": [
+  [
+   "cantus.py",
+   "tidy",
+   "--source",
+   "1000019",
+   "--share",
+   "DATA",
+   "--downloads",
+   "C:\\Users\\Ted Hamacher\\Desktop\\EMS Tools",
+   "--manifest",
+   "https://purl.stanford.edu/fk104qr6181/iiif/manifest"
+  ]
+ ],
+ "keep": [],
+ "remove": []
+}
