@@ -1,0 +1,264 @@
+job 0063-mexico-pages: The Mexican choirbook (Stanford, Codex 0734; Cantus 1000019: 96 melodies, five-line staves, late 17th/18th c.): the pages the user's browser saved from Stanford, filed by page number (Stanford labels them Page_1, Page_2 …: the folios worked out from the pages later) and shared; then the zips taken off the disk
+code: 19791ea
+
+$ cantus.py collect --source 1000019 --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --manifest https://purl.stanford.edu/fk104qr6181/iiif/manifest --by-page --share DATA --folios all --width 1800
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141482120 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135481812 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137361234 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133166582 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137252282 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134365054 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132921440 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134351435 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134038198 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135931239 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134092674 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135917620 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135549907 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134882576 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132662679 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134814481 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134991528 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134283340 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132826107 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138232850 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133452581 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138423516 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132744393 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137579138 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134637434 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136421523 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135277527 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137007140 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136503237 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137129711 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135195813 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (139063609 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135318384 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138913800 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133493438 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137742566 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138464373 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136053810 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137688090 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138832086 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133384486 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138260088 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134160769 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134651053 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137565519 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135372860 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138709515 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136435142 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138804848 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138491611 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (139771797 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133084868 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138682277 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133983722 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137320377 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132649060 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (131300779 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137102473 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132049824 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137442948 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (131940872 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137892375 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (130606210 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137047997 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (131831920 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136584951 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137279520 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (132703536 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (139785416 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133888389 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140902174 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133071249 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (139090847 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133466200 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134610196 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (139621988 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136748379 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140588937 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135890382 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141474172 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135182194 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141378839 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134256102 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140221224 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134474006 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140561699 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133956484 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140888555 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133738580 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141215411 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135767811 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+remote: warning: See https://gh.io/lfs for more information.        
+remote: warning: File cantus-1000019/pages-p0001-p0104-w1800.zip is 85.40 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
+remote: warning: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+311 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\1000019 (from 4 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 0 pages with no chant left out)
+104 of 311 pages -> pages-p0001-p0104-w1800.zip, pushed
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140834079 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134147150 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141011126 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (133970103 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141229030 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138028565 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140602556 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138859324 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141501410 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137756185 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140684270 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138505230 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141310744 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138668658 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141460553 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (137715328 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140765984 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (138314564 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142931405 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142849691 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135999334 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141678457 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136489618 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (141024745 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (140629794 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (136026572 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142413883 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142400264 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135781430 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142386645 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (134188007 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142250455 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135141337 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142427502 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142863310 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (135699716 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\PIL\Image.py:3593: DecompressionBombWarning: Image size (142985881 pixels) exceeds limit of 89478485 pixels, could be decompression bomb DOS attack.
