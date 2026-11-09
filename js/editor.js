@@ -98,6 +98,12 @@
   // region: [x, y, w, h] in page units. The lines found, in page units, or null.
   async function find(region) {
     const px = await ctx.pixels(ctx.state.page);
+    // (a book of five-line staves: the one the five-line finder finds in the box, if any)
+    if (ctx.state.doc.fiveLines && px.reds) {
+      const [x, y, w, h] = region.map(v => v * px.scale);
+      const hit = S.byFiveLines(px.reds, px.w, px.h).find(s => { const m = (s.lines[0][1] + s.lines[4][1]) / 2; return m > y && m < y + h && s.lines[0][2] > x && s.lines[0][0] < x + w; });
+      return hit ? hit.lines.map(l => l.map(v => v / px.scale)) : null;
+    }
     const r = (px.lines && S.fitStaff(px.lines, px.w, px.h, region.map(v => v * px.scale), undefined, true)) || S.fitStaff(px.gray, px.w, px.h, region.map(v => v * px.scale));
     return r && r.lines.map(l => l.map(v => v / px.scale));
   }
@@ -109,7 +115,7 @@
     try { lines = await find([rect[0], rect[1] - grow, rect[2], rect[3] + 2 * grow]); } catch (e) { ctx.say(`Couldn't read the page: ${e.message || e}`, true); }
     if (ctx.state.page !== pg) return;
     const before = snapshot();   // taken now, not before the search, in case another staff was added meanwhile
-    const st = { id: newId(), lines: lines || S.even(rect), syllables: [] };
+    const st = { id: newId(), lines: lines || S.even(rect, ctx.state.doc.fiveLines ? 5 : 4), syllables: [] };
     page().staves.push(st);
     settle(st);
     selected = st.id;
@@ -136,7 +142,7 @@
     const px = await ctx.pixels(pg);
     if (stale()) return null;
     const skip = ctx.state.doc.pages[pg].staves.map(st => st.box.map(v => v * px.scale));
-    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines, tint: px.tint, ruled: !!ctx.state.doc.ruledEvenly });
+    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines, tint: px.tint, reds: px.reds, ruled: !!ctx.state.doc.ruledEvenly, five: !!ctx.state.doc.fiveLines });
     return stale() ? null : found.map(r => r.lines.map(l => l.map(v => v / px.scale)));
   }
   function addFound(pg, found) {
@@ -260,7 +266,7 @@
 
   // the staff position (a = 0) at a point on the page, on the selected staff, and the size of a step there
   function pitchAt(st, x, y) {
-    const b = S.yAt(st.lines[3], x), t = S.yAt(st.lines[0], x), step = (b - t) / 6;
+    const b = S.yAt(st.lines[st.lines.length - 1], x), t = S.yAt(st.lines[0], x), step = (b - t) / (2 * (st.lines.length - 1));
     return { p: 3 + (b - y) / step, step };
   }
   // the item's GABC changed (moved up or down, or a note of it): marked as checked by being edited
@@ -1101,6 +1107,11 @@
         ctx.state.doc.ruledEvenly = !ctx.state.doc.ruledEvenly;
         ctx.say(ctx.state.doc.ruledEvenly ? 'Staves will be found as the four ruled lines above each row of words (a book ruled evenly all down the page, like Paris lat. 12044). Delete any found wrongly, then Find the staves.' : 'Staves will be found by their own lines again.');
       } },
+      // (a book whose staves have five lines, as the later choirbooks do: found, drawn and read with five)
+      { label: `${ctx.state.doc.fiveLines ? '✓ ' : ''}Five-line staves`, disabled: busy, run: () => {
+        ctx.state.doc.fiveLines = !ctx.state.doc.fiveLines;
+        ctx.say(ctx.state.doc.fiveLines ? 'Staves will be found with five lines (a choirbook ruled in red, 16th–18th century). Find the staves; the GABC is saved with staff-lines: 5.' : 'Staves will be found with four lines again.');
+      } },
       { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) },
       { label: 'Play the page', disabled: !list.some(v => v.syllables.length), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
@@ -1188,7 +1199,7 @@
     const st = staffOf(selected), it = itemOf();
     if (!st || !it) return false;
     const parts = String(text || '').replace(/[()]/g, ' ').trim().split(/\s+/).filter(Boolean).flatMap(c => C.groups(c));
-    const bad = parts.find(g => C.kind(g) === 'break' || (C.kind(g) === 'neume' && (/[^a-mA-M0-9vVwos~<>\/!@\[\]:._'`\-+xy#=qrR?;, ]/.test(g) || !C.notes(g).some(n => !n.acc))));
+    const bad = parts.find(g => C.kind(g) === 'break' || (C.kind(g) === 'neume' && (/[^a-npA-NP0-9vVwos~<>\/!@\[\]:._'`\-+xy#=qrR?;, ]/.test(g) || !C.notes(g).some(n => !n.acc))));
     if (!parts.length || bad) { ctx.say(parts.length ? `"${bad}" isn't something this can put here.` : 'Write its GABC: fgh, c3, f3, ::', true); return false; }
     if (parts.length === 1 && parts[0] === it.g) return true;
     const before = snapshot(), items = st.syllables[item.s].items, sc = N.scaleOf(st.lines);
@@ -1299,7 +1310,7 @@
     else if (drag.act === 'knot') st.lines = start.map(l => { const m = l.slice(); m[xi] += dx; m[yi] += dy; return m; });
     else if (drag.act === 'point') st.lines = start.map((l, i) => { const m = l.slice(); if (i === drag.line) m[yi] += dy; return m; });
     // a staff can't be turned inside out, nor its points pass one another
-    const xs = S.xsOf(st.lines[0]), t = st.lines[0], b = st.lines[3];
+    const xs = S.xsOf(st.lines[0]), t = st.lines[0], b = st.lines[st.lines.length - 1];
     if (xs.some((x, k) => k && x - xs[k - 1] < 4 * unit()) || xs.some((x, k) => b[2 * k + 1] <= t[2 * k + 1])) st.lines = start;
     draw(true);
   }

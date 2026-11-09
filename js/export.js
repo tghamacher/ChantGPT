@@ -31,7 +31,7 @@
           if (kind !== 'neume' && kind !== 'accidental') return;
           ev.push({ t: 'item' });
           for (const n of N().parse(it.g)) {
-            const d = K().diatonic(String.fromCharCode(97 + n.p), clef);
+            const d = K().diatonic('abcdefghijklmnp'[n.p], clef);
             if (n.acc) { ev.push({ t: 'acc', acc: n.acc, d }); continue; }
             if (n.sep && n.sep !== '!') ev.push({ t: 'neume' });
             ev.push({ t: 'note', d, liq: !!n.liq });
@@ -87,7 +87,7 @@
       return z;
     };
     const pitch = (p, clef) => {
-      const q = C().pitch(String.fromCharCode(97 + p), clef);
+      const q = C().pitch('abcdefghijklmnp'[p], clef);
       return q ? `pname="${q.step.toLowerCase()}" oct="${q.octave - 1}"` : '';
     };
     // the clef the page starts with: the clef in force before its first staff
@@ -98,7 +98,7 @@
     const indent = '              ';
     page.staves.forEach((st, k) => {
       const lines = st.lines, xs = S().xsOf(lines[0]), x0 = xs[0], x1 = xs[xs.length - 1];
-      const top = Math.min(...lines[0].filter((v, i) => i & 1)), bot = Math.max(...lines[3].filter((v, i) => i & 1));
+      const top = Math.min(...lines[0].filter((v, i) => i & 1)), bot = Math.max(...lines[lines.length - 1].filter((v, i) => i & 1));
       body.push(`${indent}<sb xml:id="${id('sb')}" n="${k + 1}" facs="#${zone(x0, top, x1, bot, S().tilt(lines))}"/>`);
       const sc = N().scaleOf(lines), step = S().spacing(lines) / 2;
       const yOf = (x, p) => N().yOf(lines, x, p);
@@ -119,7 +119,7 @@
             const form = it.g === '::' ? 'finalis' : it.g === ':' ? 'maior' : /^;/.test(it.g) ? 'minor' : /^,/.test(it.g) ? 'minima' : 'virgula';
             out.push(`<divLine xml:id="${id('divLine')}"${f} form="${form}"/>`);
           } else if (kind === 'custos') {
-            out.push(`<custos xml:id="${id('custos')}"${f} ${pitch(it.g.charCodeAt(0) - 97, clef)}/>`);
+            out.push(`<custos xml:id="${id('custos')}"${f} ${pitch('abcdefghijklmnp'.indexOf(it.g[0]), clef)}/>`);
           } else if (kind === 'neume' || kind === 'accidental') {
             // its glyphs as drawn, and each note's place along them
             const sh = N().itemShapes(it.g, false);

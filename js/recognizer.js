@@ -15,9 +15,12 @@
   // Returns { data (ink, 0 to 1, height rows of W), W, x0 (the image's first column on the page), step (page pixels to
   // a column) }.
   function straighten(gray, w, h, lines, meta) {
-    const H = meta.height, sp = meta.space, top = meta.top;
-    const xs = [0, 3].map(i => S().xsOf(lines[i]));
-    const g = (S().yAt(lines[3], (xs[0][0] + xs[0][xs[0].length - 1]) / 2) - S().yAt(lines[0], (xs[0][0] + xs[0][xs[0].length - 1]) / 2)) / 3;
+    // (a staff of five lines, as the 16th-18th-century choirbooks rule them: its top line at row 14, not 20, so that
+    // its fifth, at 46, leaves room below; the model has learnt both, from training/fivestaves.py's strips)
+    const n = lines.length, H = meta.height, sp = meta.space, top = n === 5 ? (meta.top5 || 14) : meta.top;
+    const xs = [0, n - 1].map(i => S().xsOf(lines[i]));
+    const midX = (xs[0][0] + xs[0][xs[0].length - 1]) / 2;
+    const g = (S().yAt(lines[n - 1], midX) - S().yAt(lines[0], midX)) / (n - 1);
     const x0 = xs[0][0] - meta.left * g, x1 = xs[0][xs[0].length - 1] + meta.right * g;
     const W = Math.max(1, Math.round((x1 - x0) / g * sp)), step = g / sp;
     const data = new Float32Array(H * W);
@@ -26,10 +29,10 @@
     // (between the lines, from line to line: a hand-ruled staff's spaces can differ a good deal; beyond them, at the
     // staff's mean space)
     for (let u = 0; u < W; u++) {
-      const cx = x0 + (u + 0.5) * step, ys = lines.map(l => at(l, cx)), mean = (ys[3] - ys[0]) / 3;
+      const cx = x0 + (u + 0.5) * step, ys = lines.map(l => at(l, cx)), mean = (ys[n - 1] - ys[0]) / (n - 1);
       for (let v = 0; v < H; v++) {
-        const s = (v + 0.5 - top) / sp, k = Math.max(0, Math.min(2, Math.floor(s)));
-        const py = s < 0 ? ys[0] + s * mean : s > 3 ? ys[3] + (s - 3) * mean : ys[k] + (s - k) * (ys[k + 1] - ys[k]);
+        const s = (v + 0.5 - top) / sp, k = Math.max(0, Math.min(n - 2, Math.floor(s)));
+        const py = s < 0 ? ys[0] + s * mean : s > n - 1 ? ys[n - 1] + (s - (n - 1)) * mean : ys[k] + (s - k) * (ys[k + 1] - ys[k]);
         data[v * W + u] = 1 - sample(gray, w, h, cx, py) / 255;
       }
     }
@@ -40,16 +43,17 @@
   // columns at meta.across to a staff space (fewer than the rows have: letters are taller than a note is wide).
   const TEXT = { height: 64, from: 3.3, to: 6.3, across: 12, left: 0.6, right: 0.4 };
   function textBand(gray, w, h, lines, meta = TEXT) {
-    const H = meta.height, xs = S().xsOf(lines[3]);
-    const mid = (xs[0] + xs[xs.length - 1]) / 2, g = (S().yAt(lines[3], mid) - S().yAt(lines[0], mid)) / 3;
+    // (five lines: the words a space lower, under the fifth)
+    const n = lines.length, below = n - 4, H = meta.height, xs = S().xsOf(lines[n - 1]);
+    const mid = (xs[0] + xs[xs.length - 1]) / 2, g = (S().yAt(lines[n - 1], mid) - S().yAt(lines[0], mid)) / (n - 1);
     const x0 = xs[0] - meta.left * g, x1 = xs[xs.length - 1] + meta.right * g;
     const W = Math.max(1, Math.round((x1 - x0) / g * meta.across)), step = g / meta.across;
     const data = new Float32Array(H * W);
     const at = (l, x) => { const v = S().xsOf(l); return S().yAt(l, Math.min(v[v.length - 1], Math.max(v[0], x))); };
     for (let u = 0; u < W; u++) {
-      const cx = x0 + (u + 0.5) * step, top = at(lines[0], cx), bot = at(lines[3], cx), sp = (bot - top) / 3;
+      const cx = x0 + (u + 0.5) * step, top = at(lines[0], cx), bot = at(lines[n - 1], cx), sp = (bot - top) / (n - 1);
       for (let v = 0; v < H; v++) {
-        const s = meta.from + (v + 0.5) / H * (meta.to - meta.from);
+        const s = below + meta.from + (v + 0.5) / H * (meta.to - meta.from);
         data[v * W + u] = 1 - sample(gray, w, h, cx, top + s * sp) / 255;
       }
     }
@@ -80,7 +84,7 @@
     return out;
   }
 
-  const isClef = t => /^[cf]b?[1-5]$/.test(t), isBar = t => /^(::|:|;|,|`)$/.test(t), isCustos = t => /^[a-m]\+$/.test(t);
+  const isClef = t => /^[cf]b?[1-5]$/.test(t), isBar = t => /^(::|:|;|,|`)$/.test(t), isCustos = t => /^[a-np]\+$/.test(t);
   // The tokens read gathered into neumes (GABC groups, as they stand over a syllable): split at |; a clef, bar or custos
   // always a group of its own. Each: { g, from, to (steps), conf (its least sure token's probability) }.
   function groups(read) {

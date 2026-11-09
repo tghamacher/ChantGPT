@@ -15,9 +15,9 @@
   const KINDS = [
     ['clef', /^[cf]b?[1-5]$/],
     ['bar', /^(::|:[?']?|;[1-8]?|,[0-7_]?|`0?)$/],
-    ['custos', /^[a-m]\+$/],
+    ['custos', /^[a-np]\+$/],
     ['break', /^[zZ][+\-0]?$/],
-    ['accidental', /^[a-m][xy#]$/]
+    ['accidental', /^[a-np][xy#]$/]
   ];
   const kind = g => (KINDS.find(([, re]) => re.test(g)) || ['neume'])[0];
   // how a person confirmed an item: looked at it alone, changed it, or accepted its staff with it
@@ -27,10 +27,10 @@
   // ---------------------------------------------------------------- pitch
   // GABC's letters a..m are staff positions from below: the four lines are d f h j. A clef names the pitch of its
   // line: c4 is middle C on the fourth (top) line; an F clef's line is the F below middle C.
-  const posOf = ch => ch.toLowerCase().charCodeAt(0) - 97;
+  const posOf = ch => 'abcdefghijklmnp'.indexOf(ch.toLowerCase());
   function pitch(letter, clef) {
     const m = /^([cf])b?([1-5])$/.exec(clef || '');
-    if (!m || !/^[a-m]$/i.test(letter)) return null;
+    if (!m || !/^[a-np]$/i.test(letter)) return null;
     const line = 1 + 2 * +m[2];                               // the clef line's position: 1 d, 2 f, 3 h, 4 j (5: above)
     const d = (m[1] === 'f' ? 24 : 28) + posOf(letter) - line;   // diatonic number: C4 = 28, F3 = 24
     return { step: STEPS[((d % 7) + 7) % 7], octave: Math.floor(d / 7) };
@@ -46,10 +46,10 @@
     while (i < g.length) {
       const ch = g[i];
       if (ch === '[') { const j = g.indexOf(']', i); i = j < 0 ? g.length : j + 1; continue; }
-      if (/[a-m]/i.test(ch)) {
+      if (/[a-np]/i.test(ch)) {
         let j = i + 1;
         if (/[xy#]/.test(g[j] || '')) { out.push({ p: ch.toLowerCase(), acc: g[j] }); i = j + 1; continue; }
-        while (j < g.length && !/[a-m\[\s\/!@,;:`]/i.test(g[j])) j++;
+        while (j < g.length && !/[a-np\[\s\/!@,;:`]/i.test(g[j])) j++;
         out.push({ p: ch.toLowerCase(), shape: ch === ch.toUpperCase() ? 'inclinatum' : 'punctum', signs: g.slice(i + 1, j) });
         i = j;
         continue;
@@ -85,10 +85,10 @@
     for (let i = 0; i < g.length; i++) {
       const ch = g[i];
       if (ch === '[') { const j = g.indexOf(']', i); if (j < 0) break; i = j; continue; }
-      if (!/[a-m]/i.test(ch)) continue;
+      if (!/[a-np]/i.test(ch)) continue;
       if (/[xy#]/.test(g[i + 1] || '')) { i++; continue; }
       let j = i + 1;
-      while (j < g.length && !/[a-m\[\s\/!@,;:`]/i.test(g[j])) j++;
+      while (j < g.length && !/[a-np\[\s\/!@,;:`]/i.test(g[j])) j++;
       if (++note === k) return [i, j];
       i = j - 1;
     }
@@ -107,7 +107,7 @@
     const at = k > 0 && noteAt(g, k);
     if (!at) return null;
     let i = at[0];
-    if (/[a-m][xy#]$/i.test(g.slice(0, i))) i -= 2;
+    if (/[a-np][xy#]$/i.test(g.slice(0, i))) i -= 2;
     const a = g.slice(0, i).replace(/[\/!@\s]+$/, ''), b = g.slice(i).replace(/^[\/!@\s]+/, '');
     return a && b ? [a, b] : null;
   }
@@ -124,13 +124,13 @@
     for (let i = 0; i < g.length; i++) {
       const ch = g[i];
       if (ch === '[') { const j = g.indexOf(']', i); out += g.slice(i, j < 0 ? g.length : j + 1); i = j < 0 ? g.length : j; continue; }
-      if (/[a-m]/i.test(ch)) {
+      if (/[a-np]/i.test(ch)) {
         const isAcc = /[xy#]/.test(g[i + 1] || '');
         if (!isAcc) note++;
         if (only === null || (!isAcc && note === only)) {
           const p = posOf(ch) + k;
           if (p < 0 || p > 12) ok = false;
-          const moved = String.fromCharCode(97 + Math.max(0, Math.min(12, p)));
+          const moved = 'abcdefghijklmnp'[Math.max(0, Math.min(14, p))];
           out += ch === ch.toUpperCase() ? moved.toUpperCase() : moved;
           continue;
         }
@@ -179,7 +179,7 @@
   // the groups of one pair of parentheses: clefs, bars, custos and breaks each their own item, neume material
   // between them kept whole with its spacing (fg gf stays one item), and a bar written straight after notes (f.;)
   // split off.
-  const SIGNS = /([a-mA-M]\+|::|:'?|;[0-9]?|,[0-9]?|`)/;
+  const SIGNS = /([a-npA-NP]\+|::|:'?|;[0-9]?|,[0-9]?|`)/;
   function groups(s) {
     // (a custos, a bar or a clef written up against other signs, f+::c4, is split off them)
     const out = [], chunks = s.trim().split(/\s+/).filter(Boolean).flatMap(c => kind(c) !== 'neume' ? [c] : c.split(SIGNS).filter(Boolean));
@@ -222,6 +222,8 @@
     const all = staves(doc), byId = new Map(all.map(s => [s.id, s]));
     const list = chant && chant.staves ? chant.staves.map(id => byId.get(id)).filter(Boolean) : all;
     const headers = Object.assign({ name: '' }, chant && chant.headers);
+    // (staves of five lines, as the later choirbooks have them: Gregorio's header for it)
+    if (list.some(st => st.lines && st.lines.length === 5)) headers['staff-lines'] = '5';
     let out = Object.entries(headers).map(([k, v]) => `${k}: ${v};`).join('\n') + '\n%%\n';
     let body = '', clef = null;
     list.forEach((staff, si) => {
@@ -377,8 +379,8 @@
         if (st.beginsAt !== undefined && !Number.isFinite(st.beginsAt)) bad.push(`${name}: "beginsAt" is a number (an x on the page).`);
         if (st.lines !== undefined) {
           const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);
-          if (!(Array.isArray(st.lines) && st.lines.length === 4 && st.lines.every(pointsOk)))
-            bad.push(`${name}: a staff has four lines, each two or more points [x0, y0, x1, y1, …] from left to right.`);
+          if (!(Array.isArray(st.lines) && (st.lines.length === 4 || st.lines.length === 5) && st.lines.every(pointsOk)))
+            bad.push(`${name}: a staff has four lines (or five), each two or more points [x0, y0, x1, y1, …] from left to right.`);
         }
         (st.syllables || []).forEach((syl, yi) => {
           if (syl.box !== undefined && !(box4(syl.box) && inside(syl.box))) bad.push(`${name}, syllable ${yi + 1}: its box is not on the page.`);
