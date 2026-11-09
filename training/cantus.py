@@ -143,6 +143,7 @@ def collect(o):
             m = re.search(r'(\d+)\s*_?\.?\s*(r|v|recto|verso)\b', label, re.I)
             f = m and f'{int(m.group(1)):03d}{m.group(2)[0].lower()}'
             return f if f in have else None
+        if o.by_page: folio_of = lambda n, name: f'p{n:04d}'      # (labels that don't give the folio: kept in page order)
     else:
         pages = page_images(o.source)
         folio = {view_of(u): f for f, u in pages.items()}
@@ -527,6 +528,7 @@ if __name__ == '__main__':
     a.add_argument('--downloads', help='collect: where the zips are (your Downloads folder)')
     a.add_argument('--share', help='collect: a clone of the training-data branch, to push the --folios to (all: every one)')
     a.add_argument('--width', type=int, help='collect --share, images --manifest: pages made no wider than this')
+    a.add_argument('--by-page', action='store_true', help='collect --manifest: file every page by its number (p0001 …), for a manifest whose labels don\'t give the folio')
     a.add_argument('--manifest', help='images: the pages from this IIIF manifest, its pages labelled by folio (e-codices\'s are); collect: the zips saved from it, each page filed by its label')
     a.add_argument('--folio', help='lines: this one')
     a.add_argument('--out')
