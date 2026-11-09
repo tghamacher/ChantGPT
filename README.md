@@ -1,6 +1,6 @@
 # ChantGPT
 
-**Version 0.20.3** · early test version
+**Version 0.21.0** · early test version
 
 ChantGPT reads scans of Gregorian chant, from printed books and manuscripts, and gives you the music in GABC (the
 format of [Gregorio](https://gregorio-project.github.io/)), with the places it isn't sure of marked for you to check
@@ -29,10 +29,13 @@ Press **?** in the app for the mouse and the keys.
 - Manuscripts in square notation on red four-line staves (e.g. Paris, BnF lat. 15181; Einsiedeln 611; the
   Salzinnes Antiphonal), German Gothic (Hufnagel) notation on staves ruled with a red F line (e.g. Köln,
   Dombibliothek, Cod. 1161), and French point notation on a page ruled evenly in pale ink (e.g. Paris, BnF
-  lat. 12044: turn on *Ruled evenly, words on every fifth line* in a page's right-click menu first).
+  lat. 12044: turn on *Ruled evenly, words on every fifth line* in a page's right-click menu first), and the great
+  choirbooks of the 16th to 18th centuries on five-line red staves (e.g. a Mexican choirbook, Stanford Codex 0734:
+  turn on *Five-line staves* in a page's right-click menu first; the GABC is saved with `staff-lines: 5`).
 - Words in Gothic and other book hands, and Gothic print.
 
-**Not yet:** staffless or heighted neumes (St Gall, Laon, Aquitanian), mensural notation, and pages very unlike the
+**Not yet:** staffless or heighted neumes (St Gall, Laon, Aquitanian), mensural notation, printed books of the
+17th and 18th centuries (Medicaean and neo-Gallican shapes: no real pages to train on yet), and pages very unlike the
 ones above. Expect to correct things: it is a first version, and the point of testing is to find where it goes wrong.
 
 **Feedback:** [open an issue on GitHub](https://github.com/tghamacher/ChantGPT/issues/new) (a free account is
