@@ -1,0 +1,8 @@
+job 0062-mexico-pages: The Mexican choirbook (Stanford, Codex 0734; Cantus 1000019: 96 melodies, five-line staves, late 17th/18th c.): the pages the user's browser saved from Stanford, filed by folio (their labels) and shared; then the zips taken off the disk
+code: a87bcb8
+
+$ cantus.py collect --source 1000019 --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools --manifest https://purl.stanford.edu/fk104qr6181/iiif/manifest --share DATA --folios all --width 1800
+0 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\1000019 (from 4 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 311 pages with no chant left out)
+pages not filed, for instance: 0001 Page_1.jpg; 0002 Page_2.jpg; 0003 Page_3.jpg; 0004 Page_4.jpg; 0005 Page_5.jpg; 0006 Page_6.jpg; 0007 Page_7.jpg; 0008 Page_8.jpg; 0009 Page_9.jpg; 0010 Page_10.jpg; 0011 Page_11.jpg; 0012 Page_12.jpg
+No pages all in D:\ChantGPT\changpt-repo\training\data\scans\1000019.
+(step 1 failed: exit 1)
