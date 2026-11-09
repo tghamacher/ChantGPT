@@ -96,8 +96,14 @@ def page(path):
         xa, xb = float(cs[0] - STRIP / 2), float(cs[-1] + STRIP / 2)
         lines = [[round(xa, 1), round(slope * xa + icpt[k], 1), round(xb, 1), round(slope * xb + icpt[k], 1)] for k in range(5)]
         out.append((lines, g))
-    out.sort(key=lambda t: t[0][0][1])
-    return gray, out
+    # (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer, as
+    # js/staves.js byFiveLines keeps it)
+    kept = []
+    for lines, g in sorted(out, key=lambda t: -(t[0][0][2] - t[0][0][0])):
+        if not any(lines[0][1] < k[4][1] and lines[4][1] > k[0][1] and lines[0][0] < k[0][2] and lines[0][2] > k[0][0] for k, _ in kept):
+            kept.append((lines, g))
+    kept.sort(key=lambda t: t[0][0][1])
+    return gray, kept
 
 
 def straighten5(gray, lines):

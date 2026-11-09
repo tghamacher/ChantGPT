@@ -13,7 +13,7 @@
   const STEP = 157.5, MIDDLE = 72;   // font units: one pitch step; a note's middle above the glyph's baseline
   const has = name => !!F().glyphs[name];
   const width = name => (F().glyphs[name] || [0, 166])[1];
-  const posOf = ch => ch.toLowerCase().charCodeAt(0) - 97;
+  const posOf = ch => 'abcdefghijklmnp'.indexOf(ch.toLowerCase());
 
   // ---------------------------------------------------------------- notes
   // The notes of a group of neume material, with what comes before each: sep is the separator written before it
@@ -28,11 +28,11 @@
       if (ch === ' ') { sep = ' '; i++; continue; }
       if (ch === '!') { sep = '!'; i++; continue; }
       if (ch === '-') { initio = true; i++; continue; }
-      if (!/[a-m]/i.test(ch)) { i++; continue; }
+      if (!/[a-np]/i.test(ch)) { i++; continue; }
       const p = posOf(ch);
       if (/[xy#]/.test(g[i + 1] || '')) { out.push({ acc: g[i + 1], p, sep }); sep = null; i += 2; if (g[i] === '?') i++; continue; }
       let j = i + 1;
-      while (j < g.length && !/[a-m\[\/ !@-]/i.test(g[j])) j++;
+      while (j < g.length && !/[a-np\[\/ !@-]/i.test(g[j])) j++;
       const m = g.slice(i + 1, j);
       const n = { p, sep, signs: m, mora: (m.match(/\./g) || []).length };
       if (ch !== ch.toLowerCase()) n.shape = 'inclinatum';
@@ -274,10 +274,11 @@
     it.box = [it.box[0], top, sh.width * sc, bot - top].map(v => Math.round(v * 100) / 100);
   }
 
-  // where a pitch (a staff position, a = 0) lies on a staff at x: the bottom line is d (3), the top j (9)
+  // where a pitch (a staff position, a = 0) lies on a staff at x: the bottom line is d (3), the top j (9) on four
+  // lines, l (11) on five
   function yOf(lines, x, p) {
-    const b = S().yAt(lines[3], x), t = S().yAt(lines[0], x);
-    return b + (t - b) * (p - 3) / 6;
+    const b = S().yAt(lines[lines.length - 1], x), t = S().yAt(lines[0], x);
+    return b + (t - b) * (p - 3) / (2 * (lines.length - 1));
   }
 
   // Everything to draw on a staff: each glyph with its character, its baseline on the page, its size (the font size
@@ -315,7 +316,7 @@
       }
     });
     // the words' baseline two spaces below the bottom line, where it lies at each syllable, as in the printed books
-    for (const t of out.texts) if (t.y === undefined) t.y = S().yAt(staff.lines[3], t.x) + 2 * S().spacing(staff.lines);
+    for (const t of out.texts) if (t.y === undefined) t.y = S().yAt(staff.lines[staff.lines.length - 1], t.x) + 2 * S().spacing(staff.lines);
     out.textSize = S().spacing(staff.lines);
     return out;
   }
@@ -327,8 +328,8 @@
     const want = Ch().pitch(letter, clef);
     if (!want) return null;
     for (let p = 0; p <= 12; p++) {
-      const q = Ch().pitch(String.fromCharCode(97 + p), hereClef);
-      if (q && q.step === want.step && q.octave === want.octave) return String.fromCharCode(97 + p) + '+';
+      const q = Ch().pitch('abcdefghijklmnp'[p], hereClef);
+      if (q && q.step === want.step && q.octave === want.octave) return 'abcdefghijklmnp'[p] + '+';
     }
     return null;
   }
@@ -446,7 +447,7 @@
       const c = seen[k].custos, nn = nextNote[i];
       if (c === null || c === undefined || !nn || !nn.clef) return 0;
       const here = clefBefore[i] || nn.clef, g = custosFor(nn.p, nn.clef, here);
-      return g && g.charCodeAt(0) - 97 === c ? -1 : 8;
+      return g && 'abcdefghijklmnp'.indexOf(g[0]) === c ? -1 : 8;
     };
     const cost = (k, a, b) => {
       const d = pre[b] - pre[a] - expect[k], e = preL[b] - preL[a] - expectL[k];

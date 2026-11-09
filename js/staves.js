@@ -21,10 +21,10 @@
   const atXs = (lines, xs) => lines.map(l => xs.flatMap(x => [x, yAt(l, x)]));
 
   // the distance between neighbouring lines, averaged over the top line's points
-  const spacing = lines => { const xs = xsOf(lines[0]); return xs.reduce((t, x) => t + yAt(lines[3], x) - yAt(lines[0], x), 0) / (3 * xs.length); };
+  const spacing = lines => { const xs = xsOf(lines[0]), b = lines[lines.length - 1]; return xs.reduce((t, x) => t + yAt(b, x) - yAt(lines[0], x), 0) / ((lines.length - 1) * xs.length); };
   // the tilt from end to end, in degrees (positive: the staff runs downhill to the right)
   const tilt = lines => {
-    const t = lines[0], b = lines[3], n = count(t), dx = t[2 * n - 2] - t[0];
+    const t = lines[0], b = lines[lines.length - 1], n = count(t), dx = t[2 * n - 2] - t[0];
     return dx ? Math.atan2(((t[2 * n - 1] + yAt(b, t[2 * n - 2])) - (t[1] + yAt(b, t[0]))) / 2, dx) * 180 / Math.PI : 0;
   };
   // how far the staff bends away from straight, in spaces (0 for a straight one)
@@ -34,20 +34,21 @@
     for (let k = 1; k < n - 1; k++) worst = Math.max(worst, Math.abs(m[2 * k + 1] - yAt([m[0], m[1], m[2 * n - 2], m[2 * n - 1]], m[2 * k])));
     return worst / spacing(lines);
   };
-  const middleLine = lines => { const xs = xsOf(lines[0]); return xs.flatMap(x => [x, (yAt(lines[0], x) + yAt(lines[3], x)) / 2]); };
+  const middleLine = lines => { const xs = xsOf(lines[0]); return xs.flatMap(x => [x, (yAt(lines[0], x) + yAt(lines[lines.length - 1], x)) / 2]); };
   // where the middle of the staff is, for putting staves in reading order
   const middle = lines => { const m = middleLine(lines); return m.filter((v, i) => i & 1).reduce((t, v) => t + v, 0) / count(m); };
 
-  // four lines spread evenly over a box [x, y, w, h], the top line along its top and the bottom along its bottom
-  function even(box) {
+  // four lines (or n) spread evenly over a box [x, y, w, h], the top line along its top and the bottom along its bottom
+  function even(box, n = 4) {
     const [x, y, w, h] = box;
-    return [0, 1, 2, 3].map(i => [x, y + h * i / 3, x + w, y + h * i / 3]);
+    return Array.from({ length: n }, (_, i) => [x, y + h * i / (n - 1), x + w, y + h * i / (n - 1)]);
   }
 
   // the two middle lines set evenly between the top and bottom ones, at each of the top line's points
   function spaceEvenly(lines) {
     const xs = xsOf(lines[0]);
-    return [0, 1, 2, 3].map(i => xs.flatMap(x => { const t = yAt(lines[0], x), b = yAt(lines[3], x); return [x, t + (b - t) * i / 3]; }));
+    const n = lines.length;
+    return Array.from({ length: n }, (_, i) => xs.flatMap(x => { const t = yAt(lines[0], x), b = yAt(lines[n - 1], x); return [x, t + (b - t) * i / (n - 1)]; }));
   }
 
   // a bend point added at x (the lines unchanged until it is moved); or the k-th taken away (not an end)
@@ -295,7 +296,7 @@
     // bent: the ends found again along the bent lines themselves (near the binding a strip's straight fit drifts
     // off the curve before the lines end)
     const lg = spacing(lines), ex0 = Math.max(rx0, Math.floor(ends[0] - 3 * lg)), ex1 = Math.min(rx1, Math.ceil(ends[1] + 3 * lg));
-    const yr = [ex0, ex1].flatMap(x => [yAt(lines[0], x), yAt(lines[3], x)]).concat(lines.flatMap(l => l.filter((v, i) => i & 1)));
+    const yr = [ex0, ex1].flatMap(x => [yAt(lines[0], x), yAt(lines[lines.length - 1], x)]).concat(lines.flatMap(l => l.filter((v, i) => i & 1)));
     const ey0 = Math.max(0, Math.floor(Math.min(...yr) - 2 * lg)), ey1 = Math.min(h, Math.ceil(Math.max(...yr) + 2 * lg));
     const dm = ex1 - ex0 > 20 && ey1 - ey0 > 8 && darkness(gray, w, ex0, ey0, ex1, ey1);
     const span = dm && stretch(dm.dark, dm.W, dm.H, lines.map(l => x => yAt(l, ex0 + x) - ey0), lg, Math.max(1, Math.round(lg / 8)), loose);
@@ -394,7 +395,13 @@
   // every fifth ruled line (as Paris, BnF lat. 12044), and tint (tint()) shows its ruling: its staves are the four
   // ruled lines above each row of words (byRuling). The person says so (no measure of a single page tells such a
   // book from one ruled a staff at a time reliably enough to choose for them).
-  function findStaves(gray, w, h, { skip = [], lines = null, tint = null, ruled = false, trace } = {}) {
+  function findStaves(gray, w, h, { skip = [], lines = null, tint = null, reds = null, ruled = false, five = false, trace } = {}) {
+    // (a book of five-line staves ruled in red, as the 16th-18th-century choirbooks are: the person says so)
+    if (five && reds) {
+      const by5 = byFiveLines(reds, w, h, skip);
+      if (trace) trace.byFiveLines = by5.length;
+      if (by5.length) return by5;
+    }
     if (ruled && tint) {
       const byR = byRuling(gray, tint, w, h, skip);
       if (trace) trace.byRuling = byR.length;
@@ -417,6 +424,96 @@
       if (byF.length > n(found)) return byF;
     }
     return found.flat();
+  }
+
+  // Staves of five lines ruled in red (the great choirbooks of Spain, Italy and the Americas, 16th-18th centuries): in
+  // each strip across the page, the rows redder than those about them, five at a time where five stand evenly spaced;
+  // followed from strip to strip, and each staff a straight line through its strips (a ruled staff is straight), the
+  // strips far off it, which took another five rows, left out. As training/fivestaves.py, which cut the Mexican
+  // choirbook's staves (Stanford, Codex 0734). red: ruling()'s map (255 where there is no red).
+  function byFiveLines(red, w, h, skip = []) {
+    // (red: redness(), how red each pixel is)
+    const rd = o => red[o];
+    const STRIP = Math.max(20, Math.round(120 * w / 1800)), lo = 0.008 * h, hi = 0.03 * h;
+    // the columns with red ruling
+    const colRed = new Float64Array(w);
+    for (let y = 0; y < h; y += 3) for (let x = 0, o = y * w; x < w; x++, o++) colRed[x] += rd(o);
+    const sorted = Array.from(colRed).sort((a, b) => a - b), cut = sorted[Math.floor(0.7 * (w - 1))];
+    let x0 = -1, x1 = -1;
+    for (let x = 0; x < w; x++) if (colRed[x] > cut) { if (x0 < 0) x0 = x; x1 = x; }
+    if (x0 < 0 || x1 - x0 < 50) return [];
+    const found = [];
+    for (let x = x0; x < x1 - STRIP / 2; x += STRIP) {
+      const xe = Math.min(w, x + STRIP), col = new Float64Array(xe - x), prof = new Float64Array(h);
+      for (let y = 0; y < h; y++) { for (let i = x, o = y * w + x; i < xe; i++, o++) col[i - x] = rd(o); col.sort(); prof[y] = col[col.length >> 1]; }
+      const sm = prof.map((v, y) => (prof[Math.max(0, y - 1)] + v + prof[Math.min(h - 1, y + 1)]) / 3);
+      const thr = 0.6 * Array.from(sm).sort((a, b) => a - b)[Math.floor(0.9 * (h - 1))] + 1e-6, apart = Math.max(2, Math.round(lo / 2));
+      const pk = [];
+      for (let y = 1; y < h - 1; y++) {
+        if (sm[y] < thr) continue;
+        let top = true;
+        for (let d = -apart; d <= apart && top; d++) if (y + d >= 0 && y + d < h && sm[y + d] > sm[y]) top = false;
+        if (top) pk.push(y);
+      }
+      // five rows evenly spaced
+      const used = new Set();
+      for (let i = 0; i < pk.length; i++) {
+        if (used.has(pk[i])) continue;
+        for (let j = i + 1; j < pk.length; j++) {
+          const g = pk[j] - pk[i];
+          if (g < lo) continue;
+          if (g > hi) break;
+          const run = [pk[i], pk[j]];
+          for (let k = 0; k < 3; k++) {
+            const want = run[run.length - 1] + g;
+            let best = null;
+            for (const y of pk) if (Math.abs(y - want) <= 0.2 * g && (best === null || Math.abs(y - want) < Math.abs(best - want))) best = y;
+            if (best === null) break;
+            run.push(best);
+          }
+          if (run.length === 5) {
+            const gaps = run.slice(1).map((y, k) => y - run[k]), mean = gaps.reduce((a, b) => a + b) / 4;
+            if (Math.max(...gaps) - Math.min(...gaps) <= 0.25 * mean) { found.push({ c: x + STRIP / 2, rows: run, g: mean }); run.forEach(y => used.add(y)); break; }
+          }
+        }
+      }
+    }
+    // followed across the page: strips whose top lines agree within half a space
+    const chains = [];
+    for (const f of found.sort((a, b) => a.c - b.c)) {
+      let best = null;
+      for (const ch of chains) {
+        const l = ch[ch.length - 1];
+        if (l.c < f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!best || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - best[best.length - 1].rows[0]))) best = ch;
+      }
+      if (best) best.push(f); else chains.push([f]);
+    }
+    const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
+    const out = [];
+    for (let ch of chains) {
+      if (ch.length < 3) continue;
+      const g = median(ch.map(f => f.g)), mean = f => f.rows.reduce((a, b) => a + b) / 5;
+      const sl = [];
+      for (let i = 0; i < ch.length; i++) for (let j = i + 1; j < ch.length; j++) sl.push((mean(ch[j]) - mean(ch[i])) / (ch[j].c - ch[i].c));
+      const slope = sl.length ? median(sl) : 0;
+      const icpt = k => median(ch.map(f => f.rows[k] - slope * f.c));
+      let ic = [0, 1, 2, 3, 4].map(icpt);
+      ch = ch.filter(f => Math.abs(f.rows.reduce((t, y, k) => t + y - slope * f.c - ic[k], 0) / 5) < 0.35 * g);
+      if (ch.length < 3 || ch[ch.length - 1].c - ch[0].c < 0.2 * (x1 - x0)) continue;
+      ic = [0, 1, 2, 3, 4].map(icpt);
+      const xa = ch[0].c - STRIP / 2, xb = ch[ch.length - 1].c + STRIP / 2;
+      const lines5 = ic.map(b => [xa, b + slope * xa, xb, b + slope * xb]);
+      const midY = (lines5[0][1] + lines5[4][1]) / 2, midX = (xa + xb) / 2;
+      if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && midX > b[0] && midX < b[0] + b[2])) continue;
+      out.push({ lines: lines5, spacing: g });
+    }
+    // (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer)
+    const len = st => st.lines[0][2] - st.lines[0][0], kept = [];
+    for (const st of out.sort((a, b) => len(b) - len(a))) {
+      const clash = kept.some(k => st.lines[0][1] < k.lines[4][1] && st.lines[4][1] > k.lines[0][1] && st.lines[0][0] < k.lines[0][2] && st.lines[0][2] > k.lines[0][0]);
+      if (!clash) kept.push(st);
+    }
+    return kept.sort((a, b) => a.lines[0][1] - b.lines[0][1]);
   }
 
   // Staves of a page ruled evenly in pale red-brown from top to bottom, the words written on every fifth ruled line
@@ -743,6 +840,14 @@
     return red > 0.004 * n && red < 0.2 * n ? out : null;
   }
 
+  // How red each pixel is (red less the greater of green and blue, less 20; 0 where it isn't): the ruling of a red-ruled
+  // staff, whatever else on the page is red (a leather binding, rubrics), for byFiveLines
+  function redness(rgba) {
+    const out = new Uint8Array(rgba.length / 4);
+    for (let i = 0, j = 0; j < out.length; i += 4, j++) out[j] = Math.max(0, Math.min(255, rgba[i] - Math.max(rgba[i + 1], rgba[i + 2]) - 20));
+    return out;
+  }
+
   // How much redder than blue each pixel is (red less blue, 128 where they are equal): pale red-brown ruling shows in
   // it where it is too faint and too brown to count as red ink (ruling())
   function tint(rgba) {
@@ -768,7 +873,7 @@
     const g = spacing(lines), xs = xsOf(lines[0]);
     const x0 = Math.max(0, Math.round(xs[0])), x1 = Math.min(w - 1, Math.round(xs[xs.length - 1]));
     if (x1 - x0 < 4 * g) return null;
-    const top = x => yAt(lines[0], x) - 1.6 * g, bot = x => yAt(lines[3], x) + 0.9 * g;
+    const top = x => yAt(lines[0], x) - 1.6 * g, bot = x => yAt(lines[lines.length - 1], x) + 0.9 * g;
     // ink: darker than half the paper (the paper is the band's lighter half)
     const sample = [];
     for (let x = x0; x <= x1; x += 7) for (let y = Math.max(0, Math.round(top(x))); y < Math.min(h, bot(x)); y += 5) sample.push(gray[y * w + x]);
@@ -830,13 +935,13 @@
     // the words under it: the ink in their band, from just below the notes to well below the bottom line
     let words = 0;
     for (let x = x0; x <= x1; x++) {
-      const ya = Math.max(0, Math.round(yAt(lines[3], x) + 1.0 * g)), yb = Math.min(h - 1, Math.round(yAt(lines[3], x) + 2.9 * g));
+      const ya = Math.max(0, Math.round(yAt(lines[lines.length - 1], x) + 1.0 * g)), yb = Math.min(h - 1, Math.round(yAt(lines[lines.length - 1], x) + 2.9 * g));
       for (let y = ya; y <= yb; y++) if (gray[y * w + x] < cut) words++;
     }
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, byRuling, tint, columns, order, beginnings, fitStaff, fit, grey, ruling };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, byRuling, byFiveLines, redness, tint, columns, order, beginnings, fitStaff, fit, grey, ruling };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

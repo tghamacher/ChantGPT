@@ -25,7 +25,7 @@
     const ctx = c.getContext('2d', { willReadFrequently: true });
     return Promise.resolve(draw(c, ctx)).then(() => {
       const rgba = ctx.getImageData(0, 0, w, h).data, S = global.CGStaves;
-      return { gray: S.grey(rgba), lines: S.ruling(rgba), tint: S.tint(rgba), w, h };
+      return { gray: S.grey(rgba), lines: S.ruling(rgba), tint: S.tint(rgba), reds: S.redness(rgba), w, h };
     });
   }
 
