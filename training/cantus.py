@@ -68,7 +68,18 @@ def iiif(link):
     if m: return (lambda n, i=m.group(1): f'https://gallica.bnf.fr/iiif/ark:/12148/{i}/f{n}/full/full/0/native.jpg'), int(m.group(2))
     m = re.search(r'digitale-sammlungen\.de/\w+/view/(bsb\d+)\?page=(\d+)', link)
     if m: return (lambda n, i=m.group(1): f'https://api.digitale-sammlungen.de/iiif/image/v2/{i}_{n:05d}/full/full/0/default.jpg'), int(m.group(2))
+    m = re.search(r'objects\.library\.uu\.nl/reader/viewer\.php\?obj=([\w-]+)&pagenum=(\d+)', link)
+    if m: return (lambda n, i=m.group(1): _canvas(f'https://objects.library.uu.nl/manifest/iiif/v2/{i}', n, 2400)), int(m.group(2))
     return None, None
+
+
+_MANIFESTS = {}
+def _canvas(url, n, width):
+    """Page n (from 1) of a IIIF v2 manifest, as an image no wider than width (Utrecht's pages are labelled
+    'Page: n', not by folio, so the page number in Cantus's link is all there is to go by)."""
+    if url not in _MANIFESTS: _MANIFESTS[url] = json.loads(get(url))['sequences'][0]['canvases']
+    c = _MANIFESTS[url][n - 1]
+    return c['images'][0]['resource']['service']['@id'].rstrip('/') + f'/full/{min(width, c["width"])},/0/default.jpg'
 
 
 def folio_key(f):
