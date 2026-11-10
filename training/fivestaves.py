@@ -6,6 +6,11 @@ strips have it, but the top line at row 14 (so the bottom one, at 46, leaves roo
 the top room for the two pitches above it a five-line staff has, n and p).
 
     python -I training/fivestaves.py --pages DIR [--out training/data/ms-1000019] [--only 014v] [--show 014v]
+    python -I training/fivestaves.py --pages DIR --lines 4 --dark --out training/data/ms-123641
+
+(--lines 4 --dark: staves of four lines ruled in ink, brown or black, as Utrecht, Ms. 406 (Cantus 123641) has them,
+each with its words in a wider gap below; found the same way by their darkness, and cut out as staffdata.straighten
+cuts four-line staves, the top line at row 20.)
 
 Writes <out>/<page>-<k>.png and <out>/staves.jsonl ({file, page, k, lines (five polylines), spacing, staff_lines: 5})."""
 import argparse, glob, json, os, sys
@@ -16,11 +21,22 @@ sys.path.insert(0, HERE)
 import staffdata as S
 
 STRIP, HEIGHT, SPACE, TOP5, LEFT, RIGHT = 120, 64, 8, 14, 0.6, 0.4
+N, DARK = 5, False                                         # (--lines, --dark)
 
 
 def redness(rgb):
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     return np.clip(r - np.maximum(g, b) - 20, 0, None)
+
+
+def darkness(rgb):
+    """How much darker than the paper, on the leaf (the dark ground about it nothing)."""
+    gray = rgb.mean(2)
+    paper = np.percentile(gray, 80)
+    d = np.clip(paper - gray, 0, None)
+    d[:, np.median(gray, axis=0) < 0.7 * paper] = 0
+    d[np.median(gray, axis=1) < 0.7 * paper, :] = 0
+    return d
 
 
 def peaks(v, apart):
@@ -43,12 +59,12 @@ def fives(ys, lo, hi):
             if g < lo: continue
             if g > hi: break
             run = [ys[i], ys[j]]
-            for k in range(3):
+            for k in range(N - 2):
                 want = run[-1] + g
                 near = [y for y in ys if abs(y - want) <= 0.2 * g]
                 if not near: break
                 run.append(min(near, key=lambda y: abs(y - want)))
-            if len(run) == 5:
+            if len(run) == N:
                 gaps = np.diff(run)
                 if gaps.max() - gaps.min() <= 0.25 * gaps.mean():
                     out.append((run, float(gaps.mean()))); used.update(run); break
@@ -58,7 +74,7 @@ def fives(ys, lo, hi):
 def page(path):
     rgb = np.asarray(Image.open(path).convert('RGB')).astype(np.float32)
     H, W, _ = rgb.shape
-    red = redness(rgb)
+    red = darkness(rgb) if DARK else redness(rgb)
     gray = rgb.mean(2)
     cols = np.where(red.sum(0) > np.percentile(red.sum(0), 70))[0]
     if len(cols) < 50: return gray, []
@@ -68,6 +84,7 @@ def page(path):
     for x in range(x0, x1 - STRIP // 2, STRIP):
         prof = np.median(red[:, x:min(W, x + STRIP)], axis=1)
         prof = np.convolve(prof, np.ones(3) / 3, 'same')
+        if DARK: prof = np.clip(prof - np.convolve(prof, np.ones(int(2 * lo) | 1) / (int(2 * lo) | 1), 'same'), 0, None)   # (thin lines, not words)
         for rows, g in fives(peaks(prof, max(2, int(lo / 2))), lo, hi):
             found.append((x + STRIP / 2, rows, g))
     # staves followed across the page: strips' fives whose top lines agree within half a space
@@ -94,13 +111,13 @@ def page(path):
         cs, R = cs[keep], R[keep]
         icpt = np.median(R - slope * cs[:, None], axis=0)
         xa, xb = float(cs[0] - STRIP / 2), float(cs[-1] + STRIP / 2)
-        lines = [[round(xa, 1), round(slope * xa + icpt[k], 1), round(xb, 1), round(slope * xb + icpt[k], 1)] for k in range(5)]
+        lines = [[round(xa, 1), round(slope * xa + icpt[k], 1), round(xb, 1), round(slope * xb + icpt[k], 1)] for k in range(N)]
         out.append((lines, g))
     # (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer, as
     # js/staves.js byFiveLines keeps it)
     kept = []
     for lines, g in sorted(out, key=lambda t: -(t[0][0][2] - t[0][0][0])):
-        if not any(lines[0][1] < k[4][1] and lines[4][1] > k[0][1] and lines[0][0] < k[0][2] and lines[0][2] > k[0][0] for k, _ in kept):
+        if not any(lines[0][1] < k[-1][1] and lines[-1][1] > k[0][1] and lines[0][0] < k[0][2] and lines[0][2] > k[0][0] for k, _ in kept):
             kept.append((lines, g))
     kept.sort(key=lambda t: t[0][0][1])
     return gray, kept
@@ -121,6 +138,9 @@ def straighten5(gray, lines):
 
 
 def main(o):
+    global N, DARK
+    N, DARK = o.lines, o.dark
+    cut = straighten5 if N == 5 else S.straighten
     out = o.out
     if o.show:
         f = os.path.join(o.pages, o.show + '.jpg')
@@ -139,8 +159,8 @@ def main(o):
             gray, st = page(p)
             for k, (lines, g) in enumerate(st):
                 file = f'{name}-{k + 1}.png'
-                Image.fromarray(straighten5(gray, lines)).save(os.path.join(out, file))
-                f.write(json.dumps({'file': file, 'page': name, 'k': k + 1, 'lines': lines, 'spacing': round(g, 2), 'staff_lines': 5}) + '\n')
+                Image.fromarray(cut(gray, lines)).save(os.path.join(out, file))
+                f.write(json.dumps({'file': file, 'page': name, 'k': k + 1, 'lines': lines, 'spacing': round(g, 2), 'staff_lines': N}) + '\n')
             total += len(st)
             print(f'{name}: {len(st)} staves ({total} so far)', flush=True)
 
@@ -151,5 +171,7 @@ if __name__ == '__main__':
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'ms-1000019'))
     a.add_argument('--only')
     a.add_argument('--show')
+    a.add_argument('--lines', type=int, default=5, choices=[4, 5])
+    a.add_argument('--dark', action='store_true', help='ruled in ink, not red')
     a.add_argument('--show-to', default='/tmp/claude-0/five-shown.jpg')
     main(a.parse_args())
