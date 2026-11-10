@@ -3,3 +3,22 @@ code: 2233622
 
 $ recognizer.py train --data training/data/staves,training/data/staves-ms,training/data/hufnagel,training/data/points,training/data/points2,training/data/late5 --real training/data/real,training/data/ms-123631-v2,training/data/ms-123606,training/data/ms-123723,training/data/ms-123672,training/data/book-7,training/data/book-48,training/data/book-9,training/data/book-2,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-601861r,training/data/ms-123628s,training/data/ms-123628s,training/data/ms-123628s,training/data/ms-1000019,training/data/ms-1000019,training/data/ms-1000019,training/data/ms-123641,training/data/ms-123641,training/data/ms-123641 --real-labels labels-rebroken-clean.jsonl,labels-rebroken-clean-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-fit-shapes.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-plain-clean.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot2.jsonl,labels-boot2.jsonl,labels-boot2.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot3.jsonl,labels-boot1.jsonl,labels-boot1.jsonl,labels-boot1.jsonl --resume training/data/j0068/best.pt --width 192 --epochs 4 --lr 3e-4 --batch 32 --out training/data/j0070
 258278 staves to learn from (45282 real, each 3 times), 3757 synthetic and 5011 real to test on; 3 left out for tokens the model hasn't; 269 tokens; 1,430,134 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.666 (2 s)
+epoch 1 batch 100: loss 0.504 (22 s)
+epoch 1 batch 200: loss 0.493 (43 s)
+epoch 1 batch 300: loss 0.488 (62 s)
+epoch 1 batch 400: loss 0.487 (82 s)
+epoch 1 batch 500: loss 0.488 (101 s)
+epoch 1 batch 600: loss 0.484 (119 s)
+epoch 1 batch 700: loss 0.479 (139 s)
+epoch 1 batch 800: loss 0.477 (158 s)
+epoch 1 batch 900: loss 0.477 (177 s)
+epoch 1 batch 1000: loss 0.477 (196 s)
+epoch 1 batch 1100: loss 0.475 (216 s)
+epoch 1 batch 1200: loss 0.475 (235 s)
+epoch 1 batch 1300: loss 0.472 (254 s)
+epoch 1 batch 1400: loss 0.473 (273 s)
+epoch 1 batch 1500: loss 0.473 (291 s)
+epoch 1 batch 1600: loss 0.472 (309 s)
