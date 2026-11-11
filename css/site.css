@@ -138,6 +138,10 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-overlay .line { stroke: var(--staff); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; cursor: move; }
 .cg-overlay .sel .area { fill: var(--sel-fill); }
 .cg-overlay .sel .line { stroke: var(--sel); stroke-width: 1.5; }
+/* a mensural staff: its lines dashed, in the marking colour, so a book's two notations are told apart at a glance */
+.cg-overlay .mensural .line { stroke: var(--mark); stroke-dasharray: 6 3; }
+.cg-overlay .mensural .area { fill: color-mix(in srgb, var(--mark) 8%, transparent); }
+.cg-overlay .sel.mensural .line { stroke: var(--sel); }
 .cg-overlay .end { stroke: var(--sel); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .end.bend { stroke-dasharray: 3 2; }
 .cg-overlay .hit { stroke: transparent; stroke-width: 14; vector-effect: non-scaling-stroke; cursor: move; }

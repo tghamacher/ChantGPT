@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.21.1">
+<link rel="stylesheet" href="css/site.css?v=0.22.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.21.1">0.21.1</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.22.0">0.22.0</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -41,6 +41,7 @@
   </div>
   <nav>
     <span id="docGroup" class="cg-tbgroup" hidden>
+      <select id="notation" class="cg-theme" aria-label="Notation" title="What the staves are written in: chant (read and saved as GABC), or mensural notation (polyphony; reading it is still to come). A staff of the other kind can be marked so by right-clicking it."><option value="chant">Chant</option><option value="mensural">Mensural</option></select>
       <button type="button" class="cg-tb" id="save" title="Save your work as a document (Ctrl+S)"><span aria-hidden="true">💾</span> Save</button>
       <label class="cg-tb" title="Open a saved document, to carry on where you left off">Resume<input type="file" id="openDoc" accept=".json,application/json" hidden></label>
     </span>
@@ -184,6 +185,7 @@
     <li>Right-click a neume for the text sung to it (T), or to make it part of the syllable before (a melisma).</li>
     <li>Select a neume or a clef to type its GABC in the panel (fgh, f3); right-click a clef to make it another (C1–C4, F1–F4, with a flat).</li>
     <li>Click the words under a neume to correct them, or drag them into place.</li>
+    <li><strong>Chant or Mensural</strong> (in the toolbar) says what the book's staves are written in. Mensural staves are found with five lines and drawn dashed; reading mensural notation is still to come. In a book with both, right-click a staff to mark it as the other kind.</li>
   </ul>
   <h2>The keys</h2>
   <dl class="cg-keys">
@@ -209,16 +211,16 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.21.1"></script>
-<script src="js/staves.js?v=0.21.1"></script>
-<script src="js/greciliae.js?v=0.21.1"></script>
-<script src="js/neumes.js?v=0.21.1"></script>
-<script src="js/checks.js?v=0.21.1"></script>
-<script src="js/export.js?v=0.21.1"></script>
-<script src="js/viewer.js?v=0.21.1"></script>
-<script src="js/recognizer.js?v=0.21.1"></script>
-<script src="js/playback.js?v=0.21.1"></script>
-<script src="js/editor.js?v=0.21.1"></script>
-<script src="js/app.js?v=0.21.1"></script>
+<script src="js/chant.js?v=0.22.0"></script>
+<script src="js/staves.js?v=0.22.0"></script>
+<script src="js/greciliae.js?v=0.22.0"></script>
+<script src="js/neumes.js?v=0.22.0"></script>
+<script src="js/checks.js?v=0.22.0"></script>
+<script src="js/export.js?v=0.22.0"></script>
+<script src="js/viewer.js?v=0.22.0"></script>
+<script src="js/recognizer.js?v=0.22.0"></script>
+<script src="js/playback.js?v=0.22.0"></script>
+<script src="js/editor.js?v=0.22.0"></script>
+<script src="js/app.js?v=0.22.0"></script>
 </body>
 </html>

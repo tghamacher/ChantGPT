@@ -62,6 +62,7 @@
     pixelCache = null;
     state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes, url: src.url });
     if (state.book) state.doc.book = bookOf(state.book);
+    $('notation').value = 'chant';
     state.page = 0;
     state.dirty = false;
     E.reset();
@@ -138,6 +139,7 @@
     }
     state.doc = doc;
     state.dirty = false;
+    $('notation').value = C.notationOf(doc);
     E.reset();
     const n = C.staves(doc).length;
     say(`${file.name}: ${n} ${n === 1 ? 'staff' : 'staves'} on ${doc.pages.filter(p => p.staves.length).length} pages.` +
@@ -298,6 +300,8 @@
   // which recognizer reads the notes (remembered)
   try { const v = localStorage.getItem('cg-model'); if (v) $('readModel').value = v; } catch (e) { }
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
+  // chant or mensural: the document's (a staff of the other kind is marked on the staff, from its menu)
+  $('notation').addEventListener('change', () => { if (state.doc) E.setNotation($('notation').value); });
   E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
