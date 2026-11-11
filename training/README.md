@@ -218,6 +218,24 @@ varied. Each is a five-line strip as `fivestaves.py` cuts real ones (64 rows, 8 
 The label (`labels.jsonl`: `file`, `text`, `tokens`) is the staff in CGMensural's text form, and its tokens (a ligature's
 brackets and its `~` apart). About a thousand staves a second.
 
+## 8. Mensural notation: real staves
+
+```
+curl -L -o Capitan.zip https://grfia.dlsi.ua.es/musicdocs/Capitan.zip && unzip Capitan.zip -d capitan
+python -I training/capitan.py --corpus capitan                 # -> training/data/capitan (511 staves)
+pdfimages -j SEILS_diplomatic_OMRgroundTruth/particellas_original/NAME.pdf scans/NAME     (each of the 150)
+python -I training/seils.py --scans scans --labels SEILS_diplomatic_OMRgroundTruth/particellas_OMRgroundTruth
+```
+
+Capitan (a 17th-century hand, 576 staves, each a photograph of one staff with its symbols; free for research) and SEILS
+(the print *Il Lauro Secco*, 1582: 150 pages, a voice to a page, with its symbols; CC BY-NC-SA 4.0). Each staff's
+lines found by `fivestaves.py` (in ink; a hand's ruling allowed more uneven), straightened as the synthetic strips are,
+and its symbols written in the mensural text form, every label checked by `js/mensural.js`. Capitan's places are
+counted from the top line (clefs from 1, notes from 0; its G clefs, all marked 5, are drawn as g2); SEILS's from the
+bottom (L1, S1). Capitan: 511 kept (34 unlabelled, 13 with chant or a smudge, 18 whose lines weren't found). SEILS:
+only the pages where as many staves are found as its symbols have (each staff ends with a custos): 161 staves for now;
+a finder for its broken, typeset lines would give more.
+
 ## Still to come
 
 - A second engraver for variety: Gregorio itself, and exsurge.

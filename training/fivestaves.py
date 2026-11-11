@@ -22,6 +22,7 @@ import staffdata as S
 
 STRIP, HEIGHT, SPACE, TOP5, LEFT, RIGHT = 120, 64, 8, 14, 0.6, 0.4
 N, DARK = 5, False                                         # (--lines, --dark)
+NEAR, EVEN = 0.2, 0.25                                      # (how far a line may stray from even spacing: a hand's ruling, more)
 
 
 def redness(rgb):
@@ -61,17 +62,19 @@ def fives(ys, lo, hi):
             run = [ys[i], ys[j]]
             for k in range(N - 2):
                 want = run[-1] + g
-                near = [y for y in ys if abs(y - want) <= 0.2 * g]
+                near = [y for y in ys if abs(y - want) <= NEAR * g]
                 if not near: break
                 run.append(min(near, key=lambda y: abs(y - want)))
             if len(run) == N:
                 gaps = np.diff(run)
-                if gaps.max() - gaps.min() <= 0.25 * gaps.mean():
+                if gaps.max() - gaps.min() <= EVEN * gaps.mean():
                     out.append((run, float(gaps.mean()))); used.update(run); break
     return out
 
 
-def page(path):
+def page(path, spacing=None):
+    """The staves on a page (spacing: the range of a staff's spacing, in pixels, if not the usual share of the page's
+    height: as for a crop of one staff)."""
     rgb = np.asarray(Image.open(path).convert('RGB')).astype(np.float32)
     H, W, _ = rgb.shape
     red = darkness(rgb) if DARK else redness(rgb)
@@ -79,7 +82,7 @@ def page(path):
     cols = np.where(red.sum(0) > np.percentile(red.sum(0), 70))[0]
     if len(cols) < 50: return gray, []
     x0, x1 = int(cols[0]), int(cols[-1])
-    lo, hi = 0.008 * H, 0.03 * H
+    lo, hi = spacing if spacing else (0.008 * H, 0.03 * H)
     found = []                                              # (strip centre, [five rows], g)
     for x in range(x0, x1 - STRIP // 2, STRIP):
         prof = np.median(red[:, x:min(W, x + STRIP)], axis=1)

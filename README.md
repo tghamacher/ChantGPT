@@ -158,4 +158,7 @@ permission (`fonts/Serenissima.otf`; `js/serenissima.js` holds their outlines, m
 The recognizers were trained on chant texts and melodies from [Cantus Database](https://cantusdatabase.org/) and
 [GregoBase](https://gregobase.selapa.net/), on scans made public by the libraries that hold the books and manuscripts,
 and on lines from [CATMuS Medieval](https://huggingface.co/datasets/CATMuS/medieval) (Thibault Clérice et al.,
-CC BY 4.0).
+CC BY 4.0). The reader of mensural notation learnt, besides staves made up with Serenissima, from
+[Capitan](https://grfia.dlsi.ua.es/) (a 17th-century manuscript from Zaragoza, by the GRFIA group of the University of
+Alicante, freely available for research) and [SEILS](https://github.com/SEILSdataset/SEILSdataset) (*Il Lauro Secco*,
+1582, by Emilia Parada-Cabaleiro et al., CC BY-NC-SA 4.0).
