@@ -7,7 +7,7 @@
 //   { k: 'clef', shape: 'C' | 'F' | 'G', line }          line counted from the bottom (1-5)
 //   { k: 'sign', sign: 'O' | 'C' | 'R', dot, stroke }     a mensuration sign (R: the C turned round); dot, stroke: true
 //   { k: 'num', text }                                     a proportion's figures (3, 3/2)
-//   { k: 'note', v, p, color }                             v: Mx L B Sb M Sm F Sf; p: the staff position
+//   { k: 'note', v, p, color, stem }                       v: Mx L B Sb M Sm F Sf; p: the staff position; stem: 'up' | 'down'
 //   { k: 'rest', v, p }                                    (a longa rest: perfect, with perf: true)
 //   { k: 'lig', notes: [{ v, p, obl }], color }            a ligature; obl: this note and the next drawn as one oblique
 //   { k: 'dot', p }                                        a dot (of addition, or of division)
@@ -19,10 +19,11 @@
 // white notation (coloration), absent for white.
 //
 // The text form (as GABC is chant's): items one after another, spaces between them:
-//   C4 F3 G2           clefs, the line from the bottom      O C O. C| O.| R     signs        3  3/2   proportions
+//   c4 f3 g2           clefs, the line from the bottom (lower case, as in GABC: F is the fusa)   O C O. C| O.| R   signs   3  3/2   proportions
 //   B5 Sb6 M5 Sm4 L2 Mx1 F3 Sf3   notes, value and position (B-1: below the bottom line)   B5* a black (coloured) note
+//   M5v L2^            a stem turned down, or up (minims and smaller go up, longae and maximae down, unless said)
 //   rB4 rL3 rLp3       rests (rLp: a perfect longa rest)
-//   [B5 L2]  [Sb6 Sb5 B3]  [B5~B3 L1]*   a ligature: its notes; ~ joins two into an oblique; * blackens it all
+//   [B5 L2]  [Sb6 Sb5 B7]  [L5 B3~B1]*   a ligature: its notes; ~ joins two into an oblique; * blackens it all
 //   .5  b6  n6  #6  +5  |  ||  |||       a dot, flat, natural, sharp, custos, bars
 // Used for tests, for typing a staff in, and for the recognizer's labels.
 (function (global) {
@@ -56,10 +57,10 @@
         out.push(Object.assign({ k: 'lig', notes }, toks[j] === ']*' ? { color: 'black' } : {}));
         i = j;
       }
-      else if ((m = /^([CFG])([1-5])$/.exec(t))) out.push({ k: 'clef', shape: m[1], line: +m[2] });
+      else if ((m = /^([cfg])([1-5])$/.exec(t))) out.push({ k: 'clef', shape: m[1].toUpperCase(), line: +m[2] });
       else if ((m = /^([OCR])(\.?)(\|?)$/.exec(t))) out.push(Object.assign({ k: 'sign', sign: m[1] }, m[2] ? { dot: true } : {}, m[3] ? { stroke: true } : {}));
       else if (/^\d+(\/\d+)?$/.test(t)) out.push({ k: 'num', text: t });
-      else if ((m = new RegExp(`^${VAL}(-?\\d+)(\\*?)$`).exec(t))) out.push(Object.assign({ k: 'note', v: m[1], p: +m[2] }, m[3] ? { color: 'black' } : {}));
+      else if ((m = new RegExp(`^${VAL}(-?\\d+)([v^]?)(\\*?)$`).exec(t))) out.push(Object.assign({ k: 'note', v: m[1], p: +m[2] }, m[3] ? { stem: m[3] === 'v' ? 'down' : 'up' } : {}, m[4] ? { color: 'black' } : {}));
       else if ((m = new RegExp(`^r${VAL}(p?)(-?\\d+)$`).exec(t))) out.push(Object.assign({ k: 'rest', v: m[1], p: +m[3] }, m[2] ? { perf: true } : {}));
       else if ((m = /^\.(-?\d+)$/.exec(t))) out.push({ k: 'dot', p: +m[1] });
       else if ((m = /^([bn#])(-?\d+)$/.exec(t))) out.push({ k: 'acc', a: m[1], p: +m[2] });
@@ -73,10 +74,10 @@
   function text(items) {
     return items.map(it => {
       switch (it.k) {
-        case 'clef': return it.shape + it.line;
+        case 'clef': return it.shape.toLowerCase() + it.line;
         case 'sign': return it.sign + (it.dot ? '.' : '') + (it.stroke ? '|' : '');
         case 'num': return it.text;
-        case 'note': return it.v + it.p + (it.color === 'black' ? '*' : '');
+        case 'note': return it.v + it.p + (it.stem ? (it.stem === 'down' ? 'v' : '^') : '') + (it.color === 'black' ? '*' : '');
         case 'rest': return 'r' + it.v + (it.perf ? 'p' : '') + it.p;
         case 'lig': return '[' + it.notes.map((n, i) => n.v + n.p + (n.obl && i < it.notes.length - 1 ? '~' : ' ')).join('').trim() + ']' + (it.color === 'black' ? '*' : '');
         case 'dot': return '.' + it.p;
@@ -169,22 +170,29 @@
   }
 
   // ---------------------------------------------------------------- drawing
-  // Serenissima (Elam Rotem's early-music font, SMuFL) for the single signs: a glyph's origin is at its left, on the
-  // staff position it stands for; one em is four spaces. Ligatures, mensuration signs and dots are drawn as shapes:
-  // the font has no ligatures, and these must fit any interval and any length.
-  const G = {
-    white: { Mx: '', L: '', B: '', Sb: '', M: '', Sm: '', F: '', Sf: '' },
-    black: { Mx: '', L: '', B: '', Sb: '', M: '', Sm: '', F: '', Sf: '' },
-    rest: { Mx: '', L: '', Lp: '', B: '', Sb: '', M: '', Sm: '', F: '', Sf: '' },
-    clef: { C: '', F: '', G: '' },
-    acc: { b: '', n: '', '#': '' },
-    custos: '',
-  };
+  // The single signs are Elam Rotem's EMS_Serenissima, as js/serenissima.js keeps them (CGSerenissima: each an outline in
+  // staff spaces, its origin at its left on the staff position it stands for, its staff lines taken out). Ligatures,
+  // bars, and what the font lacks (a natural, a turned C, black maximae) are drawn as shapes: the font has no
+  // ligatures, and these must fit any interval and any length.
+  const SIGN = () => global.CGSerenissima || {};
+  const HAS_STEM = { Mx: 'down', L: 'down', M: 'up', Sm: 'up', F: 'up', Sf: 'up' };   // (which way a stem goes, unless said)
+  // a note's sign, by its value, colour and stem: { key, p } (a black note the font hasn't: the next shorter white
+  // one, which is how a blackened minim and its like look; or null, drawn as a shape)
+  function noteSign(it) {
+    const black = it.color === 'black', stem = it.stem || HAS_STEM[it.v];
+    if (black) {
+      if (it.v === 'Mx') return null;
+      const k = { L: 'kL', B: 'kB', Sb: 'kSb', M: 'Sm', Sm: 'F', F: 'Sf', Sf: 'Sf' }[it.v];
+      return /^(kL|Sm|F|Sf)$/.test(k) ? k + '.' + (stem || 'up') : k;
+    }
+    return stem ? `${it.v}.${stem}` : it.v;
+  }
+  const REST = { Mx: 'rL', L: 'rL', B: 'rB', Sb: 'rSb', M: 'rM', Sm: 'rSm', F: 'rF', Sf: 'rF' };
   // how wide each item is, in spaces (to set out items without an x, and to box them)
-  const WIDTH = { clef: 1.6, sign: 2.2, num: 1.4, note: 1.4, rest: 1.2, dot: 0.6, acc: 1.0, custos: 1.0, bar: 0.8 };
-  const BLOCK = 1.25, OBL = 2.4, HIGH = 0.95, STEM = 2.6, PEN = 0.13;   // (a ligature's note: width, height; an oblique's run; in spaces)
+  const WIDTH = { clef: 1.7, sign: 1.8, num: 1.4, note: 1.6, rest: 1.2, dot: 0.7, acc: 1.3, custos: 1.8, bar: 0.8 };
+  const BLOCK = 1.07, OBL = 2.1, HIGH = 0.9, STEM = 3.0, PEN = 0.13;   // (a ligature's note: width, height (Serenissima's breve); an oblique's run; in spaces)
   const ligWidth = notes => notes.reduce((w, n, i) => w + (i > 0 && notes[i - 1].obl ? OBL - BLOCK : 0) + (n.v === 'Mx' ? 2 * BLOCK : BLOCK), 0);
-  const widthOf = it => it.k === 'lig' ? ligWidth(it.notes) + 0.6 : WIDTH[it.k] || 1;
+  const widthOf = it => it.k === 'lig' ? ligWidth(it.notes) + 0.9 : it.k === 'rest' && it.v === 'Mx' ? 1.6 : WIDTH[it.k] || 1;
 
   // A staff's geometry: the y of a staff position at x, the spacing.
   function geometry(lines) {
@@ -192,45 +200,67 @@
     return { y: (p, x) => { const b = S().yAt(bot, x), t = S().yAt(top, x); return b + (t - b) * p / steps; }, s: S().spacing(lines), left: top[0], right: top[top.length - 2] };
   }
 
-  // Everything to draw for a staff: { glyphs: [{ ch, x, y, size, item }], shapes: [{ d, fill, item }], boxes } in page
-  // units. shapes are SVG path data: filled (fill true) or stroked (a line PEN spaces wide). boxes: each item's
-  // [x, y, w, h], to grab it by.
+  // Everything to draw for a staff, in page units: { signs: [{ key, d, x, y, scale, flip, item }] (Serenissima's,
+  // drawn as path d at x, y, scaled to the staff's spacing, flipped left to right if flip), shapes: [{ d, fill, item }]
+  // (filled when fill is true, outlined when 'outline', else a line pen wide), texts: [{ text, x, y, size, item }],
+  // boxes: each item's [x, y, w, h], to grab it by; angle: the staff's tilt (degrees), for the signs and texts.
   function layout(staff) {
-    const items = staff.mensural || [], g = geometry(staff.lines), s = g.s, size = 4 * s;
-    const out = { glyphs: [], shapes: [], boxes: [], size, pen: PEN * s };
+    const items = staff.mensural || [], g = geometry(staff.lines), s = g.s, T = SIGN();
+    const out = { signs: [], shapes: [], texts: [], boxes: [], pen: PEN * s, angle: S().tilt(staff.lines) };
     let x = g.left + 0.8 * s;
     items.forEach((it, i) => {
       const x0 = Number.isFinite(it.x) ? it.x : x, w = widthOf(it) * s;
       x = x0 + w + 0.5 * s;
-      const glyph = (ch, p) => out.glyphs.push({ ch, x: x0, y: g.y(p, x0), size, item: i });
+      const sign = (key, p, dx = 0, flip = false) => { if (T[key]) out.signs.push({ key, d: T[key].d, x: x0 + dx * s, y: g.y(p, x0), scale: s, flip, item: i }); return !!T[key]; };
       const shape = (d, fill) => out.shapes.push({ d, fill, item: i });
       const box = (pLo, pHi) => out.boxes.push([x0, g.y(pHi, x0), w, g.y(pLo, x0) - g.y(pHi, x0)]);
       switch (it.k) {
-        case 'clef': glyph(G.clef[it.shape] || '?', 2 * (it.line - 1)); box(2 * (it.line - 1) - 3, 2 * (it.line - 1) + 3); break;
-        case 'note': glyph((it.color === 'black' ? G.black : G.white)[it.v] || '?', it.p); box(it.p - (it.v === 'L' || it.v === 'Mx' ? 6 : 1.5), it.p + (/^(M|Sm|F|Sf)$/.test(it.v) ? 6 : 1.5)); break;
-        case 'rest': glyph(G.rest[it.v === 'L' && it.perf ? 'Lp' : it.v] || '?', it.p); box(it.p - 3, it.p + 3); break;
-        case 'acc': glyph(G.acc[it.a] || '?', it.p); box(it.p - 2, it.p + 3); break;
-        case 'custos': glyph(G.custos, it.p); box(it.p - 2, it.p + 3); break;
-        case 'num': out.glyphs.push({ ch: it.text, x: x0, y: g.y(4, x0) + 0.5 * s, size: 1.6 * s, item: i, text: true }); box(2, 6); break;
-        case 'dot': { const r = 0.22 * s, cy = g.y(it.p, x0); shape(circle(x0 + 0.3 * s, cy, r), true); box(it.p - 1, it.p + 1); break; }
+        case 'clef': { const p = 2 * (it.line - 1); sign('clef' + it.shape, p); box(p - 4, p + 4); break; }
+        case 'note': {
+          const key = noteSign(it);
+          if (!key || !sign(key, it.p)) {          // (a black maxima: a filled block twice a breve's width, its stem down)
+            const y = g.y(it.p, x0), h = HIGH * s / 2, a = x0 + 0.3 * s, b2 = a + 2 * BLOCK * s;
+            shape(`M${f(a)} ${f(y - h)}L${f(b2)} ${f(y - h)}L${f(b2)} ${f(y + h)}L${f(a)} ${f(y + h)}Z`, it.color === 'black' ? true : 'outline');
+            shape(`M${f(b2)} ${f(y)}L${f(b2)} ${f(y + STEM * s)}`, false);
+          }
+          const up = /\.up$/.test(key || '') ? 6 : 1.5, down = /\.down$/.test(key || '') || it.v === 'Mx' ? 6 : 1.5;
+          box(it.p - down, it.p + up); break;
+        }
+        case 'rest': {
+          const key = it.v === 'L' && it.perf ? 'rLp' : REST[it.v];
+          sign(key, it.p); if (it.v === 'Mx') sign(key, it.p, 0.6);   // (a maxima rest: two longa rests)
+          box(it.p - 3, it.p + 3); break;
+        }
+        case 'acc':
+          if (it.a === 'n') {                      // (a natural: Serenissima has none)
+            const y = g.y(it.p, x0), a = x0 + 0.35 * s, b2 = x0 + 0.95 * s;
+            shape(`M${f(a)} ${f(y - 1.3 * s)}L${f(a)} ${f(y + 0.45 * s)}L${f(b2)} ${f(y + 0.25 * s)}M${f(b2)} ${f(y + 1.3 * s)}L${f(b2)} ${f(y - 0.45 * s)}L${f(a)} ${f(y - 0.25 * s)}`, false);
+          } else sign(it.a === 'b' ? 'flat' : 'sharp', it.p);
+          box(it.p - 2, it.p + 3); break;
+        case 'custos': sign('custos', it.p); box(it.p - 2, it.p + 4); break;
+        case 'dot': sign('dot', it.p); box(it.p - 1, it.p + 1); break;
+        case 'num': out.texts.push({ text: it.text, x: x0, y: g.y(4, x0) + 0.5 * s, size: 1.6 * s, item: i }); box(2, 6); break;
         case 'bar': {
           const n = { single: 1, double: 2, end: 3 }[it.form] || 1;
           for (let k = 0; k < n; k++) { const bx = x0 + k * 0.3 * s; shape(`M${f(bx)} ${f(g.y(8, bx))}L${f(bx)} ${f(g.y(0, bx))}`, false); }
           box(0, 8); break;
         }
         case 'sign': {
-          // a circle (O) or most of one (C, R) on the middle line, a space and a half across; a dot in it, a stroke through
-          const cx = x0 + 0.9 * s, cy = g.y(4, cx), r = 0.75 * s;
-          if (it.sign === 'O') shape(circle(cx, cy, r), false);
-          else { const c = it.sign === 'C' ? 0 : Math.PI, open = 0.75; shape(arc(cx, cy, r, c + open, c + 2 * Math.PI - open), false); }   // (the gap to the right, or for R to the left)
-          if (it.dot) shape(circle(cx, cy, 0.16 * s), true);
-          if (it.stroke) shape(`M${f(cx)} ${f(cy - 1.4 * r)}L${f(cx)} ${f(cy + 1.4 * r)}`, false);
+          // Serenissima's O and C, with or without their stroke; R, its C turned round; a dot in the middle, drawn
+          const key = (it.sign === 'O' ? 'signO' : 'signC') + (it.stroke ? 'stroke' : '');
+          sign(key, 4, 0, it.sign === 'R');
+          if (it.dot && T[key]) { const cx = x0 + (T[key].x0 + T[key].x1) / 2 * s; shape(circle(cx, g.y(4, cx), 0.14 * s), true); }
           box(1, 7); break;
         }
-        case 'lig': ligature(it, x0, g, s, shape); box(Math.min(...it.notes.map(n => n.p)) - 6, Math.max(...it.notes.map(n => n.p)) + 3); break;
+        case 'lig': ligature(it, x0 + 0.3 * s, g, s, shape); box(Math.min(...it.notes.map(n => n.p)) - 6, Math.max(...it.notes.map(n => n.p)) + 6); break;
       }
     });
     return out;
+  }
+  // a sign's transform, for SVG: placed, scaled, tilted with the staff, flipped (turned round) if need be
+  function transform(v, angle = 0) {
+    const T = SIGN()[v.key] || { x0: 0, x1: 1 }, w = (T.x0 + T.x1) * v.scale;
+    return `translate(${f(v.x + (v.flip ? w : 0))} ${f(v.y)}) rotate(${(angle || 0).toFixed(3)}) scale(${f(v.flip ? -v.scale : v.scale)} ${f(v.scale)})`;
   }
   const f = v => Math.round(v * 100) / 100;
   const circle = (cx, cy, r) => `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`;
@@ -329,5 +359,5 @@ ${body.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, geometry, mei, GLYPHS: G };
+  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign };
 })(typeof window !== 'undefined' ? window : globalThis);

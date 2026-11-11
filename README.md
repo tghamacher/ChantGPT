@@ -150,7 +150,9 @@ License 1.1), both of which may be shared with GPL software.
 pdf.js by Mozilla, Apache License 2.0 (`vendor/pdfjs/LICENSE`). ONNX Runtime Web by Microsoft, MIT License
 (`vendor/onnxruntime`). Greciliae, the chant font of
 [Gregorio](https://gregorio-project.github.io/), by Matthew Spencer and the Gregorio Project, SIL Open Font License 1.1
-(`fonts/OFL-greciliae.txt`); how glyphs are gathered and named follows Gregorio's own code (GPLv3). The test scan is engraved with
+(`fonts/OFL-greciliae.txt`); how glyphs are gathered and named follows Gregorio's own code (GPLv3). The mensural signs are
+from EMS_Serenissima by Elam Rotem ([Early Music Sources](https://www.earlymusicsources.com/)), used with his
+permission (`fonts/Serenissima.otf`; `js/serenissima.js` holds their outlines, made by `training/serenissima.py`). The test scan is engraved with
 [exsurge](https://github.com/frmatthew/exsurge) by Fr. Matthew Spencer, MIT License.
 
 The recognizers were trained on chant texts and melodies from [Cantus Database](https://cantusdatabase.org/) and

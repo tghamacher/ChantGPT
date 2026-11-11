@@ -1516,11 +1516,12 @@
       }
       // a mensural staff's contents: Serenissima's glyphs, and the shapes drawn for ligatures and signs
       if (mensural(st) && (st.mensural || []).length) {
-        const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g), angle = S.tilt(l);
-        for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : ''), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
-        for (const v of L.glyphs) {
-          const t = el('text', { x: v.x, y: v.y, 'font-size': v.size, class: 'mglyph' + (v.text ? ' num' : ''), transform: `rotate(${angle.toFixed(3)} ${v.x} ${v.y})` }, mg);
-          t.textContent = v.ch;
+        const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g);
+        for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : v.fill === 'outline' ? ' outline' : ''), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
+        for (const v of L.signs) el('path', { d: v.d, class: 'msign', transform: M.transform(v, L.angle) }, mg);
+        for (const v of L.texts) {
+          const t = el('text', { x: v.x, y: v.y, 'font-size': v.size, class: 'mnum', transform: `rotate(${L.angle.toFixed(3)} ${v.x} ${v.y})` }, mg);
+          t.textContent = v.text;
         }
       }
       // the chant: its glyphs where they are, along the staff (tilted with it); its words under it

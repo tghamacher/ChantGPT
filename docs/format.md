@@ -84,7 +84,7 @@ is how training data and tests will be made.
   kind `k` and its `x` on the page: clefs, mensuration signs, proportions, notes and rests (value `v`: `Mx` `L` `B`
   `Sb` `M` `Sm` `F` `Sf`; position `p`, steps up from the bottom line), ligatures (their `notes`, each `obl` where it
   and the next are one oblique), dots, accidentals, custodes and bars; `color: "black"` for coloration. `js/mensural.js`
-  describes each, and a text form for them (`C4 O B5 Sb6 [B5 L2] [B5~B3]* rB4 .5 |`), and saves them as MEI (mensural,
+  describes each, and a text form for them (`c4 O B5 Sb6 [B5 L2] [B5~B3]* rB4 .5 |`), and saves them as MEI (mensural,
   white notation).
 - `begins`: `true` if a chant begins on this staff (in the Solesmes books, the staff set in for the chant's initial),
   `false` if a person said it doesn't; absent if no one has said (optional). Placing GABC without line breaks on a

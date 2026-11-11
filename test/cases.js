@@ -161,10 +161,10 @@
     } },
     { name: 'document: not a document', unit: () => same('checks', C().check({ pages: [] }), ['Not a ChantGPT document.']) },
     { name: 'mensural: the text form, both ways', unit: () => {
-      const M = global.CGMensural, t = 'C4 O. C| R 3/2 B5 Sb6 M5 Sm4 F3 Sf2 B5* Mx1 L-1 [B5 L2] [Sb6 Sb5 B7] [L5 B3~B1]* rB4 rLp3 .5 b6 n6 #6 +5 | || |||';
+      const M = global.CGMensural, t = 'c4 O. C| R 3/2 B5 Sb6 M5 Sm4 F3 Sf2 B5* Mx1 L-1 [B5 L2] [Sb6 Sb5 B7] [L5 B3~B1]* rB4 rLp3 .5 b6 n6 #6 +5 | || |||';
       const it = M.parse(t), bad = same('round trip', M.text(it), t);
       bad.push(...same('a ligature', it.find(v => v.k === 'lig' && v.color), { k: 'lig', notes: [{ v: 'L', p: 5 }, { v: 'B', p: 3, obl: true }, { v: 'B', p: 1 }], color: 'black' }));
-      for (const wrong of ['Q5', '[B5', 'B', 'C7']) { try { M.parse(wrong); bad.push(`"${wrong}" was taken`); } catch (e) { } }
+      for (const wrong of ['Q5', '[B5', 'B', 'c7', 'C4']) { try { M.parse(wrong); bad.push(`"${wrong}" was taken`); } catch (e) { } }
       return bad;
     } },
     { name: 'mensural: pitches from the clef', unit: () => {
@@ -182,21 +182,23 @@
       const errs = M.check(M.parse('[B5 B3] [M3 B4] [Sb3 B4] [B5~B5] [B3~B5]'));
       for (const re of [/descending last breve is written oblique/, /minima can't be/, /semibreve has two/, /different pitch/, /ascending last breve is written square/])
         if (!errs.some(e => re.test(e))) bad.push(`No complaint matching ${re}: ${errs.join(' | ')}`);
-      bad.push(...same('a right staff', M.check(M.parse('C4 O [B5 L2] [L5 B3~B1] [Sb3 Sb5] B4 .4 |')), []));
+      bad.push(...same('a right staff', M.check(M.parse('c4 O [B5 L2] [L5 B3~B1] [Sb3 Sb5] B4 .4 |')), []));
       return bad;
     } },
     { name: 'mensural: drawn along the staff, and MEI', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
-      const L = M.layout({ lines, mensural: M.parse('C4 O [B5 L2] Sb6 rB4') });
-      bad.push(...same('glyphs (clef, semibreve, rest)', L.glyphs.map(g => g.ch.codePointAt(0).toString(16)), ['e905', 'e962', 'e9f3']));
-      bad.push(...same('the clef on its line', L.glyphs[0].y, 210), ...same('the semibreve at position 6', L.glyphs[1].y, 210));
-      bad.push(...same('boxes', L.boxes.length, 5));
-      // (the ligature: two blocks, a stroke between, a stem; the sign: one shape)
-      bad.push(...same('shapes', L.shapes.length, 1 + 4));
+      const L = M.layout({ lines, mensural: M.parse('c4 O [B5 L2] Sb6 rB4 M3 M3v L1 F3* .3 b2 n2 +5') });
+      bad.push(...same('signs', L.signs.map(v => v.key), ['clefC', 'signO', 'Sb', 'rB', 'M.up', 'M.down', 'L.down', 'Sf.up', 'dot', 'flat', 'custos']));
+      bad.push(...same('the clef on its line', L.signs[0].y, 210), ...same('the semibreve at position 6', L.signs[2].y, 210), ...same('scaled to the staff', L.signs[0].scale, 10));
+      bad.push(...same('boxes', L.boxes.length, 13));
+      // (the ligature: two blocks, a stroke between, a stem; the natural: one shape)
+      bad.push(...same('shapes', L.shapes.length, 4 + 1));
+      bad.push(...same('every sign has an outline', L.signs.every(v => /^M[-\d.]/.test(v.d)), true));
+      bad.push(...same('turned round', M.layout({ lines, mensural: M.parse('R') }).signs[0].flip, true));
       const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000]] });
       doc.notation = 'mensural';
-      doc.pages[0].staves.push({ id: 'p1s1', box: [90, 180, 820, 80], lines, mensural: M.parse('C4 O. [B5 L2] [B5~B3]* Sb6 rLp3 .4 b2 +5 ||') });
+      doc.pages[0].staves.push({ id: 'p1s1', box: [90, 180, 820, 80], lines, mensural: M.parse('c4 O. [B5 L2] [B5~B3]* Sb6 rLp3 .4 b2 +5 ||') });
       bad.push(...same('checks', C.check(doc), []));
       const x = M.mei(doc);
       for (const want of ['notationtype="mensural.white"', '<clef xml:id="m1" shape="C" line="4"/>', '<mensur xml:id="m2" sign="O" dot="true"/>',
