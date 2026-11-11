@@ -1,0 +1,6 @@
+job 0076-occo: PRIVATE (CMME's edition, not yet asked): the Occo Codex's pages saved from IDEM filed by page; CMME's edition fetched and cut into staves; staves found on the pages paired with them; the mensural reader trained on Occo with Capitan and SEILS, from 0075; tested on held-out pages against 0075. Nothing kept or exported.
+code: f908e54
+
+$ cantus.py collect --source occo --manifest https://data.idemdatabase.org/IE7950914/manifest --by-page --downloads C:\Users\Ted Hamacher\Desktop\EMS Tools
+310 pages filed by folio -> D:\ChantGPT\changpt-repo\training\data\scans\occo (from 4 zips in C:\Users\Ted Hamacher\Desktop\EMS Tools; 0 pages with no chant left out)
+(the job could not run: not allowed: cmme.py fetch)
