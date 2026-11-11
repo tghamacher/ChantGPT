@@ -129,7 +129,8 @@
   // Selected (mitem), dragged along the staff and up and down it by steps, changed from the keyboard or the menu. In a
   // ligature, the note under the pointer is the one moved or changed (mitem.n).
   const VALUE_NAMES = { Mx: 'Maxima', L: 'Longa', B: 'Breve', Sb: 'Semibreve', M: 'Minima', Sm: 'Semiminima', F: 'Fusa', Sf: 'Semifusa' };
-  const VALUE_KEYS = ['Mx', 'L', 'B', 'Sb', 'M', 'Sm', 'F', 'Sf'];   // (keys 1 to 8)
+  const VALUE_KEYS = ['Mx', 'L', 'B', 'Sb', 'M', 'Sm', 'F', 'Sf'];
+  const DIGIT_OF = { Sb: 1, M: 2, Sm: 4, F: 8, Sf: 6, B: 0, L: 9, Mx: 7 };   // (the keys for them, as the Measuring Polyphony editor has them)
   const mOf = () => { const st = staffOf(selected); return st && mitem && (st.mensural || [])[mitem.i] || null; };
   // the staff position under a point (steps up from the bottom line)
   function mPos(st, x, y) {
@@ -269,6 +270,124 @@
     mitem = { i, n: st.mensural[i].k === 'lig' ? 0 : null };
     draw();
   }
+  // ---------------------------------------------------------------- typing music in (as the Measuring Polyphony editor does)
+  // A letter, a to g, puts a note of that pitch after the selected item (or at the staff's end): the nearest such
+  // pitch to the note before; a capital, the one the other way (d then A: the fifth up, not the fourth down). Digits set
+  // a value, of the selected item and of the notes typed after it, as that editor numbers them: 1 semibreve, 2 minim,
+  // 4 semiminim, 8 fusa, 6 semifusa, 0 breve, 9 longa, 7 maxima. r puts a rest; - # n a flat, sharp or natural before
+  // the selected note (N takes it off); [ and ] the first and last notes of a ligature.
+  const DIGIT_VALUES = { 1: 'Sb', 2: 'M', 4: 'Sm', 8: 'F', 6: 'Sf', 0: 'B', 9: 'L', 7: 'Mx' };
+  let entry = 'Sb', ligFrom = null;
+  // the clef in force at index k of the staff's items (else its first; else C4)
+  function clefAt(st, k) {
+    const items = st.mensural || [];
+    return items.slice(0, k).reverse().find(v => v.k === 'clef') || items.find(v => v.k === 'clef') || { k: 'clef', shape: 'C', line: 4 };
+  }
+  // the place of the last note at or before index k (a ligature's last note), else the staff's middle line
+  function lastPlace(st, k) {
+    for (const v of (st.mensural || []).slice(0, k + 1).reverse()) {
+      if (v.k === 'note') return v.p;
+      if (v.k === 'lig') return v.notes[v.notes.length - 1].p;
+    }
+    return 4;
+  }
+  // an item put after index k (or at the start, k = -1), where it fits along the staff; those after it moved on if need be
+  function mInsertAfter(it, k) {
+    const st = staffOf(selected);
+    if (!st) return;
+    st.mensural = st.mensural || [];
+    const g = M.geometry(st.lines), L = M.layout(st), b = L.boxes[k];
+    const x = b ? b[0] + b[2] + 0.4 * g.s : g.left + 0.8 * g.s;
+    it.x = Math.round(x * 10) / 10;
+    // (room for it: the width layout would give it)
+    const w = M.layout({ lines: st.lines, mensural: [Object.assign({}, it)] }).boxes[0][2] + 0.4 * g.s;
+    const before = snapshot();
+    const next = st.mensural[k + 1];
+    if (next && Number.isFinite(next.x) && next.x < x + w) { const dx = x + w - next.x; for (const v of st.mensural.slice(k + 1)) if (Number.isFinite(v.x)) v.x = Math.round((v.x + dx) * 10) / 10; }
+    st.mensural.splice(k + 1, 0, it);
+    mitem = { i: k + 1, n: it.k === 'lig' ? 0 : null };
+    delete it.conf;
+    commit(before);
+    draw();
+  }
+  // where typing goes: after the selected item, or after the staff's last
+  const typingAt = st => mitem ? mitem.i : (st.mensural || []).length - 1;
+  function mTypeNote(letter) {
+    const st = staffOf(selected);
+    if (!st || !mensural(st)) return;
+    let k = typingAt(st);
+    // (a staff with no clef: a C4 put first, to say what the letters mean)
+    if (!(st.mensural || []).some(v => v.k === 'clef')) {
+      mInsertAfter({ k: 'clef', shape: 'C', line: 4 }, -1); k++;
+      ctx.say('The staff had no clef: a C clef on the fourth line is put first (↑ ↓ moves it to another line).');
+    }
+    const clef = clefAt(st, k + 1), ref = lastPlace(st, k), name = letter.toLowerCase();
+    const cands = [];
+    for (let p = ref - 7; p <= ref + 7; p++) { const q = M.pitch(p, clef); if (q && q.pname === name) cands.push(p); }
+    cands.sort((a, b) => Math.abs(a - ref) - Math.abs(b - ref) || b - a);
+    let p = cands[0];
+    if (letter !== name) p = cands.find(c => c !== ref && Math.sign(c - ref) !== Math.sign(cands[0] - ref)) ?? (cands[0] === ref ? ref + 7 : cands[0]);
+    mInsertAfter({ k: 'note', v: entry, p }, k);
+  }
+  function mTypeRest() {
+    const st = staffOf(selected);
+    if (!st || !mensural(st)) return;
+    const p = { Mx: 4, L: 4, B: 5, Sb: 6, M: 4, Sm: 4, F: 4, Sf: 4 }[entry];
+    mInsertAfter({ k: 'rest', v: entry, p }, typingAt(st));
+  }
+  // a digit: the selected note's (or rest's) value, and the value of what is typed next
+  function mDigit(d) {
+    const v = DIGIT_VALUES[d];
+    if (!v) return false;
+    entry = v;
+    const it = mOf();
+    if (it && (it.k === 'note' || it.k === 'rest' || (it.k === 'lig' && mitem.n !== null))) mValue(v);
+    else ctx.say(`${VALUE_NAMES[v]}s from now on.`);
+    return true;
+  }
+  // an accidental before the selected note (n: natural); N: the one before it taken off
+  function mAccidental(a) {
+    const st = staffOf(selected), it = mOf();
+    if (!st || !it || (it.k !== 'note' && it.k !== 'lig')) { ctx.say('Select the note it goes before.', true); return; }
+    const before = st.mensural[mitem.i - 1];
+    if (a === null) {
+      if (!before || before.k !== 'acc') return;
+      const snap = snapshot();
+      st.mensural.splice(mitem.i - 1, 1);
+      mitem = { i: mitem.i - 1, n: mitem.n };
+      commit(snap);
+      draw();
+      return;
+    }
+    const p = it.k === 'lig' ? it.notes[mitem.n === null ? 0 : mitem.n].p : it.p, i = mitem.i;
+    if (before && before.k === 'acc') { mitem = { i: i - 1, n: null }; mChange(x => { x.a = a; x.p = p; }); mitem = { i, n: null }; draw(); return; }
+    const x = Number.isFinite(it.x) ? it.x : M.geometry(st.lines).left;
+    const s = M.geometry(st.lines).s, snap = snapshot();
+    for (const v of st.mensural.slice(i)) if (Number.isFinite(v.x)) v.x = Math.round((v.x + 1.4 * s) * 10) / 10;
+    st.mensural.splice(i, 0, { k: 'acc', a, p, x: Math.round(x * 10) / 10 });
+    mitem = { i: i + 1, n: it.k === 'lig' ? mitem.n : null };
+    commit(snap);
+    draw();
+  }
+  // [ marks the selected note as a ligature's first; ] joins it and every note up to the selected one
+  function mLigature(open) {
+    const st = staffOf(selected);
+    if (!st || !mOf()) return;
+    if (open) { ligFrom = { staff: st.id, i: mitem.i }; ctx.say('A ligature begins here: type its notes, then ] at its last.'); return; }
+    if (!ligFrom || ligFrom.staff !== st.id || ligFrom.i >= mitem.i) { ctx.say('Mark the ligature\'s first note with [ first.', true); return; }
+    const from = ligFrom.i, to = mitem.i, part = st.mensural.slice(from, to + 1);
+    if (part.some(v => v.k !== 'note')) { ctx.say('Only notes go into a ligature (no rests, dots or accidentals between).', true); return; }
+    if (part.some(v => !['Mx', 'L', 'B', 'Sb'].includes(v.v))) { ctx.say('Only maximae, longae, breves and semibreves go into a ligature.', true); return; }
+    const snap = snapshot();
+    st.mensural.splice(from, part.length, { k: 'lig', notes: part.map(v => ({ v: v.v, p: v.p })), x: part[0].x });
+    mitem = { i: from, n: part.length - 1 };
+    ligFrom = null;
+    commit(snap);
+    draw();
+    const bad = M.check([st.mensural[from]]);
+    if (bad.length) ctx.say(bad.join(' ').replace(/Item 1: /g, ''), true);
+  }
+
   // what the side panel says of the selected item
   function mDescribe(st, it) {
     const clef = st.mensural.slice(0, mitem.i + 1).reverse().find(v => v.k === 'clef');
@@ -1271,7 +1390,7 @@
       mitem = { i, n: it.k === 'lig' ? ligNote(st, i, p[0]) : null };
       draw();
       const v = it.k === 'lig' ? it.notes[mitem.n].v : it.v, inLig = it.k === 'lig', valued = it.k === 'note' || it.k === 'rest' || inLig;
-      const values = (inLig ? ['Mx', 'L', 'B', 'Sb'] : VALUE_KEYS).map(w => ({ label: w, on: v === w, title: `${VALUE_NAMES[w]} (${VALUE_KEYS.indexOf(w) + 1})`, run: () => mValue(w) }));
+      const values = (inLig ? ['Mx', 'L', 'B', 'Sb'] : VALUE_KEYS).map(w => ({ label: w, on: v === w, title: `${VALUE_NAMES[w]} (${DIGIT_OF[w]})`, run: () => mValue(w) }));
       ctx.menu([
         { title: mDescribe(st, it) },
         valued ? { shapes: values } : null,
@@ -1773,7 +1892,15 @@
       if (k === 'Enter') { acceptWord(); return true; }
       return false;
     }
-    // a mensural item selected: the keys are its (1-8: Mx L B Sb M Sm F Sf)
+    // a mensural staff: music typed in (letters, digits, r, - # n N, [ ]); a mensural item selected: the keys are its
+    {
+      const mst = staffOf(selected);
+      if (mst && mensural(mst) && !itemOf() && !sylOf()) {
+        if (/^[a-gA-G]$/.test(k)) { mTypeNote(k); return true; }
+        if (/^[0-9]$/.test(k)) return mDigit(+k);
+        if (k === 'r') { mTypeRest(); return true; }
+      }
+    }
     if (mOf()) {
       const all = e.shiftKey;
       if (k === 'Escape') { mitem = null; draw(); return true; }
@@ -1782,11 +1909,18 @@
       if (k === 'ArrowLeft') { mNudge(-unit() * 3); return true; }
       if (k === 'ArrowRight') { mNudge(unit() * 3); return true; }
       if (k === 'Tab') { mNext(e.shiftKey ? -1 : 1); return true; }
-      if (k === 'Delete' || k === 'Backspace') { mRemove(); return true; }
-      if (/^[1-8]$/.test(k)) { mValue(VALUE_KEYS[+k - 1]); return true; }
+      if (k === 'Delete') { mRemove(); return true; }
+      // (Backspace, as when typing: this one gone, the one before selected)
+      if (k === 'Backspace') { const i = mitem.i; mRemove(); if (i > 0) { mitem = { i: i - 1, n: null }; draw(); } return true; }
+      if (k === '-') { mAccidental('b'); return true; }
+      if (k === '#') { mAccidental('#'); return true; }
+      if (k === 'n') { mAccidental('n'); return true; }
+      if (k === 'N') { mAccidental(null); return true; }
+      if (k === '[') { mLigature(true); return true; }
+      if (k === ']') { mLigature(false); return true; }
       if (k === 'k' || k === 'K') { mBlack(); return true; }
       if (k === 's' || k === 'S') { mStem(); return true; }
-      if (k === 'r' || k === 'R') { mRest(); return true; }
+      if (k === 'R') { mRest(); return true; }
       if (k === '.') { mDot(); return true; }
       if (k === 'j' || k === 'J') { mJoin(); return true; }
       if (k === 'o' || k === 'O') { mOblique(); return true; }

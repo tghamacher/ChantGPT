@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.28.0">
+<link rel="stylesheet" href="css/site.css?v=0.29.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.28.0">0.28.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.0">0.29.0</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -141,7 +141,7 @@
         <button type="button" id="putMens" title="Put what is typed on the selected mensural staff (replacing what it has), spread along it">Put on staff</button>
         <button type="button" id="downloadMensMei" title="The document's mensural staves as MEI (mensural, white notation), each tied to its place on the page">MEI</button>
       </div>
-      <p class="cg-hint">Values Mx L B Sb M Sm F Sf, then the position: steps up from the bottom line (0; the top line is 8). [ ] a ligature, ~ an oblique, * black. Clefs c4 f3 g2; signs O C R, with . and |.</p>
+      <p class="cg-hint">Or type it on the page (see Help). Here: values Mx L B Sb M Sm F Sf, then the position: steps up from the bottom line (0; the top line is 8). [ ] a ligature, ~ an oblique, * black. Clefs c4 f3 g2; signs O C R, with . and |.</p>
     </details>
 
     <details class="cg-card" id="checkGroup" hidden>
@@ -198,7 +198,8 @@
     <li><strong>Chant or Mensural</strong> (in the toolbar) says what the book's staves are written in. Mensural staves are found with five lines and drawn dashed, and Read reads them with the mensural reader (doubtful items in orange; an item you change is taken as right). In a book with both, right-click a staff to mark it as the other kind.</li>
     <li>Voices: right-click a mensural staff to say which voice it is (Cantus, Altus, Tenor, Bassus, or another name). With voices named, ▶ plays every voice together, each going through its staves in the book's order, from the selected note's moment; it says how long each voice is, and which runs short (a likely misreading). Right-click for a voice alone.</li>
     <li>▶ plays a mensural staff too, from the selected item: its rhythm read as white notation reads it (the sign's tempus and prolation, a stroke halving, proportions; perfection, imperfection, alteration, dots, coloration), a beat to the minim. A first reading: listen for a voice running a beat ahead.</li>
-    <li>On a mensural staff, click a note (or rest, clef, sign …) to select it; drag it along the staff or up and down by steps (in a ligature, the note under the pointer; Shift for all of it). Keys: ↑↓ a step, ←→ along, Tab the next, 1–8 its value (Mx L B Sb M Sm F Sf), K black, S its stem, R note or rest, . a dot after, J into a ligature with the next, O oblique with the next, Del. Right-click it for the same; right-click the staff to add something where you clicked.</li>
+    <li>Typing mensural music in (as the Measuring Polyphony editor takes it): select a mensural staff (or a note on it) and type pitch letters, a to g: each note goes after the one before, at the nearest such pitch (a capital: the other way, the larger interval). Digits give the value, of the selected note and those typed after: 1 semibreve, 2 minim, 4 semiminim, 8 fusa, 6 semifusa, 0 breve, 9 longa, 7 maxima. r adds a rest, . a dot; - # n put a flat, sharp or natural before the selected note (N takes it off); [ at a ligature's first note and ] at its last join them. Backspace deletes and steps back.</li>
+    <li>Editing a mensural item: click it to select it; drag it along the staff or up and down by steps (in a ligature, the note under the pointer; Shift for all of it). ↑↓ a step, ←→ along, Tab the next, K black, S its stem, R note or rest, J into a ligature with the next, O oblique with the next, Del. Right-click it for the same; right-click the staff to add something where you clicked.</li>
   </ul>
   <h2>The keys</h2>
   <dl class="cg-keys">
@@ -224,19 +225,19 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.28.0"></script>
-<script src="js/staves.js?v=0.28.0"></script>
-<script src="vendor/scoring-up/scoring-up.js?v=0.28.0"></script>
-<script src="js/serenissima.js?v=0.28.0"></script>
-<script src="js/mensural.js?v=0.28.0"></script>
-<script src="js/greciliae.js?v=0.28.0"></script>
-<script src="js/neumes.js?v=0.28.0"></script>
-<script src="js/checks.js?v=0.28.0"></script>
-<script src="js/export.js?v=0.28.0"></script>
-<script src="js/viewer.js?v=0.28.0"></script>
-<script src="js/recognizer.js?v=0.28.0"></script>
-<script src="js/playback.js?v=0.28.0"></script>
-<script src="js/editor.js?v=0.28.0"></script>
-<script src="js/app.js?v=0.28.0"></script>
+<script src="js/chant.js?v=0.29.0"></script>
+<script src="js/staves.js?v=0.29.0"></script>
+<script src="vendor/scoring-up/scoring-up.js?v=0.29.0"></script>
+<script src="js/serenissima.js?v=0.29.0"></script>
+<script src="js/mensural.js?v=0.29.0"></script>
+<script src="js/greciliae.js?v=0.29.0"></script>
+<script src="js/neumes.js?v=0.29.0"></script>
+<script src="js/checks.js?v=0.29.0"></script>
+<script src="js/export.js?v=0.29.0"></script>
+<script src="js/viewer.js?v=0.29.0"></script>
+<script src="js/recognizer.js?v=0.29.0"></script>
+<script src="js/playback.js?v=0.29.0"></script>
+<script src="js/editor.js?v=0.29.0"></script>
+<script src="js/app.js?v=0.29.0"></script>
 </body>
 </html>

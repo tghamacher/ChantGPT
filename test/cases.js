@@ -524,19 +524,19 @@
       bad.push(...same('signs drawn (clef, sign, B, Sb, M, rest, B)', svg.querySelectorAll('.msign').length, 7));
       bad.push(...same('a box to grab each item by', svg.querySelectorAll('.mitem').length, 8));
       E.selectMensural('p1s1', 3);
-      key('ArrowUp'); key('5'); key('k');
+      key('ArrowUp'); key('2'); key('k');
       bad.push(...same('up a step, a minima, black', txt(), 'c4 O B5 M7* M5 [B5 L2] rB4 B3'));
       key('s'); bad.push(...same('its stem turned', doc.pages[0].staves[0].mensural[3].stem, 'down'));
       E.selectMensural('p1s1', 5, 1);
-      key('ArrowDown'); key('1');
+      key('ArrowDown'); key('7');
       bad.push(...same('a ligature\'s note moved and made a maxima', txt(), 'c4 O B5 M7v* M5 [B5 Mx1] rB4 B3'));
       key('ArrowUp', true); bad.push(...same('with Shift, the whole ligature', txt(), 'c4 O B5 M7v* M5 [B6 Mx2] rB4 B3'));
-      key('5'); bad.push(...same('a minima is refused in a ligature', txt(), 'c4 O B5 M7v* M5 [B6 Mx2] rB4 B3'));
+      key('2'); bad.push(...same('a minima is refused in a ligature', txt(), 'c4 O B5 M7v* M5 [B6 Mx2] rB4 B3'));
       E.selectMensural('p1s1', 5, 0); key('o');
       bad.push(...same('oblique', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] rB4 B3'));
       E.selectMensural('p1s1', 2); key('j');
       bad.push(...same('a breve and the next (a minima) won\'t join', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] rB4 B3'));
-      E.selectMensural('p1s1', 6); key('r'); key('j');
+      E.selectMensural('p1s1', 6); key('R'); key('j');
       bad.push(...same('rest to note, then joined with the breve after', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3]'));
       key('.'); bad.push(...same('a dot after, in the space', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3] .3'));
       key('Delete'); bad.push(...same('deleted', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3]'));
@@ -594,6 +594,32 @@
       // (a breve imperfected by the semibreve before it; the second of two semibreves altered; a dotted minim, half again)
       bad.push(...same('O: Sb B Sb Sb B, then C: a dotted minim and a semiminim', beats, [2, 4, 2, 4, 6, 1.5, 0.5]));
       bad.push(...same('the document is left as it was', M.text(doc.pages[0].staves[0].mensural), 'c4 O Sb5 B6 Sb5 Sb4 B6 C M6 .7 Sm5'));
+      return bad;
+    } },
+    { name: 'app: mensural music typed in, as the Measuring Polyphony editor takes it', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page2.png');
+      const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      doc.pages[0].staves.push({ id: 'p1s1', box: [20, 40, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, 60 + 12 * k, 390, 60 + 12 * k]), syllables: [] });
+      E.selected = 'p1s1';
+      const key = (k, shiftKey = false) => E.key({ key: k, shiftKey, ctrlKey: false, metaKey: false, altKey: false });
+      const txt = () => M.text(doc.pages[0].staves[0].mensural || []);
+      // (no clef yet: C4 put first; from the middle line, d is nearest a third up; then e, f; from f, a is nearest a third
+      // up, so A, the other way, the sixth down)
+      for (const k of ['d', 'e', 'f']) key(k);
+      bad.push(...same('a clef put first, then the nearest pitches', txt(), 'c4 Sb7 Sb8 Sb9'));
+      key('A'); bad.push(...same('a capital: the other way, the larger interval', txt(), 'c4 Sb7 Sb8 Sb9 Sb4'));
+      key('Backspace'); key('a'); bad.push(...same('Backspace, and the nearest a', txt(), 'c4 Sb7 Sb8 Sb9 Sb11'));
+      key('2'); key('g'); key('f');
+      bad.push(...same('2: that one a minim, and those after', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9'));
+      key('r'); key('0'); bad.push(...same('a rest typed, made a breve rest', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4'));
+      key('c'); key('-'); bad.push(...same('a flat before the note', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 b6 B6'));
+      key('N'); bad.push(...same('and taken off again', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 B6'));
+      key('['); key('9'); key('a'); key(']');
+      bad.push(...same('a ligature from [ to ] (9: the first made a longa, and the next)', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 [L6 L4]'));
+      const ms = doc.pages[0].staves[0].mensural;
+      bad.push(...same('each placed after the one before', ms.every((v, i) => !i || v.x > ms[i - 1].x), true));
+      E.undo(); bad.push(...same('one undo takes the ligature apart', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 L6 L4'));
       return bad;
     } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {
