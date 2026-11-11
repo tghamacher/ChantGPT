@@ -201,9 +201,9 @@
       doc.pages[0].staves.push({ id: 'p1s1', box: [90, 180, 820, 80], lines, mensural: M.parse('c4 O. [B5 L2] [B5~B3]* Sb6 rLp3 .4 b2 +5 ||') });
       bad.push(...same('checks', C.check(doc), []));
       const x = M.mei(doc);
-      for (const want of ['notationtype="mensural.white"', '<clef xml:id="m1" shape="C" line="4"/>', '<mensur xml:id="m2" sign="O" dot="true"/>',
+      for (const want of ['notationtype="mensural.white"', '<clef xml:id="m1" shape="C" line="4"/>', '<mensur xml:id="m2" sign="O" dot="true" tempus="3" prolatio="3" modusminor="2" modusmaior="2"/>',
         '<ligature xml:id="m3" form="recta"><note xml:id="m4" dur="brevis" pname="b" oct="3"/><note xml:id="m5" dur="longa" pname="f" oct="3"/></ligature>',
-        'lig="obliqua" colored="true"', '<rest xml:id="m10" dur="longa" loc="3" num="3"/>', '<accid xml:id="m12" accid="f" loc="2"/>', '<custos xml:id="m13" pname="b" oct="3"/>',
+        'lig="obliqua" colored="true"', '<rest xml:id="m10" dur="longa" loc="3" dur.quality="perfecta"/>', '<accid xml:id="m12" accid="f" loc="2"/>', '<custos xml:id="m13" pname="b" oct="3"/>',
         '<barLine xml:id="m14" form="dbl"/>', '<zone xml:id="z-p1s1" ulx="90" uly="180" lrx="910" lry="260"/>', '<sb facs="#z-p1s1"/>'])
         if (!x.includes(want)) bad.push(`MEI lacks ${want}`);
       doc.pages[0].staves[0].mensural.push({ k: 'note', v: 'X', p: 2 });
@@ -238,7 +238,7 @@
         [['Cantus', 0, 2], ['Tenor', 0, 4], ['Cantus', 2, 2], ['Cantus', 4, 4], ['Tenor', 4, 2], ['Tenor', 6, 1]]));
       bad.push(...same('lengths (minims)', lengths, [{ voice: 'Cantus', minims: 8 }, { voice: 'Tenor', minims: 7 }]));
       const x = M.mei(doc);
-      for (const want of ['<part label="Cantus">', '<staffDef n="2" lines="5" notationtype="mensural.white" label="Tenor"/>', '<part>\n<scoreDef><staffGrp><staffDef n="3"'])
+      for (const want of ['<part label="Cantus">', '<staffDef n="2" lines="5" notationtype="mensural.white" label="Tenor"><mensur tempus="2" prolatio="2" modusminor="2" modusmaior="2"/></staffDef>', '<part>\n<scoreDef><staffGrp><staffDef n="3"'])
         if (!x.includes(want)) bad.push(`MEI lacks ${want}`);
       bad.push(...same('one surface a page', (x.match(/<surface /g) || []).length, 2));
       bad.push(...same('checks', C.check(doc), []));
@@ -580,6 +580,20 @@
         bad.push(...same('one voice alone, in sequence', got && got.map(e => [e.voice, e.i, e.at, e.beats]), [[undefined, 2, undefined, 4], [undefined, 3, undefined, 2]]));
       } finally { P.play = real; E.mark(null); }
       bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
+      return bad;
+    } },
+    { name: 'app: mensural rhythm reckoned by the scoring-up tool (JS_ScUp), where perform alone falls short', browser: true, unit: async app => {
+      const { w } = await app();
+      const M = w.CGMensural, C = w.CGChant, bad = [];
+      const doc = C.newDocument({ name: 'x', type: 'pdf', sizes: [[1000, 1000]] });
+      doc.notation = 'mensural';
+      const lines = [0, 1, 2, 3, 4].map(k => [100, 100 + 10 * k, 900, 100 + 10 * k]);
+      doc.pages[0].staves.push({ id: 's1', lines, voice: 'Cantus', mensural: M.parse('c4 O Sb5 B6 Sb5 Sb4 B6 C M6 .7 Sm5') });
+      const sc = M.scoredBeats(doc), beats = M.perform(doc.pages[0].staves, sc).map(e => Math.round(e.beats * 100) / 100);
+      bad.push(...same('the tool is loaded and reckons', !!sc, true));
+      // (a breve imperfected by the semibreve before it; the second of two semibreves altered; a dotted minim, half again)
+      bad.push(...same('O: Sb B Sb Sb B, then C: a dotted minim and a semiminim', beats, [2, 4, 2, 4, 6, 1.5, 0.5]));
+      bad.push(...same('the document is left as it was', M.text(doc.pages[0].staves[0].mensural), 'c4 O Sb5 B6 Sb5 Sb4 B6 C M6 .7 Sm5'));
       return bad;
     } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {

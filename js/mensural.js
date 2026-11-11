@@ -319,7 +319,7 @@
   //   A flat or sharp just after a clef holds for every note of its letter (a signature); any other, for the next
   //   note at its place.
   const SEMI = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-  function perform(staves) {
+  function perform(staves, scored) {
     const stream = [];                               // the notes and rests, and what bears on them, in order
     let tempus = false, prol = false, factor = 1, clef = null, sig = {}, next = {};
     for (const st of staves) {
@@ -372,7 +372,9 @@
       let m = e.minims;
       if (e.dot && !perfLevel) m *= 1.5;                               // (a dot of addition)
       if (e.black) m *= 2 / 3;
-      const out = { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats: m * e.factor, at: t };
+      // (as the scoring-up tool reckons it, where it has: scored, by staff, item and ligature note)
+      const k = `${e.staff}:${e.i}:${e.n === null ? '' : e.n}`, beats = scored && scored.has(k) ? scored.get(k) : m * e.factor;
+      const out = { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats, at: t };
       t += out.beats;
       return out;
     });
@@ -392,15 +394,60 @@
   }
   // The voices played together: every voice's notes, each at its time from the start (at, in minims) and with its
   // voice, in the order they sound; and each voice's length (minims). The staves without a voice are left out.
-  function together(doc) {
+  function together(doc, scored = scoredBeats(doc)) {
     const parts = voices(doc).filter(v => v.voice), events = [], lengths = [];
     for (const { voice, staves } of parts) {
-      const evs = perform(staves);
+      const evs = perform(staves, scored);
       for (const e of evs) events.push(Object.assign(e, { voice }));
       lengths.push({ voice, minims: evs.length ? evs[evs.length - 1].at + evs[evs.length - 1].beats : 0 });
     }
     events.sort((a, b) => a.at - b.at);
     return { events, lengths };
+  }
+
+  // Every note's and rest's length (in minims) as the Measuring Polyphony editor's scoring-up tool reckons it (JS_ScUp,
+  // Martha Thomae's: vendor/scoring-up), which knows more of white notation's rules than perform does — perfection
+  // at every level, imperfection by notes before as well as after, dots of division and of augmentation, coloration
+  // as the mensuration takes it, changes of mensuration within a voice. A Map 'staff:item:ligature note' → minims;
+  // null where the tool isn't loaded (Node, tests) or can't make sense of the voices (perform's own reading is used).
+  function scoredBeats(doc) {
+    const SU = global.ScoringUp;
+    if (!SU || !global.DOMParser || !voices(doc).some(v => v.staves.some(st => (st.mensural || []).length))) return null;
+    try {
+      const map = {}, xml = mei(doc, { map }), dom = new global.DOMParser().parseFromString(xml, 'application/xml');
+      if (dom.getElementsByTagName('parsererror').length) return null;
+      const out = SU.ArsNova.lining_up(SU.merge(dom));
+      const ORDER = ['semifusa', 'fusa', 'semiminima', 'minima', 'semibrevis', 'brevis', 'longa', 'maxima'];
+      const beats = new Map();
+      for (const staff of Array.from(out.getElementsByTagName('staff'))) {
+        const n = staff.getAttribute('n'), def = Array.from(out.getElementsByTagName('staffDef')).find(d => d.getAttribute('n') === n);
+        let m = (def && def.getElementsByTagName('mensur')[0]) || null, factor = 1;
+        const num = (el, k, d) => +((el && el.getAttribute(k)) || d);
+        const walk = el => {
+          for (const c of Array.from(el.children)) {
+            const t = c.localName;
+            if (t === 'mensur') { m = c; factor = 1; continue; }
+            if (t === 'proport') { factor *= num(c, 'numbase', 1) / num(c, 'num', 1); continue; }
+            if (t === 'ligature' || t === 'choice' || t === 'corr') { walk(c); continue; }
+            if (t !== 'note' && t !== 'rest') continue;
+            const pro = num(m, 'prolatio', 2), tem = num(m, 'tempus', 2), mi = num(m, 'modusminor', 2), ma = num(m, 'modusmaior', 2);
+            const und = [0.125, 0.25, 0.5, 1, pro, tem * pro, mi * tem * pro, ma * mi * tem * pro];
+            const k = ORDER.indexOf(c.getAttribute('dur'));
+            if (k < 0) continue;
+            // (its value as the mensuration has it, changed as the tool marked it: num and numbase, the ratio it is to be
+            // taken by — a dot of augmentation is marked so too, 3:2; one unmarked, half as much again)
+            const nx = c.nextElementSibling, aug = nx && nx.localName === 'dot' && nx.getAttribute('form') === 'aug';
+            let v = und[k];
+            if (c.hasAttribute('num') && c.hasAttribute('numbase')) v = v * num(c, 'numbase', 1) / num(c, 'num', 1);
+            else if (aug) v *= 1.5;
+            const w = map[c.getAttribute('xml:id')];
+            if (w) beats.set(`${w.staff}:${w.i}:${w.n === null ? '' : w.n}`, v * factor);
+          }
+        };
+        for (const layer of Array.from(staff.getElementsByTagName('layer'))) walk(layer);
+      }
+      return beats.size ? beats : null;
+    } catch (e) { return null; }
   }
 
   // ---------------------------------------------------------------- MEI
@@ -414,10 +461,17 @@
     const surfaces = new Map(), parts = [];
     let clef = null, n = 0;
     const id = () => `m${++n}`;
+    // (opts.map, if given, is filled with each note's and rest's xml:id → { staff, i, n }: where it is in the document)
+    const idOf = (st, i, k = null) => { const v = id(); if (opts.map) opts.map[v] = { staff: st.id, i, n: k }; return v; };
+    // (a mensuration sign's numbers, as the scoring-up tool reads them: three or two semibreves to the breve, minims
+    // to the semibreve; the modus, not shown by the sign, imperfect)
+    const mensurOf = it => ` tempus="${it && it.sign === 'O' ? 3 : 2}" prolatio="${it && it.dot ? 3 : 2}" modusminor="2" modusmaior="2"`;
     const at = (p, attrs = '') => { const q = pitch(p, clef); return q ? ` pname="${q.pname}" oct="${q.oct}"${attrs}` : ` loc="${p}"${attrs}`; };
     voices(doc).forEach(({ voice, staves }, vi) => {
       const body = [];
       clef = null;
+      // (the voice's mensuration where it begins: its first sign, else C)
+      const first = staves.flatMap(st => st.mensural || []).find(it => it.k === 'sign');
       staves.map(st => ({ st, pi: pageOf.get(st) })).forEach(({ st, pi }) => {
         // (each staff begins with a system break, naming its zone on the page, where it has a box)
         let facs = '';
@@ -428,16 +482,16 @@
           facs = ` facs="#${esc(z)}"`;
         }
         body.push(`<sb${facs}/>`);
-        for (const it of st.mensural || []) {
+        (st.mensural || []).forEach((it, ix) => {
           switch (it.k) {
             case 'clef': clef = it; body.push(`<clef xml:id="${id()}" shape="${it.shape}" line="${it.line}"/>`); break;
-            case 'sign': body.push(`<mensur xml:id="${id()}" sign="${it.sign === 'R' ? 'C' : it.sign}"${it.sign === 'R' ? ' orient="reversed"' : ''}${it.dot ? ' dot="true"' : ''}${it.stroke ? ' slash="1"' : ''}/>`); break;
+            case 'sign': body.push(`<mensur xml:id="${id()}" sign="${it.sign === 'R' ? 'C' : it.sign}"${it.sign === 'R' ? ' orient="reversed"' : ''}${it.dot ? ' dot="true"' : ''}${it.stroke ? ' slash="1"' : ''}${mensurOf(it)}/>`); break;
             case 'num': { const [a, b] = it.text.split('/'); body.push(`<proport xml:id="${id()}" num="${a}"${b ? ` numbase="${b}"` : ''}/>`); break; }
-            case 'note': body.push(`<note xml:id="${id()}" dur="${MEI_DUR[it.v]}"${at(it.p)}${it.color === 'black' ? ' colored="true"' : ''}/>`); break;
-            case 'rest': body.push(`<rest xml:id="${id()}" dur="${MEI_DUR[it.v]}" loc="${it.p}"${it.v === 'L' ? ` num="${it.perf ? 3 : 2}"` : ''}/>`); break;
+            case 'note': body.push(`<note xml:id="${idOf(st, ix)}" dur="${MEI_DUR[it.v]}"${at(it.p)}${it.color === 'black' ? ' colored="true"' : ''}/>`); break;
+            case 'rest': body.push(`<rest xml:id="${idOf(st, ix)}" dur="${MEI_DUR[it.v]}" loc="${it.p}"${it.v === 'L' && it.perf ? ' dur.quality="perfecta"' : ''}/>`); break;
             case 'lig': {
               const lid = id();
-              const notes = it.notes.map((nt, i) => `<note xml:id="${id()}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${it.color === 'black' ? ' colored="true"' : ''}/>`);
+              const notes = it.notes.map((nt, i) => `<note xml:id="${idOf(st, ix, i)}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${it.color === 'black' ? ' colored="true"' : ''}/>`);
               body.push(`<ligature xml:id="${lid}" form="${it.notes.every(nt => !nt.obl) ? 'recta' : 'obliqua'}">${notes.join('')}</ligature>`);
               break;
             }
@@ -446,10 +500,10 @@
             case 'custos': body.push(`<custos xml:id="${id()}"${at(it.p)}/>`); break;
             case 'bar': body.push(`<barLine xml:id="${id()}"${it.form === 'double' ? ' form="dbl"' : it.form === 'end' ? ' form="end"' : ''}/>`); break;
           }
-        }
+        });
       });
       parts.push(`<part${voice ? ` label="${esc(voice)}"` : ''}>
-<scoreDef><staffGrp><staffDef n="${vi + 1}" lines="5" notationtype="mensural.white"${voice ? ` label="${esc(voice)}"` : ''}/></staffGrp></scoreDef>
+<scoreDef><staffGrp><staffDef n="${vi + 1}" lines="5" notationtype="mensural.white"${voice ? ` label="${esc(voice)}"` : ''}><mensur${mensurOf(first)}/></staffDef></staffGrp></scoreDef>
 <section><staff n="${vi + 1}"><layer n="1">
 ${body.join('\n')}
 </layer></staff></section>
@@ -466,5 +520,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together };
+  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);

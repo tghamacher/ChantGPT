@@ -1481,7 +1481,7 @@
   // place (an item) or the first. In sequence (no times).
   function mPerformance(from, voice) {
     const list = voice ? (M.voices(ctx.state.doc).find(v => v.voice === voice) || { staves: [] }).staves : page().staves.filter(v => mensural(v) && !v.voice);
-    const all = M.perform(list).map(e => { delete e.at; return e; });
+    const all = M.perform(list, M.scoredBeats(ctx.state.doc)).map(e => { delete e.at; return e; });
     if (!from) return all;
     const order = list.map(v => v.id), b = order.indexOf(from.staff);
     const k = all.findIndex(e => { const a = order.indexOf(e.staff); return a > b || (a === b && e.i >= (from.i || 0)); });
