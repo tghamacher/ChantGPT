@@ -1240,6 +1240,25 @@
       bad.push(...same('reading order', turn > 0 && xs.slice(0, turn).every(x => x < 600) && xs.slice(turn).every(x => x > 600), true));
       return bad;
     } },
+    { name: 'app: a IIIF 3 manifest whose pages are served by a version 2 image service (as IDEM\'s, at lib.is)', browser: true, unit: async app => {
+      const { w } = await app();
+      const asked = [], real = w.fetch.bind(w);
+      // (the library stood in for: the manifest given, every image the test page; what is asked for kept)
+      const manifest = { '@context': 'http://iiif.io/api/presentation/3/context.json', id: 'https://example.org/IE1/manifest', type: 'Manifest', label: { none: ['A choirbook'] },
+        items: [1, 2].map(k => ({ id: `c${k}`, type: 'Canvas', label: { none: [`00${k}_${k}r`] }, width: 1240, height: 1754,
+          items: [{ type: 'AnnotationPage', items: [{ type: 'Annotation', motivation: 'painting', body: { id: `https://lib.example/IE1/iiif/2/FL${k}/full/full/0/default.jpg`, type: 'Image',
+            service: [{ id: `https://lib.example/IE1/iiif/2/FL${k}`, type: 'ImageService2', profile: 'level2' }] } }] }] })) };
+      w.fetch = (url, o) => { asked.push(String(url)); return String(url).endsWith('/manifest') ? Promise.resolve(new w.Response(JSON.stringify(manifest), { headers: { 'Content-Type': 'application/json' } })) : real('test/pages/synth.jpg', o); };
+      const bad = [];
+      try {
+        if (!(await w.CGApp.openIiif('https://example.org/IE1/manifest'))) return ['Not opened: ' + w.document.getElementById('status').textContent];
+        bad.push(...same('pages and labels', [w.CGApp.state.src.count, w.CGApp.state.src.names], [2, ['001_1r', '002_2r']]));
+        await w.CGApp.state.src.pixels(0);
+        const img = asked.filter(u => u.includes('/iiif/2/'));
+        bad.push(...same('images asked of the version 2 service, never as "max"', img.length > 0 && img.every(u => /\/FL1\/full\/(full|\d+,)\/0\/default\.jpg$/.test(u)), true));
+      } finally { w.fetch = real; }
+      return bad;
+    } },
     { name: 'app: a manuscript online (IIIF): its pages from the manifest, labelled, drawn and searched for staves', browser: true, unit: async app => {
       const { w } = await app();
       const bad = [];

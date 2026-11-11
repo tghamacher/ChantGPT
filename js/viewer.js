@@ -121,11 +121,14 @@
     const m = await r.json();
     const text = v => typeof v === 'string' ? v : Array.isArray(v) ? text(v[0]) : v && typeof v === 'object' ? text(v['@value'] || v.none || v.en || Object.values(v)[0]) : '';
     const serviceOf = s => { s = Array.isArray(s) ? s[0] : s; return s && (s['@id'] || s.id); };
+    // (an image service's own version: a version 3 manifest can point to version 2 services, as IDEM's do (lib.is), and
+    // only version 3 asks for the whole image as "max")
+    const v3Service = s => { s = Array.isArray(s) ? s[0] : s; return !!s && (/ImageService3/.test(s.type || s['@type'] || '') || /image\/3\//.test(JSON.stringify(s['@context'] || ''))); };
     const canvases = m.sequences ? m.sequences[0].canvases : (m.items || []);
     const pages = canvases.map((c, i) => {
       const body = c.images ? c.images[0].resource : c.items && c.items[0].items[0].body;
       const service = body && serviceOf(body.service);
-      return { label: text(c.label) || String(i + 1), w: c.width, h: c.height, service: service && service.replace(/\/$/, ''), image: body && (body['@id'] || body.id), v3: !m.sequences };
+      return { label: text(c.label) || String(i + 1), w: c.width, h: c.height, service: service && service.replace(/\/$/, ''), image: body && (body['@id'] || body.id), v3: !!body && v3Service(body.service) };
     }).filter(p => p.w && p.h && (p.service || p.image));
     if (!pages.length) throw new Error('That manifest has no pages with images.');
     progress(pages.length, pages.length);
