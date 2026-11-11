@@ -69,7 +69,7 @@
     say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}. Find the staves to begin (or right-click the page).`);
     $('pageCount').textContent = src.count;
     $('pageNo').max = src.count;
-    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'checkGroup', 'exportGroup', 'docGroup']) $(id).hidden = false;
+    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'mensGroup', 'checkGroup', 'exportGroup', 'docGroup']) $(id).hidden = false;
     $('iiifForm').hidden = true;
     $('inspector').hidden = false;
     document.querySelector('.cg-main').classList.add('open');
@@ -370,6 +370,12 @@
   $('acceptStaff').addEventListener('click', () => E.acceptStaff());
   // Enter in a syllable's field: done with it, back to the page
   for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });
+  // mensural: a staff typed in; the document's mensural staves as MEI
+  $('putMens').addEventListener('click', () => E.putMensural($('mensText').value));
+  $('downloadMensMei').addEventListener('click', () => {
+    const r = E.mensuralMei();
+    if (r) { download(new Blob([r.text], { type: 'application/xml' }), r.name); say(`Saved as ${r.name}.`); }
+  });
   $('downloadGabc').addEventListener('click', () => {
     // one file for each chant; several in a zip
     const files = E.gabcFiles({ words: $('gabcWords').checked });

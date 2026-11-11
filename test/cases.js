@@ -160,6 +160,54 @@
         .concat(bad.length === want.length ? [] : [`${bad.length} complaints, expected ${want.length}: ${bad.join(' | ')}`]);
     } },
     { name: 'document: not a document', unit: () => same('checks', C().check({ pages: [] }), ['Not a ChantGPT document.']) },
+    { name: 'mensural: the text form, both ways', unit: () => {
+      const M = global.CGMensural, t = 'C4 O. C| R 3/2 B5 Sb6 M5 Sm4 F3 Sf2 B5* Mx1 L-1 [B5 L2] [Sb6 Sb5 B7] [L5 B3~B1]* rB4 rLp3 .5 b6 n6 #6 +5 | || |||';
+      const it = M.parse(t), bad = same('round trip', M.text(it), t);
+      bad.push(...same('a ligature', it.find(v => v.k === 'lig' && v.color), { k: 'lig', notes: [{ v: 'L', p: 5 }, { v: 'B', p: 3, obl: true }, { v: 'B', p: 1 }], color: 'black' }));
+      for (const wrong of ['Q5', '[B5', 'B', 'C7']) { try { M.parse(wrong); bad.push(`"${wrong}" was taken`); } catch (e) { } }
+      return bad;
+    } },
+    { name: 'mensural: pitches from the clef', unit: () => {
+      const P = global.CGMensural.pitch, q = (p, shape, line) => { const r = P(p, { shape, line }); return r.pname + r.oct; };
+      return [].concat(same('C4, its line', q(6, 'C', 4), 'c4'), same('C4, two steps down', q(4, 'C', 4), 'a3'),
+        same('F4, the bottom line', q(0, 'F', 4), 'g2'), same('G2, its line', q(2, 'G', 2), 'g4'), same('C1, below', q(-1, 'C', 1), 'b3'));
+    } },
+    { name: 'mensural: ligatures written by the rules', unit: () => {
+      const M = global.CGMensural, st = t => M.ligRules(M.parse(t)[0].notes).stems, bad = [];
+      bad.push(...same('B L descending', st('[B5 L2]'), [['downLeft'], []]));
+      bad.push(...same('L B ascending', st('[L2 B4]'), [['downRight'], []]));
+      bad.push(...same('B B L ascending', st('[B2 B3 L5]'), [[], [], ['downRight']]));
+      bad.push(...same('c.o.p.', st('[Sb6 Sb5 B7]'), [['upLeft'], [], []]));
+      bad.push(...same('oblique', st('[B5~B3]'), [['downLeft'], []]));
+      const errs = M.check(M.parse('[B5 B3] [M3 B4] [Sb3 B4] [B5~B5] [B3~B5]'));
+      for (const re of [/descending last breve is written oblique/, /minima can't be/, /semibreve has two/, /different pitch/, /ascending last breve is written square/])
+        if (!errs.some(e => re.test(e))) bad.push(`No complaint matching ${re}: ${errs.join(' | ')}`);
+      bad.push(...same('a right staff', M.check(M.parse('C4 O [B5 L2] [L5 B3~B1] [Sb3 Sb5] B4 .4 |')), []));
+      return bad;
+    } },
+    { name: 'mensural: drawn along the staff, and MEI', unit: () => {
+      const M = global.CGMensural, C = global.CGChant, bad = [];
+      const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
+      const L = M.layout({ lines, mensural: M.parse('C4 O [B5 L2] Sb6 rB4') });
+      bad.push(...same('glyphs (clef, semibreve, rest)', L.glyphs.map(g => g.ch.codePointAt(0).toString(16)), ['e905', 'e962', 'e9f3']));
+      bad.push(...same('the clef on its line', L.glyphs[0].y, 210), ...same('the semibreve at position 6', L.glyphs[1].y, 210));
+      bad.push(...same('boxes', L.boxes.length, 5));
+      // (the ligature: two blocks, a stroke between, a stem; the sign: one shape)
+      bad.push(...same('shapes', L.shapes.length, 1 + 4));
+      const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000]] });
+      doc.notation = 'mensural';
+      doc.pages[0].staves.push({ id: 'p1s1', box: [90, 180, 820, 80], lines, mensural: M.parse('C4 O. [B5 L2] [B5~B3]* Sb6 rLp3 .4 b2 +5 ||') });
+      bad.push(...same('checks', C.check(doc), []));
+      const x = M.mei(doc);
+      for (const want of ['notationtype="mensural.white"', '<clef xml:id="m1" shape="C" line="4"/>', '<mensur xml:id="m2" sign="O" dot="true"/>',
+        '<ligature xml:id="m3" form="recta"><note xml:id="m4" dur="brevis" pname="b" oct="3"/><note xml:id="m5" dur="longa" pname="f" oct="3"/></ligature>',
+        'lig="obliqua" colored="true"', '<rest xml:id="m10" dur="longa" loc="3" num="3"/>', '<accid xml:id="m12" accid="f" loc="2"/>', '<custos xml:id="m13" pname="b" oct="3"/>',
+        '<barLine xml:id="m14" form="dbl"/>', '<zone xml:id="z-p1s1" ulx="90" uly="180" lrx="910" lry="260"/>', '<sb facs="#z-p1s1"/>'])
+        if (!x.includes(want)) bad.push(`MEI lacks ${want}`);
+      doc.pages[0].staves[0].mensural.push({ k: 'note', v: 'X', p: 2 });
+      if (!C.check(doc).some(b => /its value/.test(b))) bad.push('A note of no value was not complained of');
+      return bad;
+    } },
     { name: 'document: chant or mensural', unit: () => {
       const doc = C().newDocument({ name: 'b.pdf', type: 'pdf', sizes: [[612, 792]] });
       const st = { id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [50, 100 + 9 * k, 550, 100 + 9 * k]), syllables: [] };
