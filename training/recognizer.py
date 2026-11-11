@@ -13,7 +13,7 @@ note is); exported to ONNX for the app, which runs it in the browser.
 Needs torch, numpy, pillow (and onnx to export). On a GPU it uses it: CUDA, ROCm (an AMD card, on Linux) or, with
 torch-directml installed, DirectML (any card, on Windows). --device chooses.
 """
-import argparse, json, math, os, random, sys, time
+import argparse, json, math, os, random, re, sys, time
 import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
 from PIL import Image
@@ -255,14 +255,112 @@ def restore(path):
     return m, s
 
 
+# ---------------------------------------------------------------- a fuller report (test --report)
+CLEF = re.compile(r'^[cf]b?[1-5]$')
+def kind_of(t):
+    """What a chant token is: clef, custos, accidental, note, bar, mark (episema, ictus, mora) or break (| /)."""
+    if CLEF.match(t): return 'clef'
+    if t in ('|', '/', '!', '//'): return 'break'
+    if t in (',', ';', ':', '::', '`') or re.fullmatch(r'[,;][0-9]', t): return 'bar'
+    if t in ("'", '.', '_'): return 'mark'
+    if re.fullmatch(r'[a-npA-NP]\+', t): return 'custos'
+    if re.fullmatch(r'[a-np][xy#]', t): return 'accidental'
+    if re.match(r'[a-npA-NP]', t): return 'note'
+    return 'other'
+
+
+def align(a, b):
+    """Edit operations turning a (read) into b (wanted): [(op, i, j)], op 'ok', 'sub', 'ins' (a has an extra), 'del'
+    (a lacks b[j])."""
+    n, m = len(a), len(b)
+    d = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n + 1): d[i][0] = i
+    for j in range(m + 1): d[0][j] = j
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] != b[j - 1]))
+    ops, i, j = [], n, m
+    while i or j:
+        if i and j and d[i][j] == d[i - 1][j - 1] + (a[i - 1] != b[j - 1]):
+            ops.append(('ok' if a[i - 1] == b[j - 1] else 'sub', i - 1, j - 1)); i -= 1; j -= 1
+        elif i and d[i][j] == d[i - 1][j] + 1: ops.append(('ins', i - 1, None)); i -= 1
+        else: ops.append(('del', None, j - 1)); j -= 1
+    return ops[::-1]
+
+
+def report(read, want, seed=0):
+    """Measures over staves (read, want: token lists): printed, and returned as a dict."""
+    notes = lambda ts: [t for t in ts if kind_of(t) == 'note']
+    pitch = lambda t: t[0].lower()
+    shape = lambda t: ('incl ' if t[0].isupper() else '') + t[1:]
+    per = []                                                  # (pitch errors, notes wanted, note-token errors) a staff
+    tot = {'sub': 0, 'ins': 0, 'del': 0}
+    shape_ok = shape_n = 0
+    cats = {}
+    exact = exact_notes = clef_ok = clef_n = 0
+    for r, w in zip(read, want):
+        rn, wn = notes(r), notes(w)
+        ops = align([pitch(t) for t in rn], [pitch(t) for t in wn])
+        pe = sum(op != 'ok' for op, _, _ in ops)
+        for op, i, j in ops:
+            if op != 'ok': tot[op] += 1
+            else:
+                shape_n += 1; shape_ok += shape(rn[i]) == shape(wn[j])
+        per.append((pe, len(wn), edits(rn, wn)))
+        for c in ('clef', 'custos', 'accidental', 'bar', 'mark'):
+            a, b = [t for t in r if kind_of(t) == c], [t for t in w if kind_of(t) == c]
+            e = cats.setdefault(c, [0, 0, 0]); e[0] += edits(a, b); e[1] += len(b); e[2] += len(a)
+        cr, cw = [t for t in r if kind_of(t) == 'clef'], [t for t in w if kind_of(t) == 'clef']
+        if cw: clef_n += 1; clef_ok += cr == cw
+        exact += [t for t in r if kind_of(t) != 'break'] == [t for t in w if kind_of(t) != 'break']
+        exact_notes += rn == wn
+    N = sum(n for _, n, _ in per) or 1
+    rate = lambda k, idx: sum(p[idx] for p in [per[i] for i in k]) / max(1, sum(per[i][1] for i in k))
+    rng = random.Random(seed)
+    boots = sorted(rate([rng.randrange(len(per)) for _ in per], 0) for _ in range(1000)) if per else [0, 0]
+    out = {'staves': len(per), 'notes': N,
+           'pitch_error': sum(p[0] for p in per) / N, 'pitch_ci95': (boots[25], boots[974]) if len(boots) > 974 else None,
+           'wrong_pitch': tot['sub'] / N, 'missed': tot['del'] / N, 'extra': tot['ins'] / N,
+           'neume_error': sum(p[2] for p in per) / N, 'shape_error': 1 - shape_ok / max(1, shape_n),
+           'staves_exact': exact / max(1, len(per)), 'staves_notes_exact': exact_notes / max(1, len(per)),
+           'clef_right': clef_ok / max(1, clef_n),
+           **{f'{c}_error': e[0] / max(1, e[1]) for c, e in cats.items()}, **{f'{c}_count': e[1] for c, e in cats.items()}}
+    ci = out['pitch_ci95']
+    print(f"REPORT {out['staves']} staves, {N} notes")
+    print(f"  pitch (melody) error {out['pitch_error']:.2%}" + (f" (95% interval {ci[0]:.2%}-{ci[1]:.2%})" if ci else '') +
+          f": wrong pitch {out['wrong_pitch']:.2%}, missed {out['missed']:.2%}, extra {out['extra']:.2%}")
+    print(f"  neume error (pitch and shape: liquescent, quilisma, oriscus, virga, inclinatum, stropha) {out['neume_error']:.2%}; "
+          f"of notes at the right pitch, shape wrong {out['shape_error']:.2%}")
+    print(f"  staves read exactly {out['staves_exact']:.1%} (notes only {out['staves_notes_exact']:.1%}); clefs right {out['clef_right']:.1%}")
+    print('  ' + '; '.join(f"{c} {cats[c][0] / max(1, cats[c][1]):.1%} wrong of {cats[c][1]} (read {cats[c][2]})" for c in ('accidental', 'custos', 'bar', 'mark') if c in cats and cats[c][1]))
+    return out
+
+
+def read_all(model, rows, vocab, size=16):
+    out = []
+    with torch.no_grad():
+        for k in range(0, len(rows), size):
+            group = rows[k:k + size]
+            x, lens = collate([ink(image(r['dir'], r['file'])) for r in group])
+            out += [seq for seq, _ in greedy(model(x), lens, vocab)]
+    return out
+
+
 def test(o):
     m, s = restore(o.model)
     rows = load(o.data, o.real_labels)
-    if o.held: rows = split(rows, o.held)[1]
+    if o.held:
+        if o.held_from:                                       # (the pages a model was trained without: those its own labels held out)
+            held = set.intersection(*({r['file'].rsplit('-', 1)[0] for r in split(load(o.data, f), o.held)[1]} for f in o.held_from.split(',')))
+            rows = [r for r in rows if r['file'].rsplit('-', 1)[0] in held]
+        else: rows = split(rows, o.held)[1]
     index = set(s['vocab'])
     rows = [r for r in rows if all(t in index for t in r['tokens'])]
     ter, ner = evaluate(m, rows, None, s['vocab'], 'cpu', limit=o.test_limit)
     print(f'{min(len(rows), o.test_limit or len(rows))} staves: token errors {ter:.2%}, note errors {ner:.2%}')
+    if o.report:
+        rows = rows[:o.test_limit] if o.test_limit else rows
+        report(read_all(m, rows, s['vocab']), [r['tokens'] for r in rows])
 
 
 def clean(o):
@@ -374,6 +472,8 @@ if __name__ == '__main__':
     a.add_argument('--real', help='real staves too (align.js, cantus.py labels), every tenth page kept out to test on; folders separated by commas')
     a.add_argument('--real-weight', type=int, default=3)
     a.add_argument('--real-labels', default='labels.jsonl', help='the real staves\' labels (clean: those the model agrees with); one for each --real folder, by commas, or one for all')
+    a.add_argument('--report', action='store_true', help='test: pitch, neume shape, clef, accidental, custos and bar errors, with a 95% interval')
+    a.add_argument('--held-from', help='test --held: only the pages held out of each of these labels (those the model and its forebears were trained on, if not the ones tested on), commas between')
     a.add_argument('--held', type=int, help='test: only the pages kept out (every so many)')
     a.add_argument('--resume')
     a.add_argument('--grow-vocab', action='store_true', help='train --resume: add tokens the old model hasn\'t (else staves with them are left out)')
