@@ -10,7 +10,8 @@ The label is the staff in CGMensural's text form (js/mensural.js): c4 O B5 Sb6 [
 
     python -I training/mensuralsynth.py --text breviarium.txt --count 20000 [--out training/data/mens] [--seed 1]
 
-Writes <out>/NNNNNN.jpg and <out>/labels.jsonl ({file, text, items}: the text form, and its tokens)."""
+Writes <out>/NNNNNN.jpg and <out>/labels.jsonl ({file, text, tokens}: the text form, and its tokens, as recognizer.py
+learns them)."""
 import argparse, glob, json, os, random, re, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -57,7 +58,7 @@ def text(items):
 
 def tokens(t):
     """The text form's tokens, as the reader will learn them: each item, a ligature's brackets and joins apart."""
-    return re.sub(r'\]\*', ' ]* ', re.sub(r'\]', ' ] ', t.replace('[', ' [ ').replace('~', ' ~ '))).replace(' ]  * ', ' ]* ').split()
+    return re.findall(r'\]\*|\[|\]|~|[^\s\[\]~]+', t)
 
 
 # ---------------------------------------------------------------- the rules of ligatures (as js/mensural.js ligRules)
@@ -300,7 +301,7 @@ def main(o):
             name = f'{n:06d}.jpg'
             im.save(os.path.join(o.out, name), quality=rng.randint(80, 95))
             t = text(items)
-            f.write(json.dumps({'file': name, 'text': t, 'items': tokens(t)}) + '\n')
+            f.write(json.dumps({'file': name, 'text': t, 'tokens': tokens(t)}) + '\n')
             if (n + 1) % 2000 == 0: print(n + 1, flush=True)
 
 

@@ -157,6 +157,9 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-overlay .mshape { stroke: var(--notation-ink); fill: none; stroke-linecap: square; }
 .cg-overlay .mshape.fill { fill: var(--notation-ink); stroke: none; }
 .cg-overlay .mshape.outline { fill: none; }
+.cg-overlay .msign.doubt { fill: var(--doubt); }
+.cg-overlay .mshape.doubt { stroke: var(--doubt); }
+.cg-overlay .mshape.fill.doubt { fill: var(--doubt); }
 .cg-overlay .glyph.ok, .cg-overlay .syl.ok { fill: var(--checked); }
 .cg-overlay .glyph.custos { fill: var(--notation-ink); opacity: 0.35; }
 .cg-overlay .glyph.on { fill: var(--sel); }

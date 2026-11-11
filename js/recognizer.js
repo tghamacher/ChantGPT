@@ -8,7 +8,9 @@
   const S = () => global.CGStaves;
   // models/chant.onnx and models/chant.json (its tokens and how it cuts a staff): printed books; models/chant-ms.*:
   // manuscripts (a page whose staves are ruled in red, as viewer.js's pixels() tells), if there is one
-  const BASES = { print: 'models/chant', ms: 'models/chant-ms', text: 'models/text' };
+  // models/mensural.*: mensural notation (CGMensural's text form, a token to an item, a ligature's brackets and joins
+  // apart), five-line staves cut as training/fivestaves.py and mensuralsynth.py cut them
+  const BASES = { print: 'models/chant', ms: 'models/chant-ms', text: 'models/text', mensural: 'models/mensural' };
 
   // ---------------------------------------------------------------- the staff, straightened
   // gray: the page in grey (w × h), lines: the staff's four lines in the same pixels; meta: as models/chant.json says.
@@ -118,6 +120,7 @@
       const r = await fetch(BASES[kind] + '.json');
       if (!r.ok) {
         if (kind === 'text') throw new Error('No text reader here yet (models/text.json).');
+        if (kind === 'mensural') throw new Error('No reader of mensural notation here yet (models/mensural.json).');
         if (kind !== 'print') return load('print');
         throw new Error('No recognizer model here yet (models/chant.json).');
       }
@@ -166,7 +169,45 @@
     return { letters, space: TEXT.across * tb.step / px.scale };
   }
 
-  const api = { straighten, textBand, TEXT, decode, groups, read, readText, load, get meta() { return meta; } };
+  // The tokens of a mensural reading gathered into items (CGMensural's): each token one, but a ligature's, from its [ to
+  // its ] (or ]*, blackened), with ~ joining two of its notes into an oblique. Each: { item, from, to (steps), conf }.
+  // A token the text form doesn't take (a ligature broken off, say) is left out.
+  function mensuralItems(read) {
+    const M = global.CGMensural, out = [];
+    let lig = null;
+    for (const r of read) {
+      if (r.t === '[') { lig = { toks: [], from: r.from, to: r.to, conf: r.p }; continue; }
+      if (lig) {
+        lig.to = r.to; lig.conf = Math.min(lig.conf, r.p);
+        if (r.t === ']' || r.t === ']*') {
+          try { const it = M.parse('[' + lig.toks.join(' ').replace(/ ~ /g, '~') + r.t)[0]; out.push({ item: it, from: lig.from, to: lig.to, conf: lig.conf }); } catch (e) { }
+          lig = null;
+        } else lig.toks.push(r.t);
+        continue;
+      }
+      if (r.t === ']' || r.t === ']*' || r.t === '~') continue;
+      try { const it = M.parse(r.t)[0]; if (it) out.push({ item: it, from: r.from, to: r.to, conf: r.p }); } catch (e) { }
+    }
+    return out;
+  }
+  // The mensural notation on a staff (five lines), read: [{ item (CGMensural's, its x where it was seen, page units),
+  // x0, x1, conf }], in order along the staff.
+  async function readMensural(px, lines) {
+    const { session: s, meta: m } = await load('mensural');
+    const L = lines.map(l => l.map(v => v * px.scale));
+    const st = straighten(px.gray, px.w, px.h, L, m);
+    const W = st.W + ((-st.W) % m.stride + m.stride) % m.stride, data = new Float32Array(m.height * W);
+    for (let v = 0; v < m.height; v++) data.set(st.data.subarray(v * st.W, (v + 1) * st.W), v * W);
+    const out = await s.run({ staff: new global.ort.Tensor('float32', data, [1, 1, m.height, W]) });
+    const sc = out.scores, T = sc.dims[2], T0 = Math.floor(st.W / m.stride);
+    const xOf = t => (st.x0 + (t * m.stride + m.stride / 2) * st.step) / px.scale, half = 0.5 * m.stride * st.step / px.scale;
+    return mensuralItems(decode(sc.data, T, m.vocab).filter(r => r.from < T0)).map(v => {
+      const x0 = xOf(v.from) - half, x1 = xOf(v.to) + half;
+      return { item: Object.assign(v.item, { x: Math.round(x0 * 10) / 10 }), x0, x1, conf: Math.round(v.conf * 100) / 100 };
+    });
+  }
+
+  const api = { straighten, textBand, TEXT, decode, groups, read, readText, readMensural, mensuralItems, load, get meta() { return meta; } };
   global.CGRecognizer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -110,7 +110,7 @@
     draw();
     const odd = C.staves(doc).filter(st => st.notation && st.notation !== v).length;
     ctx.say((v === 'mensural'
-      ? 'Mensural notation: staves will be found with five lines. Reading mensural notes isn\'t ready yet, so the chant tools leave these staves alone.'
+      ? 'Mensural notation: staves will be found with five lines, and read by the mensural reader; the chant tools leave them alone.'
       : 'Chant notation: staves are found and read as chant again.') +
       (odd ? ` ${odd} ${odd === 1 ? 'staff is' : 'staves are'} marked as the other notation and stay so (right-click a staff to change it).` : ''));
   }
@@ -150,6 +150,8 @@
     if (!st || !it) return;
     const before = snapshot(), why = fn(it, st);
     if (typeof why === 'string') { ctx.say(why, true); return; }
+    const now = mOf();
+    if (now) delete now.conf;                                  // (changed by a person: taken as right)
     commit(before);
     draw();
     const bad = mitem ? M.check(st.mensural).filter(b => b.startsWith(`Item ${mitem.i + 1}:`)) : [];
@@ -882,35 +884,45 @@
     return d[q.length];
   }
   // the selected staff, or every staff on the page, read; one undo
+  // the selected staff, or every staff on the page, read: chant staves by the chant recognizer, mensural ones by the
+  // mensural reader (their items replaced by what it reads, each with how sure it is); one undo
   async function readNotes(all) {
     const chosen = all ? page().staves.slice() : [staffOf(selected)].filter(Boolean);
     if (!chosen.length) { ctx.say(all ? 'No staves on this page: find them first.' : 'Select a staff first.', true); return; }
-    // (mensural staves: not this recognizer's to read)
-    const list = chosen.filter(st => !mensural(st));
-    if (!list.length) { ctx.say(`Reading mensural notation isn't ready yet: ${chosen.length === 1 ? 'this staff is' : 'the staves here are'} marked mensural.`, true); return; }
+    const list = chosen.filter(st => !mensural(st)), mlist = chosen.filter(mensural);
     if (busy) return;
     busy = true;
     ctx.say('Reading the notes … (the first time, the recognizer is loaded)');
     const before = snapshot(), pg = ctx.state.page, tally = { put: 0, same: 0, differ: 0, unseen: 0, extra: 0 };
-    let ok = 0;
+    let ok = 0, mok = 0, mitems = 0, mdoubt = 0;
     for (const st of list) {
       const r = await readStaff(st, pg);
       if (!r) break;
       ok++;
       for (const k in r) tally[k] += r[k];
     }
+    for (const st of mlist) {
+      let got;
+      try { got = await R.readMensural(await ctx.pixels(pg), st.lines); }
+      catch (e) { ctx.say(`Couldn't read the mensural notation: ${e.message || e}`, true); break; }
+      st.mensural = got.map(v => Object.assign(v.item, v.conf < 1 ? { conf: v.conf } : {}));
+      mok++; mitems += got.length; mdoubt += got.filter(v => v.conf < DOUBT).length;
+    }
     busy = false;
-    if (!ok) { info(); return; }
+    if (!ok && !mok) { info(); return; }
     commit(before);
     letGo();
     draw();
-    const parts = [];
-    if (tally.put) parts.push(`${tally.put} neumes read onto ${list.length === 1 ? 'the staff' : 'staves without chant'}`);
-    if (tally.same + tally.differ + tally.unseen) parts.push(`of the chant's neumes, ${tally.same} read as written, ${tally.differ} read otherwise, ${tally.unseen} not seen`);
-    if (tally.extra) parts.push(`${tally.extra} more seen on the page than the chant has`);
-    const skipped = chosen.length - list.length;
-    ctx.say(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.` +
-      (skipped ? ` ${skipped} mensural ${skipped === 1 ? 'staff' : 'staves'} left unread (not ready yet).` : ''));
+    const said = [];
+    if (ok) {
+      const parts = [];
+      if (tally.put) parts.push(`${tally.put} neumes read onto ${list.length === 1 ? 'the staff' : 'staves without chant'}`);
+      if (tally.same + tally.differ + tally.unseen) parts.push(`of the chant's neumes, ${tally.same} read as written, ${tally.differ} read otherwise, ${tally.unseen} not seen`);
+      if (tally.extra) parts.push(`${tally.extra} more seen on the page than the chant has`);
+      said.push(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.`);
+    }
+    if (mok) said.push(`${mok === 1 ? 'Mensural staff' : `${mok} mensural staves`} read: ${mitems} items${mdoubt ? `, ${mdoubt} of them doubtful (in orange)` : ''}. Correct what is wrong; an item changed is taken as right.`);
+    ctx.say(said.join(' '));
   }
 
   // ---------------------------------------------------------------- the words under the notes
@@ -1344,7 +1356,7 @@
       const st = staffOf(selected), n = page().staves.indexOf(st) + 1, bent = S.count(st.lines[0]) > 2;
       ctx.menu([
         { title: `Staff ${n}` },
-        { label: 'Read the notes', disabled: busy || mensural(st), title: mensural(st) ? 'Reading mensural notation isn\'t ready yet' : '', run: () => readNotes(false) },
+        { label: 'Read the notes', disabled: busy, title: mensural(st) ? 'Read by the mensural reader (models/mensural): what is on the staff is replaced' : '', run: () => readNotes(false) },
         { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
         { label: 'Play from this staff', disabled: mensural(st) ? !(st.mensural || []).length : !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
@@ -1718,6 +1730,8 @@
       return;
     }
     if (d.act === 'mitem') {
+      const it = mOf();
+      if (it) delete it.conf;
       commit(d.before);
       draw();
       return;
@@ -1856,8 +1870,9 @@
       // a mensural staff's contents: Serenissima's glyphs, and the shapes drawn for ligatures and signs
       if (mensural(st) && (st.mensural || []).length) {
         const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g);
-        for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : v.fill === 'outline' ? ' outline' : ''), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
-        for (const v of L.signs) el('path', { d: v.d, class: 'msign', transform: M.transform(v, L.angle) }, mg);
+        const doubt = v => { const it = st.mensural[v.item]; return it && it.conf !== undefined && it.conf < DOUBT ? ' doubt' : ''; };
+        for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : v.fill === 'outline' ? ' outline' : '') + doubt(v), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
+        for (const v of L.signs) el('path', { d: v.d, class: 'msign' + doubt(v), transform: M.transform(v, L.angle) }, mg);
         for (const v of L.texts) {
           const t = el('text', { x: v.x, y: v.y, 'font-size': v.size, class: 'mnum', transform: `rotate(${L.angle.toFixed(3)} ${v.x} ${v.y})` }, mg);
           t.textContent = v.text;
@@ -1952,7 +1967,7 @@
     if (place) {
       place.disabled = !st || mensural(st);
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
-      document.getElementById('readStaff').disabled = !st || busy || mensural(st);
+      document.getElementById('readStaff').disabled = !st || busy;
       document.getElementById('readPage').disabled = !list.length || busy;
       document.getElementById('readText').disabled = !list.some(v => v.syllables.length) || busy;
       document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
@@ -1965,7 +1980,7 @@
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
-        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: click an item to select it, drag it, or right-click for more; right-click the staff to add one. Reading mensural notation is still to come.`)
+        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: Read the notes, or click an item to select it, drag it, or right-click for more; right-click the staff to add one.`)
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';

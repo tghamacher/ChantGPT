@@ -246,6 +246,15 @@
       bad.push(...same('an empty voice is complained of', C.check(doc).some(b => /"voice"/.test(b)), true));
       return bad;
     } },
+    { name: 'mensural: a reading\'s tokens gathered into items (a ligature from [ to ], an oblique by ~)', unit: () => {
+      const R = global.CGRecognizer, M = global.CGMensural;
+      const read = ['c4', 'O', '[', 'B5', '~', 'B3', 'L1', ']*', 'Sb6', ']', '~', 'Q9', '[', 'Sb3', 'Sb5', ']', 'rB4', '.5', '+5'].map((t, k) => ({ t, from: 2 * k, to: 2 * k + 1, p: t === 'Sb6' ? 0.5 : 0.9 }));
+      const got = R.mensuralItems(read);
+      return [].concat(
+        same('items, as text (stray ] and ~ and an unknown token left out)', M.text(got.map(v => v.item)), 'c4 O [B5~B3 L1]* Sb6 [Sb3 Sb5] rB4 .5 +5'),
+        same('a ligature spans its tokens', [got[2].from, got[2].to], [4, 15]),
+        same('how sure: its least sure token', got.map(v => v.conf), [0.9, 0.9, 0.9, 0.5, 0.9, 0.9, 0.9, 0.9]));
+    } },
     { name: 'document: chant or mensural', unit: () => {
       const doc = C().newDocument({ name: 'b.pdf', type: 'pdf', sizes: [[612, 792]] });
       const st = { id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [50, 100 + 9 * k, 550, 100 + 9 * k]), syllables: [] };

@@ -6,6 +6,9 @@ note is); exported to ONNX for the app, which runs it in the browser.
     python -I training/recognizer.py train [--data training/data/staves] [--epochs 20] [--out training/data/model]
     python -I training/recognizer.py test --model training/data/model/best.pt [--data ...]
     python -I training/recognizer.py export --model training/data/model/best.pt [--onnx models/chant.onnx]
+    python -I training/recognizer.py train --data training/data/mens --out training/data/mens-model     (mensural notation:
+        mensuralsynth.py's staves; the same reader, its tokens CGMensural's text form)
+    python -I training/recognizer.py export --model training/data/mens-model/best.pt --mensural --onnx models/mensural.onnx
 
 Needs torch, numpy, pillow (and onnx to export). On a GPU it uses it: CUDA, ROCm (an AMD card, on Linux) or, with
 torch-directml installed, DirectML (any card, on Windows). --device chooses.
@@ -156,7 +159,8 @@ def evaluate(model, rows, data, vocab, device, size=16, limit=None):
             for (seq, _), i in zip(greedy(model(x.to(device)), lens, vocab), group):
                 want = rows[i]['tokens']
                 errs += edits(seq, want); toks += len(want)
-                sn, wn = [t for t in seq if t not in '|/'], [t for t in want if t not in '|/']
+                skip = ('|', '/', '[', ']', ']*', '~')         # (chant's breaks; a mensural ligature's brackets and joins)
+                sn, wn = [t for t in seq if t not in skip], [t for t in want if t not in skip]
                 notes_err += edits(sn, wn); notes += len(wn)
     model.train()
     return errs / max(1, toks), notes_err / max(1, notes)
@@ -354,6 +358,7 @@ def export(o):
     torch.onnx.export(m, x, o.onnx, input_names=['staff'], output_names=['scores'], opset_version=17,
                       dynamic_axes={'staff': {0: 'batch', 3: 'width'}, 'scores': {0: 'batch', 2: 'steps'}}, dynamo=False)
     meta = {'vocab': s['vocab'], 'height': HEIGHT, 'stride': STRIDE, 'space': 8, 'top': 20, 'left': 0.6, 'right': 0.4,
+            **({'notation': 'mensural', 'lines': 5, 'top5': 14} if o.mensural else {}),
             'epoch': s.get('epoch'), 'token_errors': s.get('ter'), 'note_errors': s.get('ner'),
             'real_token_errors': s.get('real_ter'), 'real_note_errors': s.get('real_ner')}
     with open(os.path.splitext(o.onnx)[0] + '.json', 'w', encoding='utf-8') as f: json.dump(meta, f, ensure_ascii=False)
@@ -379,5 +384,6 @@ if __name__ == '__main__':
     a.add_argument('--width', type=int, default=128)
     a.add_argument('--test-limit', type=int, default=400)
     a.add_argument('--device', default='auto', help='auto, cpu, cuda or dml (DirectML)')
+    a.add_argument('--mensural', action='store_true', help='export: a reader of mensural notation (CGMensural\'s text form, five-line staves cut with the top line at row 14, as fivestaves.py and mensuralsynth.py cut them)')
     o = a.parse_args()
     {'train': train, 'test': test, 'export': export, 'clean': clean, 'rebreak': rebreak}[o.what](o)
