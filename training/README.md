@@ -204,6 +204,20 @@ Cantus's lines in order, each with the line that fits what the model reads there
 missed or a line on one: on 13 sample folios, 96 staves found and 54 paired, the pairs looked at by eye right. As the
 model learns the hand, it reads better and more pair.
 
+## 7. Mensural notation: synthetic staves
+
+```
+python -I training/mensuralsynth.py --text breviarium.txt --count 20000 [--style choirbook|print|mixed] [--out training/data/mens]
+```
+
+Staves of white mensural notation made up and drawn as the app draws them: a clef, often a flat and a mensuration
+sign, a melody of mensural values (mostly by step), rests, dots, accidentals, coloration, ligatures written by the rules
+(checked against `js/mensural.js`: of 3,000, none breaks a rule, and every label reads back the same), a custos or a
+bar; Serenissima's signs (`js/serenissima.js`), ruled red or black, words under the staff, paper, ink, blur and noise
+varied. Each is a five-line strip as `fivestaves.py` cuts real ones (64 rows, 8 to a space, the top line at row 14).
+The label (`labels.jsonl`: `file`, `text`, `items`) is the staff in CGMensural's text form, and its tokens (a ligature's
+brackets and its `~` apart). About a thousand staves a second.
+
 ## Still to come
 
 - A second engraver for variety: Gregorio itself, and exsurge.
