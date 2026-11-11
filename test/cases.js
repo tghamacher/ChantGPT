@@ -466,6 +466,43 @@
       return [].concat(same('pages', s.count, 2), same('order', s.names, ['page2.png', 'page10.png']), same('size in pixels', s.sizes[0], [420, 595]))
         .concat(inked(w.document.getElementById('canvas')) ? [] : ['The first page is blank.']);
     } },
+    { name: 'app: mensural items drawn, and changed from the keys', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page2.png');
+      const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      const st = { id: 'p1s1', box: [20, 40, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, 60 + 12 * k, 390, 60 + 12 * k]), syllables: [] };
+      doc.pages[0].staves.push(st);
+      E.selected = 'p1s1';
+      E.putMensural('c4 O B5 Sb6 M5 [B5 L2] rB4 B3');
+      const txt = () => M.text(doc.pages[0].staves[0].mensural), key = (k, shiftKey = false) => E.key({ key: k, shiftKey, ctrlKey: false, metaKey: false, altKey: false });
+      const svg = w.document.getElementById('overlay');
+      bad.push(...same('signs drawn (clef, sign, B, Sb, M, rest, B)', svg.querySelectorAll('.msign').length, 7));
+      bad.push(...same('a box to grab each item by', svg.querySelectorAll('.mitem').length, 8));
+      E.selectMensural('p1s1', 3);
+      key('ArrowUp'); key('5'); key('k');
+      bad.push(...same('up a step, a minima, black', txt(), 'c4 O B5 M7* M5 [B5 L2] rB4 B3'));
+      key('s'); bad.push(...same('its stem turned', doc.pages[0].staves[0].mensural[3].stem, 'down'));
+      E.selectMensural('p1s1', 5, 1);
+      key('ArrowDown'); key('1');
+      bad.push(...same('a ligature\'s note moved and made a maxima', txt(), 'c4 O B5 M7v* M5 [B5 Mx1] rB4 B3'));
+      key('ArrowUp', true); bad.push(...same('with Shift, the whole ligature', txt(), 'c4 O B5 M7v* M5 [B6 Mx2] rB4 B3'));
+      key('5'); bad.push(...same('a minima is refused in a ligature', txt(), 'c4 O B5 M7v* M5 [B6 Mx2] rB4 B3'));
+      E.selectMensural('p1s1', 5, 0); key('o');
+      bad.push(...same('oblique', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] rB4 B3'));
+      E.selectMensural('p1s1', 2); key('j');
+      bad.push(...same('a breve and the next (a minima) won\'t join', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] rB4 B3'));
+      E.selectMensural('p1s1', 6); key('r'); key('j');
+      bad.push(...same('rest to note, then joined with the breve after', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3]'));
+      key('.'); bad.push(...same('a dot after, in the space', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3] .3'));
+      key('Delete'); bad.push(...same('deleted', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3]'));
+      E.undo(); bad.push(...same('undone', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3] .3'));
+      E.selectMensural('p1s1', 6, 0); key('ArrowLeft');
+      const ms = doc.pages[0].staves[0].mensural;
+      bad.push(...same('nudged along the staff', ms[6].x < ms[5].x + 100, true));
+      bad.push(...same('the side panel says what it is', /Ligature of 2: Breve, Breve\. This note: breve on A3/.test(w.document.getElementById('chantInfo').textContent), true));
+      bad.push(...same('MEI', /<ligature xml:id="m\d+" form="obliqua">/.test(E.mensuralMei().text), true));
+      return bad;
+    } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {
       const { w, shown } = await app('test/pages/page2.png');
       const st = { id: 'p1s1', box: [30, 50, 360, 50], lines: [[30, 60, 390, 60], [30, 72, 390, 72], [30, 84, 390, 84], [30, 96, 390, 96]],

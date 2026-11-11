@@ -17,6 +17,7 @@
   let selected = null;       // the selected staff's id
   let item = null;           // the selected neume (an item of the selected staff): { s: syllable, i: item }, by index
   let word = null;           // or the selected syllable's words: the syllable's index on the selected staff
+  let mitem = null;          // or, on a mensural staff, the selected item: { i, n } (n: the note, in a ligature)
   let alerts = [];           // what the checks found (checks.js), as of the last full drawing
   let drag = null;           // what the pointer is doing
   const history = { undo: [], redo: [] };
@@ -122,6 +123,172 @@
     commit(before);
     draw();
     ctx.say(now === 'mensural' ? 'This staff is mensural: the chant tools leave it alone.' : 'This staff is chant again.');
+  }
+
+  // ---------------------------------------------------------------- mensural items
+  // Selected (mitem), dragged along the staff and up and down it by steps, changed from the keyboard or the menu. In a
+  // ligature, the note under the pointer is the one moved or changed (mitem.n).
+  const VALUE_NAMES = { Mx: 'Maxima', L: 'Longa', B: 'Breve', Sb: 'Semibreve', M: 'Minima', Sm: 'Semiminima', F: 'Fusa', Sf: 'Semifusa' };
+  const VALUE_KEYS = ['Mx', 'L', 'B', 'Sb', 'M', 'Sm', 'F', 'Sf'];   // (keys 1 to 8)
+  const mOf = () => { const st = staffOf(selected); return st && mitem && (st.mensural || [])[mitem.i] || null; };
+  // the staff position under a point (steps up from the bottom line)
+  function mPos(st, x, y) {
+    const g = M.geometry(st.lines), b = g.y(0, x), t = g.y(8, x);
+    return Math.round((b - y) / ((b - t) / 8));
+  }
+  // in a ligature, the note whose place along the staff is nearest x
+  function ligNote(st, i, x) {
+    const cells = (M.layout(st).cells || {})[i];
+    if (!cells) return 0;
+    let best = 0, bd = Infinity;
+    cells.forEach(([a, b], k) => { const d = x < a ? a - x : x > b ? x - b : 0; if (d < bd) { bd = d; best = k; } });
+    return best;
+  }
+  // a change to the selected item (fn changes it, or, changing nothing, returns a sentence saying why it can't): one undo
+  function mChange(fn) {
+    const st = staffOf(selected), it = mOf();
+    if (!st || !it) return;
+    const before = snapshot(), why = fn(it, st);
+    if (typeof why === 'string') { ctx.say(why, true); return; }
+    commit(before);
+    draw();
+    const bad = mitem ? M.check(st.mensural).filter(b => b.startsWith(`Item ${mitem.i + 1}:`)) : [];
+    if (bad.length) ctx.say(bad.join(' '), true);
+  }
+  // the item's (or the ligature note's) value
+  function mValue(v) {
+    mChange(it => {
+      if (it.k === 'note' || it.k === 'rest') { it.v = v; return; }
+      if (it.k === 'lig' && mitem.n !== null) {
+        if (!['Mx', 'L', 'B', 'Sb'].includes(v)) return `A ${VALUE_NAMES[v].toLowerCase()} can't be in a ligature.`;
+        it.notes[mitem.n].v = v; return;
+      }
+      return 'Select a note or a rest.';
+    });
+  }
+  // up or down by steps: a note, rest, dot, accidental or custos; a ligature's note (or all its notes); a clef by lines
+  function mShift(d, all) {
+    mChange(it => {
+      if (it.k === 'clef') { const l = it.line + Math.sign(d); if (l < 1 || l > 5) return 'A clef stays on the staff\'s lines.'; it.line = l; return; }
+      if (it.k === 'lig') { (all || mitem.n === null ? it.notes : [it.notes[mitem.n]]).forEach(n => { n.p += d; }); return; }
+      if ('p' in it) { it.p += d; return; }
+      return 'That stays where it is on the staff.';
+    });
+  }
+  function mNudge(dx) { mChange(it => { it.x = Math.round(((Number.isFinite(it.x) ? it.x : 0) + dx) * 10) / 10; }); }
+  function mBlack() {
+    mChange(it => { if (it.k !== 'note' && it.k !== 'lig') return 'Only notes and ligatures are blackened.'; if (it.color === 'black') delete it.color; else it.color = 'black'; });
+  }
+  function mStem() {
+    mChange(it => {
+      if (it.k !== 'note' || /^(B|Sb)$/.test(it.v)) return 'Only a note with a stem (a longa, maxima, minima or smaller) has one to turn.';
+      const now = it.stem || ({ Mx: 'down', L: 'down' }[it.v] || 'up');
+      it.stem = now === 'up' ? 'down' : 'up';
+    });
+  }
+  function mRest() {
+    mChange(it => {
+      if (it.k === 'note') { it.k = 'rest'; delete it.color; delete it.stem; return; }
+      if (it.k === 'rest') { it.k = 'note'; delete it.perf; return; }
+      return 'Only a note becomes a rest, or a rest a note.';
+    });
+  }
+  // a dot after the selected note: in the space it is in, or the one above if it is on a line
+  function mDot() {
+    const st = staffOf(selected), it = mOf();
+    if (!st || !it) return;
+    const p = it.k === 'lig' ? it.notes[it.notes.length - 1].p : 'p' in it ? it.p : 4;
+    const b = M.layout(st).boxes[mitem.i];
+    mInsert({ k: 'dot', p: p % 2 === 0 ? p + 1 : p, x: Math.round((b ? b[0] + b[2] : it.x + M.geometry(st.lines).s) * 10) / 10 }, mitem.i + 1);
+  }
+  // the selected note (or ligature) and the next one in one ligature
+  function mJoin() {
+    mChange((it, st) => {
+      const nx = st.mensural[mitem.i + 1];
+      const notes = x => x && (x.k === 'lig' ? x.notes.map(n => Object.assign({}, n)) : x.k === 'note' ? [{ v: x.v, p: x.p }] : null);
+      const a = notes(it), b = notes(nx);
+      if (!a || !b) return 'Only notes (or ligatures) next to each other join into a ligature.';
+      if (a.concat(b).some(n => !['Mx', 'L', 'B', 'Sb'].includes(n.v))) return 'Only maximae, longae, breves and semibreves go into a ligature.';
+      const lig = Object.assign({ k: 'lig', notes: a.concat(b), x: it.x }, it.color === 'black' ? { color: 'black' } : {});
+      st.mensural.splice(mitem.i, 2, lig);
+      mitem = { i: mitem.i, n: a.length - 1 };
+    });
+  }
+  // in a ligature: the selected note and the next one drawn as one oblique (or square again)
+  function mOblique() {
+    mChange(it => {
+      if (it.k !== 'lig' || mitem.n === null || mitem.n >= it.notes.length - 1) return 'Select a ligature\'s note (not its last) to make it and the next one oblique.';
+      const n = it.notes[mitem.n];
+      if (n.obl) delete n.obl; else n.obl = true;
+    });
+  }
+  // a ligature cut after the selected note: two ligatures (or notes)
+  function mSplit() {
+    mChange((it, st) => {
+      if (it.k !== 'lig' || mitem.n === null || mitem.n >= it.notes.length - 1) return 'Select a ligature\'s note (not its last) to cut the ligature after it.';
+      const cells = (M.layout(st).cells || {})[mitem.i] || [];
+      const part = ns => ns.length === 1
+        ? Object.assign({ k: 'note', v: ns[0].v, p: ns[0].p }, it.color === 'black' ? { color: 'black' } : {})
+        : Object.assign({ k: 'lig', notes: ns }, it.color === 'black' ? { color: 'black' } : {});
+      const a = part(it.notes.slice(0, mitem.n + 1).map(n => Object.assign({}, n))), b = part(it.notes.slice(mitem.n + 1).map(n => Object.assign({}, n)));
+      if (a.k === 'lig') delete a.notes[a.notes.length - 1].obl;
+      a.x = it.x;
+      b.x = cells[mitem.n + 1] ? Math.round((cells[mitem.n + 1][0] + 0.6 * M.geometry(st.lines).s) * 10) / 10 : it.x + 2 * M.geometry(st.lines).s;
+      st.mensural.splice(mitem.i, 1, a, b);
+      mitem = { i: mitem.i, n: a.k === 'lig' ? a.notes.length - 1 : null };
+    });
+  }
+  function mRemove() {
+    const st = staffOf(selected);
+    if (!st || !mOf()) return;
+    const before = snapshot();
+    st.mensural.splice(mitem.i, 1);
+    mitem = null;
+    commit(before);
+    draw();
+  }
+  // a new item on the selected staff, at index k (or where its x puts it among the others)
+  function mInsert(it, k) {
+    const st = staffOf(selected);
+    if (!st) return;
+    const before = snapshot();
+    st.mensural = st.mensural || [];
+    if (k === undefined) { k = st.mensural.findIndex(v => Number.isFinite(v.x) && v.x > it.x); if (k < 0) k = st.mensural.length; }
+    st.mensural.splice(k, 0, it);
+    mitem = { i: k, n: it.k === 'lig' ? 0 : null };
+    commit(before);
+    draw();
+  }
+  // the next item along the staff (or the one before)
+  function mNext(d) {
+    const st = staffOf(selected);
+    if (!st || !(st.mensural || []).length) return;
+    const n = st.mensural.length, i = mitem ? (mitem.i + d + n) % n : d > 0 ? 0 : n - 1;
+    mitem = { i, n: st.mensural[i].k === 'lig' ? 0 : null };
+    draw();
+  }
+  // what the side panel says of the selected item
+  function mDescribe(st, it) {
+    const clef = st.mensural.slice(0, mitem.i + 1).reverse().find(v => v.k === 'clef');
+    const name = p => { const q = M.pitch(p, clef); return q ? q.pname.toUpperCase() + q.oct : `position ${p}`; };
+    const black = it.color === 'black' ? ' (black)' : '';
+    switch (it.k) {
+      case 'note': return `${VALUE_NAMES[it.v] || it.v}${black} on ${name(it.p)}${it.stem ? `, its stem ${it.stem}` : ''}.`;
+      case 'rest': return `${VALUE_NAMES[it.v] || it.v} rest${it.perf ? ' (perfect)' : ''}.`;
+      case 'lig': {
+        const n = mitem.n !== null ? it.notes[mitem.n] : null;
+        return `Ligature of ${it.notes.length}${black}: ${it.notes.map(v => VALUE_NAMES[v.v] || v.v).join(', ')}.` +
+          (n ? ` This note: ${(VALUE_NAMES[n.v] || n.v).toLowerCase()} on ${name(n.p)}${n.obl ? ', oblique with the next' : ''}.` : '');
+      }
+      case 'clef': return `${it.shape} clef on line ${it.line} (from the bottom).`;
+      case 'sign': return `Mensuration sign: ${it.sign === 'R' ? 'C turned round' : it.sign}${it.dot ? ', with a dot' : ''}${it.stroke ? ', struck through' : ''}.`;
+      case 'dot': return `A dot, on ${name(it.p)}.`;
+      case 'acc': return `${{ b: 'Flat', n: 'Natural', '#': 'Sharp' }[it.a]} on ${name(it.p)}.`;
+      case 'custos': return `Custos: the next staff begins on ${name(it.p)}.`;
+      case 'num': return `Proportion ${it.text}.`;
+      case 'bar': return `Bar (${it.form}).`;
+    }
+    return '';
   }
 
   // the selected mensural staff given what is typed (CGMensural's text form), its items spread along it
@@ -295,8 +462,9 @@
   }
   const shift = (lines, dx, dy) => lines.map(l => l.map((v, i) => v + (i & 1 ? dy : dx)));
   // a staff's chant goes where the staff goes: its items' boxes, as they were (boxes), moved by dx, dy
-  const boxesOf = st => st.syllables.map(syl => syl.items.map(it => it.box ? it.box.slice() : null));
+  const boxesOf = st => Object.assign(st.syllables.map(syl => syl.items.map(it => it.box ? it.box.slice() : null)), { mx: (st.mensural || []).map(it => it.x) });
   function shiftChant(st, boxes, dx, dy) {
+    (st.mensural || []).forEach((it, j) => { if (boxes.mx && Number.isFinite(boxes.mx[j])) it.x = Math.round((boxes.mx[j] + dx) * 10) / 10; });
     st.syllables.forEach((syl, i) => syl.items.forEach((it, j) => {
       const b = boxes[i] && boxes[i][j];
       if (b) it.box = [b[0] + dx, b[1] + dy, b[2], b[3]];
@@ -315,7 +483,7 @@
     return st && word !== null && st.syllables[word] || null;
   }
   // nothing selected within the staff
-  const letGo = () => { item = null; word = null; };
+  const letGo = () => { item = null; word = null; mitem = null; };
   const DOUBT = 0.8;
   // A custos is no work of the editor's: Gregorio sets its own and GABC and Volpiano leave it out. It's read (so it isn't
   // taken for a note), drawn faintly, never doubtful nor counted as to check, passed over by Tab; it's only heard from
@@ -1085,8 +1253,37 @@
     e.preventDefault();
     const t = e.target.closest('[data-act]'), act = t ? t.dataset.act : 'page', p = at(e), x = e.clientX, y = e.clientY;
     if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
+    if (act === 'mitem') {
+      selected = t.dataset.staff; item = null; word = null;
+      const st = staffOf(selected), i = +t.dataset.i, it = st.mensural[i];
+      mitem = { i, n: it.k === 'lig' ? ligNote(st, i, p[0]) : null };
+      draw();
+      const v = it.k === 'lig' ? it.notes[mitem.n].v : it.v, inLig = it.k === 'lig', valued = it.k === 'note' || it.k === 'rest' || inLig;
+      const values = (inLig ? ['Mx', 'L', 'B', 'Sb'] : VALUE_KEYS).map(w => ({ label: w, on: v === w, title: `${VALUE_NAMES[w]} (${VALUE_KEYS.indexOf(w) + 1})`, run: () => mValue(w) }));
+      ctx.menu([
+        { title: mDescribe(st, it) },
+        valued ? { shapes: values } : null,
+        it.k === 'note' || inLig ? { label: it.color === 'black' ? 'Black (coloured) ✓' : 'Black (coloured)', key: 'K', run: mBlack } : null,
+        it.k === 'note' && !/^(B|Sb)$/.test(it.v) ? { label: 'Turn its stem', key: 'S', run: mStem } : null,
+        it.k === 'note' ? { label: 'Make it a rest', key: 'R', run: mRest } : it.k === 'rest' ? { label: 'Make it a note', key: 'R', run: mRest } : null,
+        it.k === 'rest' && it.v === 'L' ? { label: it.perf ? 'Perfect (three spaces) ✓' : 'Perfect (three spaces)', run: () => mChange(r => { if (r.perf) delete r.perf; else r.perf = true; }) } : null,
+        it.k === 'sign' ? { shapes: [['O', 'O'], ['C', 'C'], ['R', 'Ɔ']].map(([w, lab]) => ({ label: lab, on: it.sign === w, run: () => mChange(r => { r.sign = w; }) })) } : null,
+        it.k === 'sign' ? { label: it.dot ? 'With a dot ✓' : 'With a dot', run: () => mChange(r => { if (r.dot) delete r.dot; else r.dot = true; }) } : null,
+        it.k === 'sign' ? { label: it.stroke ? 'Struck through ✓' : 'Struck through', run: () => mChange(r => { if (r.stroke) delete r.stroke; else r.stroke = true; }) } : null,
+        it.k === 'clef' ? { shapes: ['C', 'F', 'G'].map(w => ({ label: w, on: it.shape === w, run: () => mChange(r => { r.shape = w; }) })) } : null,
+        it.k === 'acc' ? { shapes: [['b', '♭'], ['n', '♮'], ['#', '♯']].map(([w, lab]) => ({ label: lab, on: it.a === w, run: () => mChange(r => { r.a = w; }) })) } : null,
+        it.k === 'bar' ? { shapes: [['single', '|'], ['double', '||'], ['end', '|||']].map(([w, lab]) => ({ label: lab, on: it.form === w, run: () => mChange(r => { r.form = w; }) })) } : null,
+        '-',
+        it.k === 'note' || inLig ? { label: 'Add a dot after it', key: '.', run: mDot } : null,
+        it.k === 'note' || inLig ? { label: 'Join to the next in a ligature', key: 'J', disabled: !st.mensural[i + 1], run: mJoin } : null,
+        inLig ? { label: it.notes[mitem.n].obl ? 'Oblique with the next ✓' : 'Oblique with the next', key: 'O', disabled: mitem.n >= it.notes.length - 1, run: mOblique } : null,
+        inLig ? { label: 'Cut the ligature after this note', disabled: mitem.n >= it.notes.length - 1, run: mSplit } : null,
+        { label: 'Delete', key: 'Del', run: mRemove },
+      ].filter(Boolean), x, y);
+      return;
+    }
     if (act === 'neume') {
-      selected = t.dataset.staff; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null; draw();
+      selected = t.dataset.staff; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null; mitem = null; draw();
       const st = staffOf(selected), it = itemOf(), kd = C.kind(it.g);
       const ns = kd === 'neume' ? C.notes(it.g).filter(n => !n.acc) : [];
       // the note under the pointer, whose shape the row sets
@@ -1154,6 +1351,17 @@
           : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
         '-',
         { label: mensural(st) ? 'Mensural staff ✓' : 'Mensural staff', title: `Mark this staff as ${mensural(st) ? 'chant' : 'mensural notation'} (the document is ${C.notationOf(ctx.state.doc)})`, run: toggleNotation },
+        // (on a mensural staff: a new item where the pointer is, at its height)
+        ...(mensural(st) ? (() => {
+          const here = mPos(st, p[0], p[1]), x0 = Math.round(p[0] * 10) / 10, add = it => () => mInsert(Object.assign({ x: x0 }, it));
+          return [
+            { title: 'Add here' },
+            { shapes: VALUE_KEYS.map(w => ({ label: w, title: `A ${VALUE_NAMES[w].toLowerCase()} here`, run: add({ k: 'note', v: w, p: here }) })) },
+            { shapes: [['Rest', { k: 'rest', v: 'Sb', p: 4 }], ['Clef', { k: 'clef', shape: 'C', line: Math.max(1, Math.min(5, Math.round(here / 2) + 1)) }], ['Sign', { k: 'sign', sign: 'O' }],
+              ['Dot', { k: 'dot', p: here }], ['♭', { k: 'acc', a: 'b', p: here }], ['♯', { k: 'acc', a: '#', p: here }], ['Custos', { k: 'custos', p: here }], ['Bar', { k: 'bar', form: 'single' }]]
+              .map(([lab, it]) => ({ label: lab, run: add(it) })) },
+          ];
+        })() : []),
         '-',
         { label: 'Find its lines again', key: 'F', run: refit },
         { label: 'Space the lines evenly', key: 'E', run: evenly },
@@ -1321,14 +1529,24 @@
     if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
     const id = t.dataset.staff;
     if (act === 'syl') {
-      selected = id; word = +t.dataset.s; item = null;
+      selected = id; word = +t.dataset.s; item = null; mitem = null;
       const syl = sylOf();
       drag = { act, from: p, box: wordBox(word), had: syl.box ? syl.box.slice() : null, checked: syl.checked, before: snapshot(), moved: false };
       draw();
       return;
     }
+    if (act === 'mitem') {
+      // a mensural item: along the staff as it is dragged, up or down by steps (a ligature: the note under the pointer,
+      // or with Shift all of it)
+      selected = id; item = null; word = null;
+      const st = staffOf(id), i = +t.dataset.i, it = st.mensural[i];
+      mitem = { i, n: it.k === 'lig' ? ligNote(st, i, p[0]) : null };
+      drag = { act, from: p, start: JSON.stringify(it), all: e.shiftKey, before: snapshot(), moved: false };
+      draw();
+      return;
+    }
     if (act === 'neume') {
-      selected = id; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null;
+      selected = id; item = { s: +t.dataset.s, i: +t.dataset.i }; word = null; mitem = null;
       const st = staffOf(id), it = itemOf();
       // Shift: only the note nearest the pointer
       let note = null;
@@ -1354,6 +1572,18 @@
       if (!syl || !drag.box) return;
       syl.box = [drag.box[0] + dx, drag.box[1] + dy, drag.box[2], drag.box[3]].map(v => Math.round(v * 100) / 100);
       syl.checked = 'edited';
+      draw(true);
+      return;
+    }
+    if (drag.act === 'mitem') {
+      const st = staffOf(selected), it = mOf();
+      if (!st || !it) return;
+      const was = JSON.parse(drag.start), step = M.geometry(st.lines).s / 2, k = Math.round(-dy / step);
+      Object.assign(it, was);
+      if (Number.isFinite(was.x)) it.x = Math.round((was.x + dx) * 10) / 10;
+      if (it.k === 'lig') it.notes = was.notes.map((n, j) => Object.assign({}, n, drag.all || j === mitem.n ? { p: n.p + k } : {}));
+      else if (it.k === 'clef') it.line = Math.max(1, Math.min(5, was.line + Math.round(k / 2)));
+      else if ('p' in was) it.p = was.p + k;
       draw(true);
       return;
     }
@@ -1407,6 +1637,11 @@
       draw();
       return;
     }
+    if (d.act === 'mitem') {
+      commit(d.before);
+      draw();
+      return;
+    }
     if (d.act === 'neume') {
       const it = itemOf();
       // moved and put back: as it was, checked or not
@@ -1444,6 +1679,25 @@
       if (k === 'Enter') { acceptWord(); return true; }
       return false;
     }
+    // a mensural item selected: the keys are its (1-8: Mx L B Sb M Sm F Sf)
+    if (mOf()) {
+      const all = e.shiftKey;
+      if (k === 'Escape') { mitem = null; draw(); return true; }
+      if (k === 'ArrowUp') { mShift(1, all); return true; }
+      if (k === 'ArrowDown') { mShift(-1, all); return true; }
+      if (k === 'ArrowLeft') { mNudge(-unit() * 3); return true; }
+      if (k === 'ArrowRight') { mNudge(unit() * 3); return true; }
+      if (k === 'Tab') { mNext(e.shiftKey ? -1 : 1); return true; }
+      if (k === 'Delete' || k === 'Backspace') { mRemove(); return true; }
+      if (/^[1-8]$/.test(k)) { mValue(VALUE_KEYS[+k - 1]); return true; }
+      if (k === 'k' || k === 'K') { mBlack(); return true; }
+      if (k === 's' || k === 'S') { mStem(); return true; }
+      if (k === 'r' || k === 'R') { mRest(); return true; }
+      if (k === '.') { mDot(); return true; }
+      if (k === 'j' || k === 'J') { mJoin(); return true; }
+      if (k === 'o' || k === 'O') { mOblique(); return true; }
+      return false;
+    }
     // a neume selected: the keys are its
     if (itemOf()) {
       if (k === 'Escape') { item = null; draw(); return true; }
@@ -1469,7 +1723,7 @@
     if (k === 'ArrowDown') { nudge(0, u); return true; }
     if (k === 'ArrowLeft') { nudge(-u, 0); return true; }
     if (k === 'ArrowRight') { nudge(u, 0); return true; }
-    if (k === 'Tab') { cycle(e.shiftKey ? -1 : 1); return true; }
+    if (k === 'Tab') { const st = staffOf(selected); if (st && mensural(st) && (st.mensural || []).length) mNext(e.shiftKey ? -1 : 1); else cycle(e.shiftKey ? -1 : 1); return true; }
     return false;
   }
 
@@ -1523,6 +1777,10 @@
           const t = el('text', { x: v.x, y: v.y, 'font-size': v.size, class: 'mnum', transform: `rotate(${L.angle.toFixed(3)} ${v.x} ${v.y})` }, mg);
           t.textContent = v.text;
         }
+        // each item's box, to grab it by; the selected one outlined (and in a ligature, its note)
+        L.boxes.forEach((b, i) => el('rect', { x: b[0], y: b[1], width: Math.max(b[2], 8 * u), height: b[3], class: 'mitem' + (sel && mitem && mitem.i === i ? ' on' : ''), 'data-act': 'mitem', 'data-staff': st.id, 'data-i': i }, g));
+        const cell = sel && mitem && mitem.n !== null && (L.cells[mitem.i] || [])[mitem.n];
+        if (cell) { const b = L.boxes[mitem.i]; el('rect', { x: cell[0], y: b[1], width: cell[1] - cell[0], height: b[3], class: 'mcell' }, g); }
       }
       // the chant: its glyphs where they are, along the staff (tilted with it); its words under it
       if (st.syllables.some(syl => syl.items.some(it => it.box))) {
@@ -1622,7 +1880,7 @@
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
-        : mensural(st) ? 'A mensural staff: reading and saving mensural notation are still to come.'
+        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : 'A mensural staff: click an item to select it, drag it, or right-click for more; right-click the staff to add one. Reading mensural notation is still to come.')
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
@@ -1738,6 +1996,7 @@
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
     get word() { return word; }, selectWord(id, s) { selected = id; word = s; item = null; draw(); },
-    get neume() { return item && Object.assign({}, item); }, selectNeume(id, s, i) { selected = id; item = { s, i }; word = null; draw(); },
+    get neume() { return item && Object.assign({}, item); }, selectNeume(id, s, i) { selected = id; item = { s, i }; word = null; mitem = null; draw(); },
+    get mensuralItem() { return mitem && Object.assign({}, mitem); }, selectMensural(id, i, n = null) { selected = id; item = null; word = null; mitem = { i, n }; draw(); },
   };
 })(window);

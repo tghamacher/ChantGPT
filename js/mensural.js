@@ -203,10 +203,11 @@
   // Everything to draw for a staff, in page units: { signs: [{ key, d, x, y, scale, flip, item }] (Serenissima's,
   // drawn as path d at x, y, scaled to the staff's spacing, flipped left to right if flip), shapes: [{ d, fill, item }]
   // (filled when fill is true, outlined when 'outline', else a line pen wide), texts: [{ text, x, y, size, item }],
-  // boxes: each item's [x, y, w, h], to grab it by; angle: the staff's tilt (degrees), for the signs and texts.
+  // boxes: each item's [x, y, w, h], to grab it by; cells: for each ligature (by its index), each note's [left,
+  // right] along the staff; angle: the staff's tilt (degrees), for the signs and texts.
   function layout(staff) {
     const items = staff.mensural || [], g = geometry(staff.lines), s = g.s, T = SIGN();
-    const out = { signs: [], shapes: [], texts: [], boxes: [], pen: PEN * s, angle: S().tilt(staff.lines) };
+    const out = { signs: [], shapes: [], texts: [], boxes: [], cells: {}, pen: PEN * s, angle: S().tilt(staff.lines) };
     let x = g.left + 0.8 * s;
     items.forEach((it, i) => {
       const x0 = Number.isFinite(it.x) ? it.x : x, w = widthOf(it) * s;
@@ -252,7 +253,7 @@
           if (it.dot && T[key]) { const cx = x0 + (T[key].x0 + T[key].x1) / 2 * s; shape(circle(cx, g.y(4, cx), 0.14 * s), true); }
           box(1, 7); break;
         }
-        case 'lig': ligature(it, x0 + 0.3 * s, g, s, shape); box(Math.min(...it.notes.map(n => n.p)) - 6, Math.max(...it.notes.map(n => n.p)) + 6); break;
+        case 'lig': out.cells[i] = ligature(it, x0 + 0.3 * s, g, s, shape); box(Math.min(...it.notes.map(n => n.p)) - 6, Math.max(...it.notes.map(n => n.p)) + 6); break;
       }
     });
     return out;
@@ -302,6 +303,7 @@
       const [a, b] = cells[i], xs = /Left/.test(kind) ? a : b, yy = y(i, xs), dy = (/^up/.test(kind) ? -1 : 1) * STEM * s;
       shape(`M${f(xs)} ${f(yy)}L${f(xs)} ${f(yy + dy)}`, false);
     }));
+    return cells;
   }
 
   // ---------------------------------------------------------------- MEI
