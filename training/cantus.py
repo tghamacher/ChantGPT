@@ -147,13 +147,14 @@ def collect(o):
     out = o.out or os.path.join(HERE, 'data', 'scans', str(o.source))
     os.makedirs(out, exist_ok=True)
     if o.manifest:                                      # (pages filed by their labels: 12r, f. 12v, …)
-        have = {r['folio'] for r in chants(o.source)}
+        # (a source not in Cantus, as the Occo Codex for cmme.py: every page, filed by its label or its number)
+        have = {r['folio'] for r in chants(o.source)} if os.path.exists(csv_path(o.source)) else None
         ident = o.manifest
         def folio_of(n, name):
             label = name[5:].rsplit('.', 1)[0]
             m = re.search(r'(\d+)\s*_?\.?\s*(r|v|recto|verso)\b', label, re.I)
             f = m and f'{int(m.group(1)):03d}{m.group(2)[0].lower()}'
-            return f if f in have else None
+            return f if have is None or f in have else None
         if o.by_page: folio_of = lambda n, name: f'p{n:04d}'      # (labels that don't give the folio: kept in page order)
     else:
         pages = page_images(o.source)
