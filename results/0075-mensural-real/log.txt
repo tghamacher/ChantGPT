@@ -1,0 +1,22 @@
+job 0075-mensural-real: The mensural reader learns real staves: from 0074 (synthetic only), with Capitan (511 staves, a 17th-c. hand) and SEILS (161, the 1582 print Il Lauro Secco), each x3, with the 30,000 synthetic; new tokens added (--grow-vocab); tested on the real staves kept out (every tenth), against 0074; exported
+code: 621f294
+
+$ recognizer.py train --data training/data/mens --real training/data/capitan,training/data/seils --real-labels labels.jsonl --resume training/data/m0074/best.pt --grow-vocab --width 192 --epochs 8 --lr 1e-3 --batch 32 --out training/data/m0075
+30887 staves to learn from (599 real, each 3 times), 910 synthetic and 72 real to test on; 0 left out for tokens the model hasn't; 390 tokens; 1,453,487 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.095 (2 s)
+epoch 1 batch 100: loss 0.518 (17 s)
+epoch 1 batch 200: loss 0.461 (32 s)
+epoch 1 batch 300: loss 0.470 (47 s)
+epoch 1 batch 400: loss 0.426 (62 s)
+epoch 1 batch 500: loss 0.419 (77 s)
+epoch 1 batch 600: loss 0.394 (91 s)
+epoch 1 batch 700: loss 0.378 (106 s)
+epoch 1 batch 800: loss 0.372 (121 s)
+epoch 1 batch 900: loss 0.375 (135 s)
+epoch 1: loss 0.367; synthetic test staves: token errors 1.45%, note errors 1.63%; real: token errors 57.52%, note errors 56.92% (146 s)
+epoch 2 batch 0: loss 0.499 (146 s)
+epoch 2 batch 100: loss 0.271 (159 s)
+epoch 2 batch 200: loss 0.265 (172 s)
+epoch 2 batch 300: loss 0.264 (186 s)
