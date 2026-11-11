@@ -160,6 +160,19 @@
         .concat(bad.length === want.length ? [] : [`${bad.length} complaints, expected ${want.length}: ${bad.join(' | ')}`]);
     } },
     { name: 'document: not a document', unit: () => same('checks', C().check({ pages: [] }), ['Not a ChantGPT document.']) },
+    { name: 'document: chant or mensural', unit: () => {
+      const doc = C().newDocument({ name: 'b.pdf', type: 'pdf', sizes: [[612, 792]] });
+      const st = { id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [50, 100 + 9 * k, 550, 100 + 9 * k]), syllables: [] };
+      doc.pages[0].staves.push(st);
+      const out = [].concat(same('default', C().notationOf(doc, st), 'chant'), same('clean', C().check(doc), []));
+      doc.notation = 'mensural';
+      out.push(...same('document', C().notationOf(doc, st), 'mensural'));
+      st.notation = 'chant';
+      out.push(...same('staff over document', C().notationOf(doc, st), 'chant'), ...same('still clean', C().check(doc), []));
+      doc.notation = 'neumes'; st.notation = 'square';
+      const bad = C().check(doc);
+      return out.concat(bad.length === 2 && bad.every(b => /notation/.test(b)) ? [] : [`Expected two complaints about notation; got: ${bad.join(' | ')}`]);
+    } },
 
     // ---- staves: geometry, and finding lines in the ink
     { name: 'staves: even lines, spacing, tilt, box', unit: () => {

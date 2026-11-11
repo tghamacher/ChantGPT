@@ -94,12 +94,42 @@
     return `p${n}s${k}`;
   }
 
+  // ---------------------------------------------------------------- chant or mensural
+  // Which notation a staff is in (the document's, unless the staff says otherwise: CGChant.notationOf). Mensural
+  // staves have five lines, and the chant tools (GABC, the chant recognizer) leave them alone: they will be read and
+  // saved their own way.
+  const mensural = st => C.notationOf(ctx.state.doc, st) === 'mensural';
+  const fiveLines = () => !!ctx.state.doc.fiveLines || ctx.state.doc.notation === 'mensural';
+  // the document's notation set (its staves that said otherwise left as they are)
+  function setNotation(v) {
+    const doc = ctx.state.doc;
+    if (!doc || !C.NOTATIONS.includes(v) || C.notationOf(doc) === v) return;
+    if (v === 'chant') delete doc.notation; else doc.notation = v;
+    ctx.changed();
+    draw();
+    const odd = C.staves(doc).filter(st => st.notation && st.notation !== v).length;
+    ctx.say((v === 'mensural'
+      ? 'Mensural notation: staves will be found with five lines. Reading mensural notes isn\'t ready yet, so the chant tools leave these staves alone.'
+      : 'Chant notation: staves are found and read as chant again.') +
+      (odd ? ` ${odd} ${odd === 1 ? 'staff is' : 'staves are'} marked as the other notation and stay so (right-click a staff to change it).` : ''));
+  }
+  // the selected staff marked as the other notation from the document's (or back)
+  function toggleNotation() {
+    const st = staffOf(selected);
+    if (!st) return;
+    const before = snapshot(), doc = C.notationOf(ctx.state.doc), now = mensural(st) ? 'chant' : 'mensural';
+    if (now === doc) delete st.notation; else st.notation = now;
+    commit(before);
+    draw();
+    ctx.say(now === 'mensural' ? 'This staff is mensural: the chant tools leave it alone.' : 'This staff is chant again.');
+  }
+
   // ---------------------------------------------------------------- finding lines in the ink
   // region: [x, y, w, h] in page units. The lines found, in page units, or null.
   async function find(region) {
     const px = await ctx.pixels(ctx.state.page);
     // (a book of five-line staves: the one the five-line finder finds in the box, if any)
-    if (ctx.state.doc.fiveLines && px.reds) {
+    if (fiveLines() && px.reds) {
       const [x, y, w, h] = region.map(v => v * px.scale);
       const hit = S.byFiveLines(px.reds, px.w, px.h).find(s => { const m = (s.lines[0][1] + s.lines[4][1]) / 2; return m > y && m < y + h && s.lines[0][2] > x && s.lines[0][0] < x + w; });
       return hit ? hit.lines.map(l => l.map(v => v / px.scale)) : null;
@@ -115,7 +145,7 @@
     try { lines = await find([rect[0], rect[1] - grow, rect[2], rect[3] + 2 * grow]); } catch (e) { ctx.say(`Couldn't read the page: ${e.message || e}`, true); }
     if (ctx.state.page !== pg) return;
     const before = snapshot();   // taken now, not before the search, in case another staff was added meanwhile
-    const st = { id: newId(), lines: lines || S.even(rect, ctx.state.doc.fiveLines ? 5 : 4), syllables: [] };
+    const st = { id: newId(), lines: lines || S.even(rect, fiveLines() ? 5 : 4), syllables: [] };
     page().staves.push(st);
     settle(st);
     selected = st.id;
@@ -142,7 +172,7 @@
     const px = await ctx.pixels(pg);
     if (stale()) return null;
     const skip = ctx.state.doc.pages[pg].staves.map(st => st.box.map(v => v * px.scale));
-    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines, tint: px.tint, reds: px.reds, ruled: !!ctx.state.doc.ruledEvenly, five: !!ctx.state.doc.fiveLines });
+    const found = S.findStaves(px.gray, px.w, px.h, { skip, lines: px.lines, tint: px.tint, reds: px.reds, ruled: !!ctx.state.doc.ruledEvenly, five: fiveLines() });
     return stale() ? null : found.map(r => r.lines.map(l => l.map(v => v / px.scale)));
   }
   function addFound(pg, found) {
@@ -484,6 +514,7 @@
   async function placeChant(src, last) {
     const st = staffOf(selected);
     if (!st) { ctx.say('Select the staff the chant begins on first.', true); return false; }
+    if (mensural(st)) { ctx.say('This staff is marked mensural: GABC goes on chant staves only. (Right-click it to mark it chant.)', true); return false; }
     let r;
     try { r = C.fromGabc(src); } catch (e) { ctx.say(e.message, true); return false; }
     const where = staves(st, r, last), pages = new Set(where.map(v => v.page));
@@ -655,8 +686,11 @@
   }
   // the selected staff, or every staff on the page, read; one undo
   async function readNotes(all) {
-    const list = all ? page().staves.slice() : [staffOf(selected)].filter(Boolean);
-    if (!list.length) { ctx.say(all ? 'No staves on this page: find them first.' : 'Select a staff first.', true); return; }
+    const chosen = all ? page().staves.slice() : [staffOf(selected)].filter(Boolean);
+    if (!chosen.length) { ctx.say(all ? 'No staves on this page: find them first.' : 'Select a staff first.', true); return; }
+    // (mensural staves: not this recognizer's to read)
+    const list = chosen.filter(st => !mensural(st));
+    if (!list.length) { ctx.say(`Reading mensural notation isn't ready yet: ${chosen.length === 1 ? 'this staff is' : 'the staves here are'} marked mensural.`, true); return; }
     if (busy) return;
     busy = true;
     ctx.say('Reading the notes … (the first time, the recognizer is loaded)');
@@ -677,7 +711,9 @@
     if (tally.put) parts.push(`${tally.put} neumes read onto ${list.length === 1 ? 'the staff' : 'staves without chant'}`);
     if (tally.same + tally.differ + tally.unseen) parts.push(`of the chant's neumes, ${tally.same} read as written, ${tally.differ} read otherwise, ${tally.unseen} not seen`);
     if (tally.extra) parts.push(`${tally.extra} more seen on the page than the chant has`);
-    ctx.say(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.`);
+    const skipped = chosen.length - list.length;
+    ctx.say(`${ok === 1 ? 'Staff' : `${ok} staves`} read: ${parts.join('; ') || 'nothing found'}. Where they differ, the neume is marked in orange; select it to see what was read.` +
+      (skipped ? ` ${skipped} mensural ${skipped === 1 ? 'staff' : 'staves'} left unread (not ready yet).` : ''));
   }
 
   // ---------------------------------------------------------------- the words under the notes
@@ -1080,13 +1116,15 @@
       const st = staffOf(selected), n = page().staves.indexOf(st) + 1, bent = S.count(st.lines[0]) > 2;
       ctx.menu([
         { title: `Staff ${n}` },
-        { label: 'Read the notes', disabled: busy, run: () => readNotes(false) },
+        { label: 'Read the notes', disabled: busy || mensural(st), title: mensural(st) ? 'Reading mensural notation isn\'t ready yet' : '', run: () => readNotes(false) },
         { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
         { label: 'Play from this staff', disabled: !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
         { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
         typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
           : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
+        '-',
+        { label: mensural(st) ? 'Mensural staff ✓' : 'Mensural staff', title: `Mark this staff as ${mensural(st) ? 'chant' : 'mensural notation'} (the document is ${C.notationOf(ctx.state.doc)})`, run: toggleNotation },
         '-',
         { label: 'Find its lines again', key: 'F', run: refit },
         { label: 'Space the lines evenly', key: 'E', run: evenly },
@@ -1425,15 +1463,15 @@
     const el = (name, attrs, parent = svg) => { const x = document.createElementNS(SVG, name); for (const k in attrs) x.setAttribute(k, attrs[k]); parent.appendChild(x); return x; };
     el('rect', { x: 0, y: 0, width: pg.size[0], height: pg.size[1], class: 'bg' });
     for (const st of pg.staves) {
-      const sel = st.id === selected, g = el('g', { class: 'staff' + (sel ? ' sel' : '') });
+      const sel = st.id === selected, g = el('g', { class: 'staff' + (sel ? ' sel' : '') + (mensural(st) ? ' mensural' : '') });
       const l = st.lines, s = S.spacing(l) / 2, n = S.count(l[0]);
       const pts = (line, dy) => { const out = []; for (let k = 0; k < n; k++) out.push([line[2 * k], line[2 * k + 1] + dy]); return out; };
       // the staff's area: its lines, half a space beyond the outer ones; grabbing it moves the staff
-      el('polygon', { points: pts(l[0], -s).concat(pts(l[3], s).reverse()).map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
+      el('polygon', { points: pts(l[0], -s).concat(pts(l[l.length - 1], s).reverse()).map(q => q.join(',')).join(' '), class: 'area', 'data-act': 'body', 'data-staff': st.id }, g);
       for (const ln of l) el('polyline', { points: pts(ln, 0).map(q => q.join(',')).join(' '), class: 'line', 'data-act': 'body', 'data-staff': st.id }, g);
       // a chant begins here: a mark before the staff
       if (st.begins === true) {
-        const x = l[0][0] - 1.6 * s, y0 = l[0][1] - 2 * s, y1 = l[3][1] + 2 * s;
+        const x = l[0][0] - 1.6 * s, y0 = l[0][1] - 2 * s, y1 = l[l.length - 1][1] + 2 * s;
         const m = el('g', { class: 'begins' }, g);
         el('line', { x1: x, y1: y0, x2: x, y2: y1 }, m);
         el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
@@ -1441,7 +1479,7 @@
       }
       // a chant begins part way along: a flag at the point
       if (typeof st.beginsAt === 'number') {
-        const x = st.beginsAt, y0 = S.yAt(l[0], x) - 2 * s, y1 = S.yAt(l[3], x) + 2 * s;
+        const x = st.beginsAt, y0 = S.yAt(l[0], x) - 2 * s, y1 = S.yAt(l[l.length - 1], x) + 2 * s;
         const m = el('g', { class: 'begins mid' }, g);
         el('line', { x1: x, y1: y0, x2: x, y2: y1 }, m);
         el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
@@ -1476,7 +1514,7 @@
       // at each point (the ends, and any bends): a bar through all four lines, and a dot on each line
       for (let k = 0; k < n; k++) {
         const xi = 2 * k;
-        const bar = { x1: l[0][xi], y1: l[0][xi + 1] - s, x2: l[3][xi], y2: l[3][xi + 1] + s };
+        const bar = { x1: l[0][xi], y1: l[0][xi + 1] - s, x2: l[l.length - 1][xi], y2: l[l.length - 1][xi + 1] + s };
         el('line', Object.assign({ class: k && k < n - 1 ? 'end bend' : 'end' }, bar), g);
         el('line', Object.assign({ class: 'hit', 'data-act': 'knot', 'data-staff': st.id, 'data-knot': k }, bar), g);
         l.forEach((ln, i) => el('circle', { cx: ln[xi], cy: ln[xi + 1], r: rr, class: 'handle', 'data-act': 'point', 'data-staff': st.id, 'data-knot': k, 'data-line': i }, g));
@@ -1530,9 +1568,9 @@
     if (begins) { begins.disabled = !st; begins.checked = !!(st && st.begins === true); }
     const place = document.getElementById('placeChant');
     if (place) {
-      place.disabled = !st;
+      place.disabled = !st || mensural(st);
       document.getElementById('clearChant').disabled = !st || !st.syllables.length;
-      document.getElementById('readStaff').disabled = !st || busy;
+      document.getElementById('readStaff').disabled = !st || busy || mensural(st);
       document.getElementById('readPage').disabled = !list.length || busy;
       document.getElementById('readText').disabled = !list.some(v => v.syllables.length) || busy;
       document.getElementById('readBreaks').disabled = !st || !ctx.state.doc.chants.some(c => c.staves.includes(st.id) && c.staves.length > 1);
@@ -1545,6 +1583,7 @@
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
+        : mensural(st) ? 'A mensural staff: reading and saving mensural notation are still to come.'
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
@@ -1648,7 +1687,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, setNotation, toggleNotation, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

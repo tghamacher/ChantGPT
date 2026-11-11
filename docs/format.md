@@ -54,6 +54,9 @@ is how training data and tests will be made.
   GregoBase uses them) and the `staves` it runs over, by id, in order. A chant that begins part way along its first
   staff has `startsAt`, that staff's `beginsAt`; a staff two chants share is in both lists. A chant can run over several pages. A chant
   placed from a book's index has its GregoBase id in a `gregobase` header.
+- `notation` (optional): what the staves are written in, `"chant"` (the default, when absent) or `"mensural"`.
+  Chant staves carry GABC; mensural staves have five lines, and for now only their lines (reading and saving
+  mensural notation, as MEI, is to come).
 - `book` (optional): which book the source is, when its index from GregoBase is used: `title`, `gregobase` (the
   book's source number in GregoBase) and `first`, the source's page (from 0) that is the first page of the book's
   index. The book's pages are numbered from there. The index itself (a `.book.json`, made by
@@ -71,10 +74,12 @@ is how training data and tests will be made.
 - `id`: unique in the document. The app writes `p<page>s<staff>`, but any string will do.
 - `box`: `[x, y, width, height]` around the staff and its notes (optional). The app sets it from the lines: from
   their ends, and a space and a half above the top line and below the bottom one.
-- `lines`: the four staff lines, top to bottom, each a list of points from left to right, `[x0, y0, x1, y1, …]`
+- `lines`: the four staff lines (five on a five-line or mensural staff), top to bottom, each a list of points from left to right, `[x0, y0, x1, y1, …]`
   (optional, but the recognizer will need them). A straight staff, level or tilted, has two points a line, its ends.
   A staff on a page that couldn't be scanned flat bends: it has a point at each bend, and runs straight between them.
   The app gives all four lines points at the same xs. The app keeps a page's staves in reading order, top to bottom.
+- `notation` (optional): `"chant"` or `"mensural"`, for a staff written otherwise than the document's `notation` (a
+  book with both). Absent, the staff is in the document's.
 - `begins`: `true` if a chant begins on this staff (in the Solesmes books, the staff set in for the chant's initial),
   `false` if a person said it doesn't; absent if no one has said (optional). Placing GABC without line breaks on a
   staff spreads it over the staves down to the next one where a chant begins.
@@ -138,5 +143,5 @@ the F below middle C. `CGChant.withClefs(staff, clefBefore)` lists a staff's ite
 ## Later
 
 - MEI-Neumes and Volpiano export.
-- Mensural notation (version 2 of the format, or a sibling): five lines, and items in a mensural encoding instead of
-  GABC.
+- Mensural notation: the staves are marked already (`notation`); their contents, items in a mensural encoding instead
+  of GABC (version 2 of the format, or a sibling), saved as MEI mensural.

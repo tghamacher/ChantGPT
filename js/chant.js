@@ -258,6 +258,12 @@
     };
   }
 
+  // Which notation a staff is written in: chant (GABC, the square notes this app reads) or mensural (the measured
+  // notation of polyphony, read and saved another way, as MEI). The document says which its staves are (notation,
+  // chant when not said); a staff of the other kind, in a book that has both, says so itself.
+  const NOTATIONS = ['chant', 'mensural'];
+  const notationOf = (doc, st) => (st && st.notation) || (doc && doc.notation) || 'chant';
+
   // every staff of a document, in reading order (pages, then staves as listed)
   const staves = doc => (doc.pages || []).flatMap(p => p.staves || []);
 
@@ -363,6 +369,7 @@
     if (!Array.isArray(doc.pages)) return bad.concat('The document has no pages.');
     if (doc.book !== undefined && !(doc.book && typeof doc.book === 'object' && (doc.book.first === undefined || Number.isInteger(doc.book.first))))
       bad.push('"book" says which book the scan is: { title, gregobase, first (the scan page, from 0, that is the book\'s first) }.');
+    if (doc.notation !== undefined && !NOTATIONS.includes(doc.notation)) bad.push(`"notation" is ${NOTATIONS.join(' or ')}.`);
     const ids = new Set();
     doc.pages.forEach((page, pi) => {
       const where = `Page ${page.n || pi + 1}`;
@@ -376,6 +383,7 @@
         else ids.add(st.id);
         if (st.box !== undefined && !(box4(st.box) && inside(st.box))) bad.push(`${name}: its box is not on the page.`);
         if (st.begins !== undefined && typeof st.begins !== 'boolean') bad.push(`${name}: "begins" is true or false.`);
+        if (st.notation !== undefined && !NOTATIONS.includes(st.notation)) bad.push(`${name}: its "notation" is ${NOTATIONS.join(' or ')}.`);
         if (st.beginsAt !== undefined && !Number.isFinite(st.beginsAt)) bad.push(`${name}: "beginsAt" is a number (an x on the page).`);
         if (st.lines !== undefined) {
           const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);
@@ -403,7 +411,7 @@
     return bad;
   }
 
-  const api = { FORMAT, VERSION, CHECKED, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, perform, syllables, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
+  const api = { FORMAT, VERSION, CHECKED, NOTATIONS, notationOf, kind, pitch, notes, shapeOf, reshape, splitAt, joinG, groups, perform, syllables, sylX, owns, transpose, fromGabc, toGabc, newDocument, staves, withClefs, check };
   global.CGChant = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
