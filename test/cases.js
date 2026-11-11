@@ -210,6 +210,19 @@
       if (!C.check(doc).some(b => /its value/.test(b))) bad.push('A note of no value was not complained of');
       return bad;
     } },
+    { name: 'mensural: played, its rhythm as white notation reads it', unit: () => {
+      const M = global.CGMensural, play = t => M.perform([{ id: 'a', mensural: M.parse(t) }]), beats = t => play(t).map(e => Math.round(e.beats * 100) / 100);
+      return [].concat(
+        same('C: breve 4, semibreve 2, minims 1', beats('c4 C B6 Sb6 M6 M7 Sb8'), [4, 2, 1, 1, 2]),
+        same('pitches under the clef', play('c4 C B6 Sb5 Sb8').map(e => e.midi), [60, 59, 64]),
+        same('O: imperfection, then alteration', beats('c4 O B6 Sb5 B6 B6 Sb5 Sb4 B6'), [4, 2, 6, 6, 2, 4, 6]),
+        same('O: a dot of perfection keeps the breve whole', beats('c4 O B6 .7 Sb5 Sb4 Sb4 B6'), [6, 2, 2, 2, 6]),
+        same('C.: major prolation, the same one level down', beats('c4 C. Sb6 M5 Sb6 M5 M4 Sb6'), [2, 1, 3, 1, 2, 3]),
+        same('a dot of addition; coloration', beats('c4 C M6 .7 Sm5 B6* B6* B6*'), [1.5, 0.5, 2.67, 2.67, 2.67]),
+        same('a stroke halves; 3/2 three in the time of two', beats('c4 C| B6 Sb6 3/2 Sb6 Sb6 Sb6'), [2, 1, 1.33, 1.33, 1.33]),
+        same('ligatures: their notes in order', beats('c4 C [B5 L2] [Sb3 Sb5]'), [4, 8, 2, 2]),
+        same('a signature flat, a natural for one note', play('c4 b5 C Sb5 n5 Sb5 Sb5 rSb4').map(e => e.midi), [58, 59, 58, null]));
+    } },
     { name: 'document: chant or mensural', unit: () => {
       const doc = C().newDocument({ name: 'b.pdf', type: 'pdf', sizes: [[612, 792]] });
       const st = { id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [50, 100 + 9 * k, 550, 100 + 9 * k]), syllables: [] };
@@ -501,6 +514,15 @@
       bad.push(...same('nudged along the staff', ms[6].x < ms[5].x + 100, true));
       bad.push(...same('the side panel says what it is', /Ligature of 2: Breve, Breve\. This note: breve on A3/.test(w.document.getElementById('chantInfo').textContent), true));
       bad.push(...same('MEI', /<ligature xml:id="m\d+" form="obliqua">/.test(E.mensuralMei().text), true));
+      // played from the selected item: the player given its notes, a beat a minim; each marked as it sounds
+      const P = w.CGPlay, real = P.play;
+      let got = null;
+      P.play = (events, bpm, onStep, onEnd) => { got = events; onStep(events[0], 0); };
+      try {
+        E.selectMensural('p1s1', 4); E.listen(E.playFrom());
+        bad.push(...same('played from the minima', got && got.map(e => [e.i, e.n, Math.round(e.beats * 100) / 100]), [[4, null, 1], [5, 0, 6], [5, 1, 24], [6, 0, 6], [6, 1, 6]]));
+        bad.push(...same('the note sounding is marked', !!svg.querySelector('.mitem.playing[data-i="4"]'), true));
+      } finally { P.play = real; E.mark(null); }
       return bad;
     } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {

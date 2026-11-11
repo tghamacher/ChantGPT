@@ -1278,6 +1278,7 @@
         it.k === 'note' || inLig ? { label: 'Join to the next in a ligature', key: 'J', disabled: !st.mensural[i + 1], run: mJoin } : null,
         inLig ? { label: it.notes[mitem.n].obl ? 'Oblique with the next ✓' : 'Oblique with the next', key: 'O', disabled: mitem.n >= it.notes.length - 1, run: mOblique } : null,
         inLig ? { label: 'Cut the ligature after this note', disabled: mitem.n >= it.notes.length - 1, run: mSplit } : null,
+        { label: 'Play from here', key: 'Space', run: () => listen({ staff: st.id, i }) },
         { label: 'Delete', key: 'Del', run: mRemove },
       ].filter(Boolean), x, y);
       return;
@@ -1344,7 +1345,7 @@
         { title: `Staff ${n}` },
         { label: 'Read the notes', disabled: busy || mensural(st), title: mensural(st) ? 'Reading mensural notation isn\'t ready yet' : '', run: () => readNotes(false) },
         { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
-        { label: 'Play from this staff', disabled: !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
+        { label: 'Play from this staff', disabled: mensural(st) ? !(st.mensural || []).length : !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
         { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
         { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
         typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
@@ -1388,7 +1389,7 @@
         ctx.say(ctx.state.doc.fiveLines ? 'Staves will be found with five lines (a choirbook ruled in red, 16th–18th century). Find the staves; the GABC is saved with staff-lines: 5.' : 'Staves will be found with four lines again.');
       } },
       { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) },
-      { label: 'Play the page', disabled: !list.some(v => v.syllables.length), run: () => listen(null) },
+      { label: 'Play the page', disabled: !list.some(v => v.syllables.length || (mensural(v) && (v.mensural || []).length)), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
       { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
       '-',
@@ -1452,19 +1453,36 @@
     });
     return k < 0 ? [] : all.slice(k);
   }
-  function mark(e) {
-    playing = e ? { staff: e.staff, s: e.s, i: e.i } : null;
-    for (const r of ctx.svg.querySelectorAll('.neume.playing')) r.classList.remove('playing');
-    if (playing) { const r = ctx.svg.querySelector(`.neume[data-staff="${playing.staff}"][data-s="${playing.s}"][data-i="${playing.i}"]`); if (r) r.classList.add('playing'); }
+  // The page's mensural staves as played (CGMensural.perform: their rhythm as white notation reads it, a beat a minim),
+  // from a place (an item on one of them) or from the first
+  function mPerformance(from) {
+    const list = page().staves.filter(mensural), all = M.perform(list);
+    if (!from) return all;
+    const order = list.map(v => v.id), b = order.indexOf(from.staff);
+    const k = all.findIndex(e => { const a = order.indexOf(e.staff); return a > b || (a === b && e.i >= (from.i || 0)); });
+    return k < 0 ? [] : all.slice(k);
   }
-  // played from a place (null: the page's start); the app's player does the sounding
+  function mark(e) {
+    playing = e ? { staff: e.staff, s: e.s, i: e.i, m: 'n' in e } : null;
+    for (const r of ctx.svg.querySelectorAll('.neume.playing, .mitem.playing')) r.classList.remove('playing');
+    if (!playing) return;
+    const r = playing.m ? ctx.svg.querySelector(`.mitem[data-staff="${playing.staff}"][data-i="${playing.i}"]`)
+      : ctx.svg.querySelector(`.neume[data-staff="${playing.staff}"][data-s="${playing.s}"][data-i="${playing.i}"]`);
+    if (r) r.classList.add('playing');
+  }
+  // played from a place (null: the page's start); the app's player does the sounding. A place on a mensural staff
+  // plays the mensural staves; with none, a page whose staves are all mensural plays them, else its chant.
   function listen(from) {
-    const events = performance(from);
-    if (!events.length) { ctx.say('Nothing to play here yet: read the notes or place a chant first.', true); return; }
+    const st = from && staffOf(from.staff), list = page().staves;
+    const mens = st ? mensural(st) : list.length > 0 && list.every(mensural);
+    const events = mens ? mPerformance(from) : performance(from);
+    if (!events.length) { ctx.say(mens ? 'Nothing to play here yet: put notes on the mensural staves first.' : 'Nothing to play here yet: read the notes or place a chant first.', true); return; }
     if (ctx.play) ctx.play(events);
   }
-  // where Play starts: the selected neume, else the selected staff, else the page's start
-  const playFrom = () => item && selected ? { staff: selected, s: item.s, i: item.i } : selected && staffOf(selected) ? { staff: selected, s: 0, i: 0 } : null;
+  // where Play starts: the selected neume (or mensural item), else the selected staff, else the page's start
+  const playFrom = () => item && selected ? { staff: selected, s: item.s, i: item.i }
+    : mitem && selected ? { staff: selected, i: mitem.i }
+    : selected && staffOf(selected) ? { staff: selected, s: 0, i: 0 } : null;
 
   // The selected item's GABC written anew: a neume, a clef, a bar, anything GABC writes (several, "fg h", become
   // several, after it). Clefs and notes keep their places on the staff: GABC's letters are places, not pitches, so a

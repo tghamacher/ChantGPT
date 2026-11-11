@@ -306,6 +306,75 @@
     return cells;
   }
 
+  // ---------------------------------------------------------------- hearing it
+  // Mensural staves played in order, one voice: [{ staff, i, n, midi (null: a rest), beats }], a beat a minim. How long
+  // each note is, read as white notation reads it (a first reading, to hear by: the commoner rules, not every one):
+  //   the sign sets the tempus (O: three semibreves to the breve; C: two) and the prolation (a dot: three minims to
+  //   the semibreve); a stroke through it halves every value (diminution), a proportion (3, 3/2) scales them (3/2:
+  //   three in the time of two); the modus is imperfect (two breves to the longa), a maxima two longae.
+  //   In a perfect mensuration, a note of that level followed by a single note of the next smaller (before the next
+  //   note as long or longer) is imperfect, a third shorter; of two between, the second is altered (twice as long); a
+  //   dot just after it is a dot of perfection. A dot after a note of an imperfect level adds half its value.
+  //   A black (coloured) note loses a third of its value.
+  //   A flat or sharp just after a clef holds for every note of its letter (a signature); any other, for the next
+  //   note at its place.
+  const SEMI = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+  function perform(staves) {
+    const stream = [];                               // the notes and rests, and what bears on them, in order
+    let tempus = false, prol = false, factor = 1, clef = null, sig = {}, next = {};
+    for (const st of staves) {
+      let afterClef = false;
+      (st.mensural || []).forEach((it, i) => {
+        if (it.k === 'clef') { clef = it; sig = {}; afterClef = true; return; }
+        if (it.k === 'acc') {
+          const q = pitch(it.p, clef), a = it.a === 'b' ? -1 : it.a === '#' ? 1 : 0;
+          if (afterClef && q) sig[q.pname] = a; else next[it.p] = a;
+          return;
+        }
+        afterClef = false;
+        if (it.k === 'sign') { tempus = it.sign === 'O'; prol = !!it.dot; factor = it.stroke ? 0.5 : 1; return; }
+        if (it.k === 'num') { const [a, b] = it.text.split('/').map(Number); factor = (b || 1) / (a || 1); return; }
+        if (it.k === 'bar') { next = {}; return; }
+        if (it.k === 'dot') { if (stream.length) stream[stream.length - 1].dot = true; return; }
+        const add = (v, p, color, n, rest) => {
+          const q = rest ? null : pitch(p, clef);
+          let midi = null;
+          if (q) { midi = 12 * (q.oct + 1) + SEMI[q.pname] + (next[p] !== undefined ? next[p] : sig[q.pname] || 0); delete next[p]; }
+          stream.push({ staff: st.id, i, n, v, midi, rest: !!rest, black: color === 'black', tempus, prol, factor });
+        };
+        if (it.k === 'note') add(it.v, it.p, it.color, null, false);
+        else if (it.k === 'rest') add(it.v, it.p, null, null, true);
+        else if (it.k === 'lig') it.notes.forEach((nt, k) => add(nt.v, nt.p, it.color, k, false));
+      });
+    }
+    // each one's value in minims, as its mensuration makes it
+    const RANK = { Mx: 0, L: 1, B: 2, Sb: 3, M: 4, Sm: 5, F: 6, Sf: 7 };
+    const value = e => {
+      const sb = e.prol ? 3 : 2, b = (e.tempus ? 3 : 2) * sb;
+      return { Sf: 0.125, F: 0.25, Sm: 0.5, M: 1, Sb: sb, B: b, L: 2 * b, Mx: 4 * b }[e.v];
+    };
+    stream.forEach(e => { e.minims = value(e); });
+    // perfection, imperfection and alteration, at the breve's level (in O) and the semibreve's (with the dot)
+    for (const [big, small, perfect] of [['B', 'Sb', e => e.tempus], ['Sb', 'M', e => e.prol]]) {
+      stream.forEach((e, a) => {
+        if (e.v !== big || e.rest || !perfect(e) || e.dot) return;      // (a dot after it: a dot of perfection)
+        const between = [];
+        for (let k = a + 1; k < stream.length && RANK[stream[k].v] > RANK[big]; k++) between.push(stream[k]);
+        const unit = value({ v: small, tempus: e.tempus, prol: e.prol });
+        const count = between.reduce((t, x) => t + value(x) / unit, 0);
+        if (Math.abs(count - 1) < 1e-9) e.minims -= unit;               // (one after it: imperfect a parte post)
+        else if (between.length === 2 && between.every(x => x.v === small && !x.rest)) between[1].minims += unit;   // (altered)
+      });
+    }
+    return stream.map(e => {
+      const perfLevel = (e.v === 'B' && e.tempus) || (e.v === 'Sb' && e.prol);
+      let m = e.minims;
+      if (e.dot && !perfLevel) m *= 1.5;                               // (a dot of addition)
+      if (e.black) m *= 2 / 3;
+      return { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats: m * e.factor };
+    });
+  }
+
   // ---------------------------------------------------------------- MEI
   // A document's mensural staves as MEI (mensural, white notation): its staves one after another in one voice, a
   // system break between them, each with its facsimile zone. Pitches from the clef in force.
@@ -361,5 +430,5 @@ ${body.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign };
+  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform };
 })(typeof window !== 'undefined' ? window : globalThis);
