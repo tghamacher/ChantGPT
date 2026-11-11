@@ -134,3 +134,9 @@ epoch 12 batch 400: loss 0.116 (1414 s)
 epoch 12 batch 500: loss 0.118 (1427 s)
 epoch 12 batch 600: loss 0.120 (1441 s)
 epoch 12 batch 700: loss 0.119 (1454 s)
+epoch 12 batch 800: loss 0.118 (1467 s)
+epoch 12 batch 900: loss 0.119 (1480 s)
+epoch 12: loss 0.119; synthetic test staves: token errors 1.29%, note errors 1.45%; real: token errors -, note errors - (1481 s)
+
+$ recognizer.py export --model training/data/m0074/best.pt --mensural --onnx OUT/mensural.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0074-mensural-synth/mensural.onnx (5.8 MB)
