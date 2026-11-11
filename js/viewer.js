@@ -166,8 +166,10 @@
         return Object.assign(g, { scale: b.width / p.w });
       },
       // the page's image as the library has it, at full size (for saving): { data: Uint8Array, type }
-      async original(i) {
-        const p = pages[i], res = await fetch(p.service ? `${p.service}/full/${p.v3 ? 'max' : 'full'}/0/default.jpg` : p.image);
+      // (width: no wider than this, where the library's image service can make it so; else the page as it is)
+      async original(i, width) {
+        const p = pages[i], w = width && p.w && width < p.w ? `${Math.round(width)},` : p.v3 ? 'max' : 'full';
+        const res = await fetch(p.service ? `${p.service}/full/${w}/0/default.jpg` : p.image);
         if (!res.ok) throw new Error(`Couldn't load page ${p.label} from the library (${res.status}).`);
         return { data: new Uint8Array(await res.arrayBuffer()), type: res.headers.get('content-type') || 'image/jpeg' };
       },

@@ -85,7 +85,7 @@
   // library asks for them (429, 503) or a page fails (tried five times, then left out and said so).
   let saving = null;
   const BATCH = 100;
-  async function savePages(from, to) {
+  async function savePages(from, to, width) {
     const src = state.src;
     if (!src || !src.original) return false;
     from = Math.max(1, Math.round(from)); to = Math.min(src.count, Math.round(to));
@@ -103,7 +103,7 @@
           for (let k = 0; k < 5 && !img; k++) {
             if (run.stop) { say(`Stopped after ${saved} pages${zips ? `, in ${zips} zips` : ''}.`); return false; }
             say(`Fetching page ${i + 1} (${i - from + 2} of ${to - from + 1}) …${k ? ` (try ${k + 1})` : ''}`);
-            try { img = await src.original(i); }
+            try { img = await src.original(i, width); }
             catch (e) {
               const busy = /\((429|503)\)/.test(e.message);
               say(`${e.message} Waiting ${busy ? 60 * (k + 1) : 10 * (k + 1)} s …`);
@@ -458,14 +458,15 @@
   // (and ?iiif=<manifest> a manuscript online)
   const urls = new URLSearchParams(location.search).getAll('source'), iiif = new URLSearchParams(location.search).get('iiif');
   if (urls.length) V.fetchFiles(urls).then(open, e => say(e.message, true));
-  // (with &save=29-49, those pages saved as soon as it is open; &save=all, all of them)
+  // (with &save=29-49, those pages saved as soon as it is open; &save=all, all of them; &width=2400, smaller)
   else if (iiif) {
     $('iiifUrl').value = iiif;
-    // (&save=all: every page)
+    // (&save=all: every page; &width=2400, each no wider than that, where the library's image service can)
     const want = new URLSearchParams(location.search).get('save') || '', range = want.match(/^(\d+)-(\d+)$/);
+    const width = +new URLSearchParams(location.search).get('width') || undefined;
     openIiif(iiif).then(ok => {
       const r = range ? [+range[1], +range[2]] : want === 'all' && ok && state.src ? [1, state.src.count] : null;
-      if (ok && r) { $('saveFrom').value = r[0]; $('saveTo').value = r[1]; savePages(r[0], r[1]); }
+      if (ok && r) { $('saveFrom').value = r[0]; $('saveTo').value = r[1]; savePages(r[0], r[1], width); }
     });
   }
 })();

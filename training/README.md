@@ -236,6 +236,28 @@ bottom (L1, S1). Capitan: 511 kept (34 unlabelled, 13 with chant or a smudge, 18
 only the pages where as many staves are found as its symbols have (each staff ends with a custos): 161 staves for now;
 a finder for its broken, typeset lines would give more.
 
+## 9. Mensural notation: the Occo Codex (CMME's edition, IDEM's pages), private for now
+
+```
+python -I training/cmme.py fetch                    # CMME's files for its edition of the Occo Codex -> training/data/cmme
+python -I training/cmme.py staves                   # -> training/data/cmme/occo.jsonl (1,649 staves said, of 1,721)
+    (in the app: index.html?iiif=https://data.idemdatabase.org/IE7950914/manifest&save=all&width=2400)
+python -I training/cantus.py collect --source occo --manifest https://data.idemdatabase.org/IE7950914/manifest --by-page
+python -I training/cmme.py pair --model training/data/m0075/best.pt     # -> training/data/occo
+```
+
+CMME's edition of Brussels, KBR, IV 922 (ed. van Benthem, van Berchum, Dieleman, Dumitrescu and Wiering) keeps the
+manuscript's notation and where its staves and pages end, as the readings of a version "Occo Codex" where the edition
+differs; `cmme.py staves` writes each staff in the mensural text form (the Occo Codex's reading), checked against
+`js/mensural.js`'s rules. Its pages are IDEM's (the images KBR's, digitised by Alamire Digital Lab; public domain
+there), saved by the app in the browser (`&width=` keeps them to a size the finder needs). `pair` finds the staves on
+each page, reads them with the reader, and gives each the edition's staff it reads most like (a bag of signs to choose
+25, then the edits between them), if fewer than 60% of its signs differ and the staff belongs to an opening most of the
+page's staves are of; tested on mock pages drawn from the edition, every pair right.
+
+CMME gives no licence for its editions: until the project has been asked, what is made from it stays on the computer
+that trains (training/data, which git leaves out): no zip on training-data, no model from it in the app.
+
 ## Still to come
 
 - A second engraver for variety: Gregorio itself, and exsurge.

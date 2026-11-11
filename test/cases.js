@@ -1256,6 +1256,10 @@
         await w.CGApp.state.src.pixels(0);
         const img = asked.filter(u => u.includes('/iiif/2/'));
         bad.push(...same('images asked of the version 2 service, never as "max"', img.length > 0 && img.every(u => /\/FL1\/full\/(full|\d+,)\/0\/default\.jpg$/.test(u)), true));
+        // saving: the whole page, or (&width=) no wider than asked
+        asked.length = 0;
+        await w.CGApp.state.src.original(1); await w.CGApp.state.src.original(1, 600); await w.CGApp.state.src.original(1, 5000);
+        bad.push(...same('pages saved: whole, 600 wide, whole (wider than it is)', asked.map(u => u.replace(/^.*\/FL2\/full\//, '')), ['full/0/default.jpg', '600,/0/default.jpg', 'full/0/default.jpg']));
       } finally { w.fetch = real; }
       return bad;
     } },

@@ -14,7 +14,8 @@ queue/<id>.json on that branch:
      "keep": ["training/data/model6/best.pt"],         # files copied back with the log
      "remove": ["training/data/model3"]}               # folders straight under training/data deleted first (disk)
 
-Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect, tidy),
+Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect, tidy;
+cmme.py: fetch, staves, pair, which fetch a CMME edition from cmme.org and pair it with pages saved here),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
 the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
 app's zips from (--downloads), which it only reads; and its --manifest, an https address it only matches.
@@ -25,7 +26,8 @@ import argparse, glob, json, os, platform, re, shutil, subprocess, sys, time, zi
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'}}
+ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'},
+           'cmme.py': {'fetch', 'staves', 'pair'}}
 
 
 def git(where, *args, check=True, quiet=False):
