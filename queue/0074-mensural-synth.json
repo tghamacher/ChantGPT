@@ -1,0 +1,41 @@
+{
+ "id": "0074-mensural-synth",
+ "about": "The first reader of mensural notation (white notation): the chant reader's network, trained from nothing on 30,000 synthetic mensural staves (mensuralsynth.py, seed 11), its tokens CGMensural's text form; tested on the staves kept out; exported as models/mensural for the app (not installed yet)",
+ "data": [
+  "mens-1.zip",
+  "mens-2.zip",
+  "mens-3.zip",
+  "mens-4.zip"
+ ],
+ "steps": [
+  [
+   "recognizer.py",
+   "train",
+   "--data",
+   "training/data/mens",
+   "--epochs",
+   "12",
+   "--lr",
+   "2e-3",
+   "--batch",
+   "32",
+   "--width",
+   "192",
+   "--out",
+   "training/data/m0074"
+  ],
+  [
+   "recognizer.py",
+   "export",
+   "--model",
+   "training/data/m0074/best.pt",
+   "--mensural",
+   "--onnx",
+   "OUT/mensural.onnx"
+  ]
+ ],
+ "keep": [
+  "training/data/m0074/best.pt"
+ ],
+ "remove": []
+}
