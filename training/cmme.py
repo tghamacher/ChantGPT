@@ -14,6 +14,12 @@ this computer (training/data/, which git leaves out): no zip of it on training-d
         # the staves found on the pages (fivestaves.py), each read by the model and given the edition's staff it reads
         # most like (if near enough, and of the opening most of the page's staves are of) -> training/data/occo/
 
+Other sources CMME collates, the same way (their staff breaks are among its readings too: The Other Josquin, project
+14; Berchem, project 9), by the name CMME gives the source's reading, e.g. Kassel 4° Ms. Mus. 24's partbooks:
+    python -I training/cmme.py fetch --projects 14,9
+    python -I training/cmme.py staves --source "KasL 24" --name kasl24
+    python -I training/cmme.py pair --name kasl24 --scans training/data/scans/kasl24-1,training/data/scans/kasl24-2 --model …
+
 The pages: open https://data.idemdatabase.org/IE7950914/manifest in the app with &save=all&width=2400 (the app saves
 them in zips in Downloads, a page a second), then: cantus.py collect --source occo --manifest <that address>.
 
@@ -54,10 +60,13 @@ def get(url, tries=4):
 
 
 def fetch(o):
-    """The project's compositions, and each one's files (score data): those edited from the Occo Codex."""
+    """The projects' compositions, and each one's files (score data)."""
     os.makedirs(DIR, exist_ok=True)
-    page = get(f'{SITE}/database/projects/{PROJECT}').decode('utf-8', 'replace')
-    pieces = sorted(set(re.findall(r'/database/pieces/(\d+)', page)), key=int)
+    pieces = set()
+    for project in o.projects.split(','):
+        page = get(f'{SITE}/database/projects/{int(project)}').decode('utf-8', 'replace'); time.sleep(o.wait)
+        pieces |= set(re.findall(r'/database/pieces/(\d+)', page))
+    pieces = sorted(pieces, key=int)
     files = []
     for p in pieces:
         html = get(f'{SITE}/database/pieces/{p}').decode('utf-8', 'replace'); time.sleep(o.wait)
@@ -219,15 +228,16 @@ def voice_staves(events, version):
     return out
 
 
-def edition(path):
+def edition(path, source=OCCO):
     """A file's staves: [{piece, voice, page, line, text, tokens}] (text None where the staff can't be said)."""
     root = ET.parse(path).getroot()
     gen = kid(root, 'GeneralData')
     versions = gen.findall(NS + 'VariantVersion')
-    # (the Occo Codex's reading: a version taken from it that isn't the edition's own; else the edition's)
-    occo = next((txt(v, 'ID') for v in versions if kid(v, 'Default') is None and kid(v, 'Source') is not None
-                 and txt(kid(v, 'Source'), 'Name') == OCCO), None)
-    default_is_occo = any(kid(v, 'Default') is not None and kid(v, 'Source') is not None and txt(kid(v, 'Source'), 'Name') == OCCO for v in versions)
+    # (the source's reading: a version taken from it that isn't the edition's own (named by its source, or the
+    # version's ID the source's name, as The Other Josquin names them); else the edition's, if edited from it)
+    named = lambda v: txt(v, 'ID') == source or (kid(v, 'Source') is not None and txt(kid(v, 'Source'), 'Name') == source)
+    occo = next((txt(v, 'ID') for v in versions if kid(v, 'Default') is None and named(v)), None)
+    default_is_occo = any(kid(v, 'Default') is not None and named(v) for v in versions)
     if not occo and not default_is_occo: return []
     version = occo or 'DEFAULT'
     title = f'{txt(gen, "Composer", "")}: {txt(gen, "Title", "")} {txt(gen, "Section", "")}'.strip()
@@ -254,12 +264,12 @@ def staves(o):
     files = sorted(f for f in os.listdir(DIR) if f.endswith('.cmme.xml'))
     for f in files:
         if not parses(os.path.join(DIR, f)): print(f'{f}: not whole, left out'); continue
-        rows += edition(os.path.join(DIR, f))
-    with open(os.path.join(DIR, 'occo.jsonl'), 'w', encoding='utf-8') as fh:
+        rows += edition(os.path.join(DIR, f), o.source)
+    with open(os.path.join(DIR, o.name + '.jsonl'), 'w', encoding='utf-8') as fh:
         for r in rows: fh.write(json.dumps(r) + '\n')
     said = [r for r in rows if r['text']]
     print(f'{len(rows)} staves in {len(files)} files, {len(said)} of them said in the text form '
-          f'({sum(len(r["tokens"]) for r in said)} signs) -> {os.path.join(DIR, "occo.jsonl")}')
+          f'({sum(len(r["tokens"]) for r in said)} signs) of {o.source} -> {os.path.join(DIR, o.name + ".jsonl")}')
 
 
 # ---------------------------------------------------------------- pairing with the pages
@@ -289,7 +299,7 @@ def pair(o):
     import fivestaves as F
     F.N, F.DARK, F.NEAR, F.EVEN = 5, True, 0.3, 0.4           # (ruled by hand)
     m, s = recognizer.restore(o.model)
-    rows = [json.loads(l) for l in open(os.path.join(DIR, 'occo.jsonl'), encoding='utf-8')]
+    rows = [json.loads(l) for l in open(os.path.join(DIR, o.name + '.jsonl'), encoding='utf-8')]
     cands = [r for r in rows if r['text']]
     group = lambda r: (r['file'], r['page'])                 # (an opening of a composition's section)
     vocab = {t: j for j, t in enumerate(sorted({t for r in cands for t in signs(r['tokens'])}))}
@@ -298,11 +308,12 @@ def pair(o):
         for t in signs(r['tokens']): bags[i, vocab[t]] += 1
     sizes = bags.sum(1)
     os.makedirs(o.out, exist_ok=True)
-    pages = sorted(f for f in os.listdir(o.scans) if re.search(r'\.(jpe?g|png)$', f, re.I))
+    dirs = o.scans.split(',')                                # (several: a set of partbooks, each its own folder)
+    pages = [(d, f) for d in dirs for f in sorted(os.listdir(d)) if re.search(r'\.(jpe?g|png)$', f, re.I)]
     found = []                                               # (page, k, file, reading)
-    for pg in pages:
-        name = re.sub(r'\W', '', os.path.splitext(pg)[0])
-        try: gray, st = F.page(os.path.join(o.scans, pg))
+    for d, pg in pages:
+        name = re.sub(r'\W', '', (os.path.basename(os.path.normpath(d)) + '_' if len(dirs) > 1 else '') + os.path.splitext(pg)[0])
+        try: gray, st = F.page(os.path.join(d, pg))
         except Exception as e: print(f'{pg}: {e}'); continue
         arrays = [F.straighten5(gray, lines).astype(np.uint8) for lines, g in st]
         for k, a in enumerate(arrays):
@@ -354,10 +365,15 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['fetch', 'staves', 'pair'])
     a.add_argument('--wait', type=float, default=2.0, help='fetch: seconds between requests')
-    a.add_argument('--scans', default=os.path.join(HERE, 'data', 'scans', 'occo'), help='pair: the pages (cantus.py collect)')
+    a.add_argument('--projects', default=str(PROJECT), help='fetch: CMME\'s editorial projects (4 Occo, 9 Berchem, 14 The Other Josquin)')
+    a.add_argument('--source', default=OCCO, help='staves: the source, as CMME names its reading (BrusBR IV.922, KasL 24, RosU 49, …)')
+    a.add_argument('--name', default='occo', help='staves, pair: what its staves are called (training/data/cmme/<name>.jsonl)')
+    a.add_argument('--scans', help='pair: the pages (cantus.py collect), a folder or several, comma between (training/data/scans/<name>)')
     a.add_argument('--model', help='pair: the mensural reader\'s checkpoint')
-    a.add_argument('--out', default=os.path.join(HERE, 'data', 'occo'))
+    a.add_argument('--out', help='pair: training/data/<name>')
     a.add_argument('--worth', type=float, default=0.6, help='pair: kept if fewer than this share of signs differ')
     a.add_argument('--top', type=int, default=25, help='pair: edition staves compared closely with each staff found')
     o = a.parse_args()
+    o.scans = o.scans or os.path.join(HERE, 'data', 'scans', o.name)
+    o.out = o.out or os.path.join(HERE, 'data', o.name)
     {'fetch': fetch, 'staves': staves, 'pair': pair}[o.what](o)
