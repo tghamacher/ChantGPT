@@ -384,6 +384,7 @@
         if (st.box !== undefined && !(box4(st.box) && inside(st.box))) bad.push(`${name}: its box is not on the page.`);
         if (st.begins !== undefined && typeof st.begins !== 'boolean') bad.push(`${name}: "begins" is true or false.`);
         if (st.notation !== undefined && !NOTATIONS.includes(st.notation)) bad.push(`${name}: its "notation" is ${NOTATIONS.join(' or ')}.`);
+        if (st.mensural !== undefined && global.CGMensural) bad.push(...global.CGMensural.check(st.mensural).map(b => `${name}: ${b}`));
         if (st.beginsAt !== undefined && !Number.isFinite(st.beginsAt)) bad.push(`${name}: "beginsAt" is a number (an x on the page).`);
         if (st.lines !== undefined) {
           const pointsOk = l => Array.isArray(l) && l.length >= 4 && l.length % 2 === 0 && l.every(Number.isFinite) && l.every((v, i) => i & 1 || i < 2 || v > l[i - 2]);

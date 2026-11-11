@@ -9,7 +9,7 @@
 // Everything is drawn in the page's own units (the overlay's viewBox is the page), so it lines up at any zoom.
 (function (global) {
   'use strict';
-  const S = global.CGStaves, N = global.CGNeumes, C = global.CGChant, K = global.CGChecks, X = global.CGExport, R = global.CGRecognizer;
+  const S = global.CGStaves, N = global.CGNeumes, M = global.CGMensural, C = global.CGChant, K = global.CGChecks, X = global.CGExport, R = global.CGRecognizer;
   const SVG = 'http://www.w3.org/2000/svg';
   const HANDLE = 6, MIN_DRAG = 6;   // in screen pixels
 
@@ -122,6 +122,35 @@
     commit(before);
     draw();
     ctx.say(now === 'mensural' ? 'This staff is mensural: the chant tools leave it alone.' : 'This staff is chant again.');
+  }
+
+  // the selected mensural staff given what is typed (CGMensural's text form), its items spread along it
+  function putMensural(text) {
+    const st = staffOf(selected);
+    if (!st || !mensural(st)) { ctx.say('Select a mensural staff first (mark it so from its right-click menu, or set the document to Mensural).', true); return false; }
+    let items;
+    try { items = M.parse(text); } catch (e) { ctx.say(e.message, true); return false; }
+    const before = snapshot();
+    // (spread: each item's x where the layout puts it, stretched (up to three times) to fill the staff; never squeezed,
+    // so that what runs past the staff's end shows)
+    const L = M.layout({ lines: st.lines, mensural: items }), g = M.geometry(st.lines);
+    const xs = L.boxes.map(b => b[0]), end = L.boxes.length ? L.boxes[L.boxes.length - 1][0] + L.boxes[L.boxes.length - 1][2] : g.left;
+    const k = items.length > 1 ? Math.max(1, Math.min(3, (g.right - g.left - g.s) / Math.max(1, end - g.left))) : 1;
+    items.forEach((it, i) => { it.x = Math.round((g.left + (xs[i] - g.left) * k) * 10) / 10; });
+    st.mensural = items;
+    commit(before);
+    draw();
+    const bad = M.check(items);
+    const over = end > g.right + g.s;
+    ctx.say(`${items.length} ${items.length === 1 ? 'item' : 'items'} on the staff.` + (over ? ' They run past its end: is it all one staff?' : '') + (bad.length ? ` To look at: ${bad.slice(0, 3).join(' ')}` : ''), !!bad.length);
+    return true;
+  }
+  // the document's mensural staves as MEI
+  function mensuralMei() {
+    const doc = ctx.state.doc;
+    if (!C.staves(doc).some(st => mensural(st) && (st.mensural || []).length)) { ctx.say('No mensural staff has anything on it yet.', true); return null; }
+    const base = (doc.source.name || 'mensural').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
+    return { name: `${base} (mensural).mei`, text: M.mei(doc) };
   }
 
   // ---------------------------------------------------------------- finding lines in the ink
@@ -1485,6 +1514,15 @@
         el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
         el('title', {}, m).textContent = 'A chant begins here, part way along the staff';
       }
+      // a mensural staff's contents: Serenissima's glyphs, and the shapes drawn for ligatures and signs
+      if (mensural(st) && (st.mensural || []).length) {
+        const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g), angle = S.tilt(l);
+        for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : ''), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
+        for (const v of L.glyphs) {
+          const t = el('text', { x: v.x, y: v.y, 'font-size': v.size, class: 'mglyph' + (v.text ? ' num' : ''), transform: `rotate(${angle.toFixed(3)} ${v.x} ${v.y})` }, mg);
+          t.textContent = v.ch;
+        }
+      }
       // the chant: its glyphs where they are, along the staff (tilted with it); its words under it
       if (st.syllables.some(syl => syl.items.some(it => it.box))) {
         const L = N.layout(st), ch = el('g', { class: 'chant' }, g);
@@ -1588,6 +1626,13 @@
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
     }
+    const mt = document.getElementById('mensText');
+    if (mt) {
+      const on = !!(st && mensural(st));
+      document.getElementById('putMens').disabled = !on;
+      if (on && document.activeElement !== mt) mt.value = st.mensural ? M.text(st.mensural) : '';
+      document.getElementById('mensGroup').open = document.getElementById('mensGroup').open || on;
+    }
     document.getElementById('undo').disabled = !history.undo.length;
     document.getElementById('redo').disabled = !history.redo.length;
     bookInfo();
@@ -1687,7 +1732,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, setNotation, toggleNotation, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

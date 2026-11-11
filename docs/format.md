@@ -80,6 +80,12 @@ is how training data and tests will be made.
   The app gives all four lines points at the same xs. The app keeps a page's staves in reading order, top to bottom.
 - `notation` (optional): `"chant"` or `"mensural"`, for a staff written otherwise than the document's `notation` (a
   book with both). Absent, the staff is in the document's.
+- `mensural` (a mensural staff, optional): what is on it, a list of items in order along the staff, each with its
+  kind `k` and its `x` on the page: clefs, mensuration signs, proportions, notes and rests (value `v`: `Mx` `L` `B`
+  `Sb` `M` `Sm` `F` `Sf`; position `p`, steps up from the bottom line), ligatures (their `notes`, each `obl` where it
+  and the next are one oblique), dots, accidentals, custodes and bars; `color: "black"` for coloration. `js/mensural.js`
+  describes each, and a text form for them (`C4 O B5 Sb6 [B5 L2] [B5~B3]* rB4 .5 |`), and saves them as MEI (mensural,
+  white notation).
 - `begins`: `true` if a chant begins on this staff (in the Solesmes books, the staff set in for the chant's initial),
   `false` if a person said it doesn't; absent if no one has said (optional). Placing GABC without line breaks on a
   staff spreads it over the staves down to the next one where a chant begins.
@@ -143,5 +149,4 @@ the F below middle C. `CGChant.withClefs(staff, clefBefore)` lists a staff's ite
 ## Later
 
 - MEI-Neumes and Volpiano export.
-- Mensural notation: the staves are marked already (`notation`); their contents, items in a mensural encoding instead
-  of GABC (version 2 of the format, or a sibling), saved as MEI mensural.
+- Mensural notation: editing items on the page (dragging, values from a menu), playback, and a recognizer.

@@ -1,6 +1,8 @@
 [hidden] { display: none !important; }
 /* Greciliae, the chant font of Gregorio (Matthew Spencer, the Gregorio Project), SIL OFL 1.1: see fonts/OFL-greciliae.txt */
 @font-face { font-family: "greciliae"; src: url("../fonts/greciliae.ttf") format("truetype"); font-display: block; }
+/* Serenissima, Elam Rotem's early-music font (SMuFL), used with his permission: mensural notes, rests, clefs */
+@font-face { font-family: "serenissima"; src: url("../fonts/Serenissima.otf") format("opentype"), url("../fonts/Serenissima.ttf") format("truetype"); font-display: block; }
 
 :root {
   color-scheme: light;
@@ -150,6 +152,11 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-overlay .chant { opacity: var(--notation, .7); pointer-events: none; }
 .cg-overlay .glyph { font-family: "greciliae"; fill: var(--notation-ink); }
 .cg-overlay .glyph.doubt { fill: var(--doubt); }
+/* mensural notation: Serenissima's glyphs, and the shapes drawn for ligatures, signs, dots and bars */
+.cg-overlay .mglyph { font-family: "serenissima"; fill: var(--notation-ink); }
+.cg-overlay .mglyph.num { font-family: Georgia, serif; font-weight: bold; }
+.cg-overlay .mshape { stroke: var(--notation-ink); fill: none; stroke-linecap: square; }
+.cg-overlay .mshape.fill { fill: var(--notation-ink); stroke: none; }
 .cg-overlay .glyph.ok, .cg-overlay .syl.ok { fill: var(--checked); }
 .cg-overlay .glyph.custos { fill: var(--notation-ink); opacity: 0.35; }
 .cg-overlay .glyph.on { fill: var(--sel); }

@@ -2,6 +2,7 @@
 'use strict';
 require('../js/chant.js');
 require('../js/staves.js');
+require('../js/mensural.js');
 require('../js/greciliae.js');
 require('../js/neumes.js');
 require('../js/checks.js');

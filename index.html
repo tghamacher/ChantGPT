@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.22.0">
+<link rel="stylesheet" href="css/site.css?v=0.23.0">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.22.0">0.22.0</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.23.0">0.23.0</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -134,6 +134,16 @@
       </div>
     </details>
 
+    <details class="cg-card" id="mensGroup" hidden>
+      <summary>Mensural</summary>
+      <textarea id="mensText" rows="4" spellcheck="false" placeholder="The selected mensural staff, typed in:&#10;C4 O B5 Sb6 M5 [B5 L2] [B5~B3]* rB4 .5 b6 +5 |"></textarea>
+      <div class="cg-row">
+        <button type="button" id="putMens" title="Put what is typed on the selected mensural staff (replacing what it has), spread along it">Put on staff</button>
+        <button type="button" id="downloadMensMei" title="The document's mensural staves as MEI (mensural, white notation), each tied to its place on the page">MEI</button>
+      </div>
+      <p class="cg-hint">Values Mx L B Sb M Sm F Sf, then the position: steps up from the bottom line (0; the top line is 8). [ ] a ligature, ~ an oblique, * black. Clefs C4 F3 G2; signs O C R, with . and |.</p>
+    </details>
+
     <details class="cg-card" id="checkGroup" hidden>
       <summary>Checks <span class="cg-count" id="checkCount"></span></summary>
       <ol class="cg-checks" id="checkList"></ol>
@@ -211,16 +221,17 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.22.0"></script>
-<script src="js/staves.js?v=0.22.0"></script>
-<script src="js/greciliae.js?v=0.22.0"></script>
-<script src="js/neumes.js?v=0.22.0"></script>
-<script src="js/checks.js?v=0.22.0"></script>
-<script src="js/export.js?v=0.22.0"></script>
-<script src="js/viewer.js?v=0.22.0"></script>
-<script src="js/recognizer.js?v=0.22.0"></script>
-<script src="js/playback.js?v=0.22.0"></script>
-<script src="js/editor.js?v=0.22.0"></script>
-<script src="js/app.js?v=0.22.0"></script>
+<script src="js/chant.js?v=0.23.0"></script>
+<script src="js/staves.js?v=0.23.0"></script>
+<script src="js/mensural.js?v=0.23.0"></script>
+<script src="js/greciliae.js?v=0.23.0"></script>
+<script src="js/neumes.js?v=0.23.0"></script>
+<script src="js/checks.js?v=0.23.0"></script>
+<script src="js/export.js?v=0.23.0"></script>
+<script src="js/viewer.js?v=0.23.0"></script>
+<script src="js/recognizer.js?v=0.23.0"></script>
+<script src="js/playback.js?v=0.23.0"></script>
+<script src="js/editor.js?v=0.23.0"></script>
+<script src="js/app.js?v=0.23.0"></script>
 </body>
 </html>
