@@ -6,11 +6,12 @@
   let ac = null, out = null, run = null;
 
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
-  function voice(m, t, d) {
+  // (level: quieter when several voices sound together)
+  function voice(m, t, d, level = 0.22) {
     const g = ac.createGain();
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.22, t + 0.02);
-    g.gain.setValueAtTime(0.22, t + Math.max(0.03, d - 0.06));
+    g.gain.linearRampToValueAtTime(level, t + 0.02);
+    g.gain.setValueAtTime(level, t + Math.max(0.03, d - 0.06));
     g.gain.linearRampToValueAtTime(0, t + d);
     g.connect(out);
     for (const [type, mul, level] of [['triangle', 1, 1], ['sine', 2, 0.25]]) {
@@ -20,24 +21,30 @@
     }
   }
 
-  // events: [{ midi (null: a rest), beats }]; bpm: beats a minute
+  // events: [{ midi (null: a rest), beats }], one after another; or, when they have at (beats from the start, in
+  // order), each at its time, so that several voices sound together. bpm: beats a minute. onStep(event, k) as each
+  // begins.
   function play(events, bpm, onStep, onEnd) {
     stop();
     if (!events.length) { if (onEnd) onEnd(); return; }
     ac = ac || new (global.AudioContext || global.webkitAudioContext)();
     if (ac.state === 'suspended') ac.resume();
     out = ac.createGain(); out.gain.value = 1; out.connect(ac.destination);
-    const beat = 60 / bpm, t0 = ac.currentTime + 0.08, at = [];
-    let t = t0;
-    for (const e of events) { at.push(t); if (e.midi !== null) voice(e.midi, t, e.beats * beat * 0.97); t += e.beats * beat; }
-    const end = t;
+    const beat = 60 / bpm, t0 = ac.currentTime + 0.08, at = [], timed = events.every(e => Number.isFinite(e.at));
+    let t = t0, end = t0;
+    for (const e of events) {
+      if (timed) t = t0 + e.at * beat;
+      at.push(t);
+      if (e.midi !== null) voice(e.midi, t, e.beats * beat * 0.97, timed ? 0.12 : 0.22);
+      end = Math.max(end, t + e.beats * beat);
+      if (!timed) t += e.beats * beat;
+    }
     run = { events, at, end, k: -1, onStep, onEnd, paused: false, frame: 0 };
     const tick = () => {
       if (!run) return;
       const now = ac.currentTime;
-      let k = run.k;
-      while (k + 1 < at.length && at[k + 1] <= now) k++;
-      if (k !== run.k) { run.k = k; if (k >= 0 && run.onStep) run.onStep(events[k], k); }
+      // (every event begun since the last frame, in order: in several voices, more than one at a time)
+      while (run.k + 1 < at.length && at[run.k + 1] <= now) { run.k++; if (run.onStep) run.onStep(events[run.k], run.k); }
       if (now >= end) { const f = run.onEnd; run = null; if (f) f(); return; }
       run.frame = requestAnimationFrame(tick);
     };

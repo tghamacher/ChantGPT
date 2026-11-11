@@ -366,69 +366,105 @@
         else if (between.length === 2 && between.every(x => x.v === small && !x.rest)) between[1].minims += unit;   // (altered)
       });
     }
+    let t = 0;
     return stream.map(e => {
       const perfLevel = (e.v === 'B' && e.tempus) || (e.v === 'Sb' && e.prol);
       let m = e.minims;
       if (e.dot && !perfLevel) m *= 1.5;                               // (a dot of addition)
       if (e.black) m *= 2 / 3;
-      return { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats: m * e.factor };
+      const out = { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats: m * e.factor, at: t };
+      t += out.beats;
+      return out;
     });
   }
 
+  // A document's mensural staves by voice (each staff's voice, as the staff menu sets it; '' for those without), each
+  // voice's staves in the document's order: [{ voice, staves }], in the order the voices first appear.
+  function voices(doc) {
+    const C = global.CGChant, by = new Map();
+    for (const pg of doc.pages || []) for (const st of pg.staves || []) {
+      if (C.notationOf(doc, st) !== 'mensural') continue;
+      const v = st.voice || '';
+      if (!by.has(v)) by.set(v, []);
+      by.get(v).push(st);
+    }
+    return [...by].map(([voice, staves]) => ({ voice, staves }));
+  }
+  // The voices played together: every voice's notes, each at its time from the start (at, in minims) and with its
+  // voice, in the order they sound; and each voice's length (minims). The staves without a voice are left out.
+  function together(doc) {
+    const parts = voices(doc).filter(v => v.voice), events = [], lengths = [];
+    for (const { voice, staves } of parts) {
+      const evs = perform(staves);
+      for (const e of evs) events.push(Object.assign(e, { voice }));
+      lengths.push({ voice, minims: evs.length ? evs[evs.length - 1].at + evs[evs.length - 1].beats : 0 });
+    }
+    events.sort((a, b) => a.at - b.at);
+    return { events, lengths };
+  }
+
   // ---------------------------------------------------------------- MEI
-  // A document's mensural staves as MEI (mensural, white notation): its staves one after another in one voice, a
-  // system break between them, each with its facsimile zone. Pitches from the clef in force.
+  // A document's mensural staves as MEI (mensural, white notation): a part for each voice (staves without one, a part
+  // of their own), its staves one after another, a system break between them, each with its facsimile zone. Pitches
+  // from the clef in force.
   function mei(doc, opts = {}) {
-    const C = global.CGChant, esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-    const list = [];
-    (doc.pages || []).forEach((pg, pi) => (pg.staves || []).forEach(st => { if (C.notationOf(doc, st) === 'mensural') list.push({ st, pi }); }));
-    const surfaces = new Map(), body = [];
+    const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    const pageOf = new Map();
+    (doc.pages || []).forEach((pg, pi) => (pg.staves || []).forEach(st => pageOf.set(st, pi)));
+    const surfaces = new Map(), parts = [];
     let clef = null, n = 0;
     const id = () => `m${++n}`;
     const at = (p, attrs = '') => { const q = pitch(p, clef); return q ? ` pname="${q.pname}" oct="${q.oct}"${attrs}` : ` loc="${p}"${attrs}`; };
-    list.forEach(({ st, pi }) => {
-      // (each staff begins with a system break, naming its zone on the page, where it has a box)
-      let facs = '';
-      if (st.box) {
-        const z = `z-${st.id}`;
-        if (!surfaces.has(pi)) surfaces.set(pi, []);
-        surfaces.get(pi).push(`<zone xml:id="${esc(z)}" ulx="${Math.round(st.box[0])}" uly="${Math.round(st.box[1])}" lrx="${Math.round(st.box[0] + st.box[2])}" lry="${Math.round(st.box[1] + st.box[3])}"/>`);
-        facs = ` facs="#${esc(z)}"`;
-      }
-      body.push(`<sb${facs}/>`);
-      for (const it of st.mensural || []) {
-        switch (it.k) {
-          case 'clef': clef = it; body.push(`<clef xml:id="${id()}" shape="${it.shape}" line="${it.line}"/>`); break;
-          case 'sign': body.push(`<mensur xml:id="${id()}" sign="${it.sign === 'R' ? 'C' : it.sign}"${it.sign === 'R' ? ' orient="reversed"' : ''}${it.dot ? ' dot="true"' : ''}${it.stroke ? ' slash="1"' : ''}/>`); break;
-          case 'num': { const [a, b] = it.text.split('/'); body.push(`<proport xml:id="${id()}" num="${a}"${b ? ` numbase="${b}"` : ''}/>`); break; }
-          case 'note': body.push(`<note xml:id="${id()}" dur="${MEI_DUR[it.v]}"${at(it.p)}${it.color === 'black' ? ' colored="true"' : ''}/>`); break;
-          case 'rest': body.push(`<rest xml:id="${id()}" dur="${MEI_DUR[it.v]}" loc="${it.p}"${it.v === 'L' ? ` num="${it.perf ? 3 : 2}"` : ''}/>`); break;
-          case 'lig': {
-            const lid = id();
-            const notes = it.notes.map((nt, i) => `<note xml:id="${id()}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${it.color === 'black' ? ' colored="true"' : ''}/>`);
-            body.push(`<ligature xml:id="${lid}" form="${it.notes.every(nt => !nt.obl) ? 'recta' : 'obliqua'}">${notes.join('')}</ligature>`);
-            break;
-          }
-          case 'dot': body.push(`<dot xml:id="${id()}" loc="${it.p}"/>`); break;
-          case 'acc': body.push(`<accid xml:id="${id()}" accid="${{ b: 'f', n: 'n', '#': 's' }[it.a]}" loc="${it.p}"/>`); break;
-          case 'custos': body.push(`<custos xml:id="${id()}"${at(it.p)}/>`); break;
-          case 'bar': body.push(`<barLine xml:id="${id()}"${it.form === 'double' ? ' form="dbl"' : it.form === 'end' ? ' form="end"' : ''}/>`); break;
+    voices(doc).forEach(({ voice, staves }, vi) => {
+      const body = [];
+      clef = null;
+      staves.map(st => ({ st, pi: pageOf.get(st) })).forEach(({ st, pi }) => {
+        // (each staff begins with a system break, naming its zone on the page, where it has a box)
+        let facs = '';
+        if (st.box) {
+          const z = `z-${st.id}`;
+          if (!surfaces.has(pi)) surfaces.set(pi, []);
+          surfaces.get(pi).push(`<zone xml:id="${esc(z)}" ulx="${Math.round(st.box[0])}" uly="${Math.round(st.box[1])}" lrx="${Math.round(st.box[0] + st.box[2])}" lry="${Math.round(st.box[1] + st.box[3])}"/>`);
+          facs = ` facs="#${esc(z)}"`;
         }
-      }
+        body.push(`<sb${facs}/>`);
+        for (const it of st.mensural || []) {
+          switch (it.k) {
+            case 'clef': clef = it; body.push(`<clef xml:id="${id()}" shape="${it.shape}" line="${it.line}"/>`); break;
+            case 'sign': body.push(`<mensur xml:id="${id()}" sign="${it.sign === 'R' ? 'C' : it.sign}"${it.sign === 'R' ? ' orient="reversed"' : ''}${it.dot ? ' dot="true"' : ''}${it.stroke ? ' slash="1"' : ''}/>`); break;
+            case 'num': { const [a, b] = it.text.split('/'); body.push(`<proport xml:id="${id()}" num="${a}"${b ? ` numbase="${b}"` : ''}/>`); break; }
+            case 'note': body.push(`<note xml:id="${id()}" dur="${MEI_DUR[it.v]}"${at(it.p)}${it.color === 'black' ? ' colored="true"' : ''}/>`); break;
+            case 'rest': body.push(`<rest xml:id="${id()}" dur="${MEI_DUR[it.v]}" loc="${it.p}"${it.v === 'L' ? ` num="${it.perf ? 3 : 2}"` : ''}/>`); break;
+            case 'lig': {
+              const lid = id();
+              const notes = it.notes.map((nt, i) => `<note xml:id="${id()}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${it.color === 'black' ? ' colored="true"' : ''}/>`);
+              body.push(`<ligature xml:id="${lid}" form="${it.notes.every(nt => !nt.obl) ? 'recta' : 'obliqua'}">${notes.join('')}</ligature>`);
+              break;
+            }
+            case 'dot': body.push(`<dot xml:id="${id()}" loc="${it.p}"/>`); break;
+            case 'acc': body.push(`<accid xml:id="${id()}" accid="${{ b: 'f', n: 'n', '#': 's' }[it.a]}" loc="${it.p}"/>`); break;
+            case 'custos': body.push(`<custos xml:id="${id()}"${at(it.p)}/>`); break;
+            case 'bar': body.push(`<barLine xml:id="${id()}"${it.form === 'double' ? ' form="dbl"' : it.form === 'end' ? ' form="end"' : ''}/>`); break;
+          }
+        }
+      });
+      parts.push(`<part${voice ? ` label="${esc(voice)}"` : ''}>
+<scoreDef><staffGrp><staffDef n="${vi + 1}" lines="5" notationtype="mensural.white"${voice ? ` label="${esc(voice)}"` : ''}/></staffGrp></scoreDef>
+<section><staff n="${vi + 1}"><layer n="1">
+${body.join('\n')}
+</layer></staff></section>
+</part>`);
     });
     const title = esc(opts.title || (doc.source && doc.source.name) || 'ChantGPT');
     return `<?xml version="1.0" encoding="UTF-8"?>
 <mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.0">
 <meiHead><fileDesc><titleStmt><title>${title}</title></titleStmt><pubStmt><p>Made with ChantGPT</p></pubStmt></fileDesc></meiHead>
-<music>${surfaces.size ? `<facsimile>${[...surfaces].map(([pi, zs]) => `<surface n="${pi + 1}">${zs.join('')}</surface>`).join('')}</facsimile>` : ''}<body><mdiv><parts><part>
-<scoreDef><staffGrp><staffDef n="1" lines="5" notationtype="mensural.white"/></staffGrp></scoreDef>
-<section><staff n="1"><layer n="1">
-${body.join('\n')}
-</layer></staff></section>
-</part></parts></mdiv></body></music>
+<music>${surfaces.size ? `<facsimile>${[...surfaces].sort((a, b) => a[0] - b[0]).map(([pi, zs]) => `<surface n="${pi + 1}">${zs.join('')}</surface>`).join('')}</facsimile>` : ''}<body><mdiv><parts>
+${parts.join('\n')}
+</parts></mdiv></body></music>
 </mei>
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform };
+  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together };
 })(typeof window !== 'undefined' ? window : globalThis);

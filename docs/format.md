@@ -80,6 +80,8 @@ is how training data and tests will be made.
   The app gives all four lines points at the same xs. The app keeps a page's staves in reading order, top to bottom.
 - `notation` (optional): `"chant"` or `"mensural"`, for a staff written otherwise than the document's `notation` (a
   book with both). Absent, the staff is in the document's.
+- `voice` (a mensural staff, optional): the voice it belongs to, a name (`"Cantus"`, `"Tenor"` …). A voice's staves,
+  in the document's order, are its part; the voices are played together, and saved as parts in MEI.
 - `mensural` (a mensural staff, optional): what is on it, a list of items in order along the staff, each with its
   kind `k` and its `x` on the page: clefs, mensuration signs, proportions, notes and rests (value `v`: `Mx` `L` `B`
   `Sb` `M` `Sm` `F` `Sf`; position `p`, steps up from the bottom line), ligatures (their `notes`, each `obl` where it

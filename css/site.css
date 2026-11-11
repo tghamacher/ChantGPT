@@ -182,6 +182,7 @@ body.dropping .cg-stage { outline: 3px dashed var(--accent); outline-offset: -10
 .cg-play input[type=range] { width: 80px; }
 .cg-overlay .neume.on { fill: var(--sel-fill); stroke: var(--sel); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .mitem { fill: transparent; cursor: grab; }
+.cg-overlay .mvoice { fill: var(--mark); font-family: Georgia, serif; font-style: italic; pointer-events: none; }
 .cg-overlay .mitem.playing { fill: rgba(255, 170, 0, 0.35); stroke: #e69500; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .mitem.on, .cg-overlay .mcell { fill: var(--sel-fill); stroke: var(--sel); stroke-width: 1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 .cg-overlay .mcell { fill: none; stroke-dasharray: none; pointer-events: none; }

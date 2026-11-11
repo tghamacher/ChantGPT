@@ -223,6 +223,29 @@
         same('ligatures: their notes in order', beats('c4 C [B5 L2] [Sb3 Sb5]'), [4, 8, 2, 2]),
         same('a signature flat, a natural for one note', play('c4 b5 C Sb5 n5 Sb5 Sb5 rSb4').map(e => e.midi), [58, 59, 58, null]));
     } },
+    { name: 'mensural: voices played together, their lengths, and a part each in MEI', unit: () => {
+      const M = global.CGMensural, C = global.CGChant, bad = [];
+      const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000], [1000, 1000]] });
+      doc.notation = 'mensural';
+      const lines = y => [0, 1, 2, 3, 4].map(k => [100, y + 10 * k, 900, y + 10 * k]);
+      const staff = (pg, id, voice, t, y) => doc.pages[pg].staves.push(Object.assign({ id, box: [90, y - 20, 820, 80], lines: lines(y), mensural: M.parse(t) }, voice ? { voice } : {}));
+      staff(0, 'p1s1', 'Cantus', 'c1 C Sb2 Sb3', 100); staff(0, 'p1s2', 'Tenor', 'c4 C B4', 300);
+      staff(1, 'p2s1', 'Cantus', 'c1 C B2', 100); staff(1, 'p2s2', 'Tenor', 'c4 C Sb4 M5', 300); staff(1, 'p2s3', '', 'c4 C L4', 500);
+      bad.push(...same('voices, in order, their staves through the document', M.voices(doc).map(v => [v.voice, v.staves.map(s => s.id)]),
+        [['Cantus', ['p1s1', 'p2s1']], ['Tenor', ['p1s2', 'p2s2']], ['', ['p2s3']]]));
+      const { events, lengths } = M.together(doc);
+      bad.push(...same('every note at its time, by voice', events.map(e => [e.voice, e.at, e.beats]),
+        [['Cantus', 0, 2], ['Tenor', 0, 4], ['Cantus', 2, 2], ['Cantus', 4, 4], ['Tenor', 4, 2], ['Tenor', 6, 1]]));
+      bad.push(...same('lengths (minims)', lengths, [{ voice: 'Cantus', minims: 8 }, { voice: 'Tenor', minims: 7 }]));
+      const x = M.mei(doc);
+      for (const want of ['<part label="Cantus">', '<staffDef n="2" lines="5" notationtype="mensural.white" label="Tenor"/>', '<part>\n<scoreDef><staffGrp><staffDef n="3"'])
+        if (!x.includes(want)) bad.push(`MEI lacks ${want}`);
+      bad.push(...same('one surface a page', (x.match(/<surface /g) || []).length, 2));
+      bad.push(...same('checks', C.check(doc), []));
+      doc.pages[0].staves[0].voice = '';
+      bad.push(...same('an empty voice is complained of', C.check(doc).some(b => /"voice"/.test(b)), true));
+      return bad;
+    } },
     { name: 'document: chant or mensural', unit: () => {
       const doc = C().newDocument({ name: 'b.pdf', type: 'pdf', sizes: [[612, 792]] });
       const st = { id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [50, 100 + 9 * k, 550, 100 + 9 * k]), syllables: [] };
@@ -523,6 +546,31 @@
         bad.push(...same('played from the minima', got && got.map(e => [e.i, e.n, Math.round(e.beats * 100) / 100]), [[4, null, 1], [5, 0, 6], [5, 1, 24], [6, 0, 6], [6, 1, 6]]));
         bad.push(...same('the note sounding is marked', !!svg.querySelector('.mitem.playing[data-i="4"]'), true));
       } finally { P.play = real; E.mark(null); }
+      return bad;
+    } },
+    { name: 'app: mensural voices played together, each marked as it sounds; one alone', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page2.png');
+      const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      const staff = (id, y, t) => ({ id, box: [20, y - 20, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, y + 12 * k, 390, y + 12 * k]), syllables: [], mensural: M.parse(t) });
+      doc.pages[0].staves.push(staff('p1s1', 60, 'c1 C Sb2 Sb3 B2'), staff('p1s2', 200, 'c4 C B4 Sb5'));
+      E.selected = 'p1s1';
+      E.setVoice(doc.pages[0].staves[0], 'Cantus'); E.setVoice(doc.pages[0].staves[1], 'Tenor');
+      bad.push(...same('the voices named on the page', [...w.document.querySelectorAll('#overlay .mvoice')].map(t => t.textContent), ['Cantus', 'Tenor']));
+      const P = w.CGPlay, real = P.play;
+      let got = null;
+      P.play = (events, bpm, onStep) => { got = events; onStep(events[0], 0); onStep(events[1], 1); };
+      try {
+        E.selectMensural('p1s1', 2); E.listen(E.playFrom());
+        bad.push(...same('every voice, each note at its time', got && got.map(e => [e.voice, e.i, e.at, e.beats]),
+          [['Cantus', 2, 0, 2], ['Tenor', 2, 0, 4], ['Cantus', 3, 2, 2], ['Cantus', 4, 4, 4], ['Tenor', 3, 4, 2]]));
+        bad.push(...same('a note marked in each voice', w.document.querySelectorAll('#overlay .mitem.playing').length, 2));
+        bad.push(...same('their lengths said', /Cantus 4, Tenor 3 semibreves: Tenor is 1 short/.test(w.document.getElementById('status').textContent), true));
+        E.mark(null);
+        E.listen({ staff: 'p1s2', i: 0 }, true);
+        bad.push(...same('one voice alone, in sequence', got && got.map(e => [e.voice, e.i, e.at, e.beats]), [[undefined, 2, undefined, 4], [undefined, 3, undefined, 2]]));
+      } finally { P.play = real; E.mark(null); }
+      bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
       return bad;
     } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {

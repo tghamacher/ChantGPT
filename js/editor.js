@@ -1278,7 +1278,8 @@
         it.k === 'note' || inLig ? { label: 'Join to the next in a ligature', key: 'J', disabled: !st.mensural[i + 1], run: mJoin } : null,
         inLig ? { label: it.notes[mitem.n].obl ? 'Oblique with the next ✓' : 'Oblique with the next', key: 'O', disabled: mitem.n >= it.notes.length - 1, run: mOblique } : null,
         inLig ? { label: 'Cut the ligature after this note', disabled: mitem.n >= it.notes.length - 1, run: mSplit } : null,
-        { label: 'Play from here', key: 'Space', run: () => listen({ staff: st.id, i }) },
+        { label: st.voice ? 'Play from here, every voice' : 'Play from here', key: 'Space', run: () => listen({ staff: st.id, i }) },
+        st.voice ? { label: `Play the ${st.voice} alone from here`, run: () => listen({ staff: st.id, i }, true) } : null,
         { label: 'Delete', key: 'Del', run: mRemove },
       ].filter(Boolean), x, y);
       return;
@@ -1352,7 +1353,17 @@
           : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
         '-',
         { label: mensural(st) ? 'Mensural staff ✓' : 'Mensural staff', title: `Mark this staff as ${mensural(st) ? 'chant' : 'mensural notation'} (the document is ${C.notationOf(ctx.state.doc)})`, run: toggleNotation },
-        // (on a mensural staff: a new item where the pointer is, at its height)
+        // (on a mensural staff: which voice it is; played alone; a new item where the pointer is, at its height)
+        ...(mensural(st) ? (() => {
+          const names = [...new Set(['Cantus', 'Altus', 'Tenor', 'Bassus', ...M.voices(ctx.state.doc).map(v => v.voice).filter(Boolean)])];
+          return [
+            { title: `Voice${st.voice ? `: ${st.voice}` : ''}` },
+            { shapes: names.map(v => ({ label: v, on: st.voice === v, title: `This staff is the ${v}`, run: () => setVoice(st, v) }))
+              .concat([{ label: 'Other…', title: 'Another name (Quintus, Sextus, Superius …)', run: () => { const v = global.prompt ? global.prompt('The voice\'s name', st.voice || '') : null; if (v !== null) setVoice(st, v); } },
+                { label: 'None', on: !st.voice, run: () => setVoice(st, '') }]) },
+            { label: 'Play this voice alone', disabled: !(st.mensural || []).length, run: () => listen({ staff: st.id, i: 0 }, true) },
+          ];
+        })() : []),
         ...(mensural(st) ? (() => {
           const here = mPos(st, p[0], p[1]), x0 = Math.round(p[0] * 10) / 10, add = it => () => mInsert(Object.assign({ x: x0 }, it));
           return [
@@ -1453,31 +1464,82 @@
     });
     return k < 0 ? [] : all.slice(k);
   }
-  // The page's mensural staves as played (CGMensural.perform: their rhythm as white notation reads it, a beat a minim),
-  // from a place (an item on one of them) or from the first
-  function mPerformance(from) {
-    const list = page().staves.filter(mensural), all = M.perform(list);
+  // Mensural staves as played (CGMensural.perform: their rhythm as white notation reads it, a beat a minim), one voice:
+  // the staff's voice through the document, or (a staff with none) the page's mensural staves without one; from a
+  // place (an item) or the first. In sequence (no times).
+  function mPerformance(from, voice) {
+    const list = voice ? (M.voices(ctx.state.doc).find(v => v.voice === voice) || { staves: [] }).staves : page().staves.filter(v => mensural(v) && !v.voice);
+    const all = M.perform(list).map(e => { delete e.at; return e; });
     if (!from) return all;
     const order = list.map(v => v.id), b = order.indexOf(from.staff);
     const k = all.findIndex(e => { const a = order.indexOf(e.staff); return a > b || (a === b && e.i >= (from.i || 0)); });
     return k < 0 ? [] : all.slice(k);
   }
+  // Every voice together, from the moment the place (in its voice) is reached: [events at their times], and what
+  // the voices' lengths say (if they differ, one is likely misread).
+  function mTogether(from, voice) {
+    const { events, lengths } = M.together(ctx.state.doc);
+    let t0 = 0;
+    if (from) {
+      const e = events.find(v => v.voice === voice && v.staff === from.staff && v.i >= (from.i || 0)) || events.find(v => v.voice === voice && v.staff === from.staff);
+      if (e) t0 = e.at;
+    }
+    const out = events.filter(e => e.at >= t0 - 1e-9).map(e => Object.assign({}, e, { at: e.at - t0 }));
+    const sb = m => Math.round(m / 2 * 100) / 100, most = Math.max(...lengths.map(v => v.minims));
+    const short = lengths.filter(v => most - v.minims > 1e-6);
+    const note = `${lengths.map(v => `${v.voice} ${sb(v.minims)}`).join(', ')} semibreves` +
+      (short.length ? `: ${short.map(v => `${v.voice} is ${sb(most - v.minims)} short`).join(', ')}. A note or rest misread, or a rule this reading doesn't know.` : ', all alike.');
+    return { events: out, note, even: !short.length };
+  }
+  // what is marked as it sounds: one item (or neume), or one in each voice
+  let sounding = new Map();
   function mark(e) {
-    playing = e ? { staff: e.staff, s: e.s, i: e.i, m: 'n' in e } : null;
-    for (const r of ctx.svg.querySelectorAll('.neume.playing, .mitem.playing')) r.classList.remove('playing');
-    if (!playing) return;
-    const r = playing.m ? ctx.svg.querySelector(`.mitem[data-staff="${playing.staff}"][data-i="${playing.i}"]`)
-      : ctx.svg.querySelector(`.neume[data-staff="${playing.staff}"][data-s="${playing.s}"][data-i="${playing.i}"]`);
+    if (!e) {
+      playing = null; sounding = new Map();
+      for (const r of ctx.svg.querySelectorAll('.neume.playing, .mitem.playing')) r.classList.remove('playing');
+      return;
+    }
+    const key = e.voice || '', was = sounding.get(key);
+    if (was) { const r = ctx.svg.querySelector(was); if (r) r.classList.remove('playing'); }
+    if (!e.voice) for (const r of ctx.svg.querySelectorAll('.neume.playing, .mitem.playing')) r.classList.remove('playing');
+    playing = { staff: e.staff, s: e.s, i: e.i };
+    const sel = 'n' in e ? `.mitem[data-staff="${e.staff}"][data-i="${e.i}"]` : `.neume[data-staff="${e.staff}"][data-s="${e.s}"][data-i="${e.i}"]`;
+    sounding.set(key, sel);
+    const r = ctx.svg.querySelector(sel);
     if (r) r.classList.add('playing');
   }
   // played from a place (null: the page's start); the app's player does the sounding. A place on a mensural staff
-  // plays the mensural staves; with none, a page whose staves are all mensural plays them, else its chant.
-  function listen(from) {
+  // plays mensural notation: with voices named, every voice together (alone: its own only); with none, the page's
+  // mensural staves. With no place, a page whose staves are all mensural plays them, else its chant.
+  function listen(from, alone = false) {
     const st = from && staffOf(from.staff), list = page().staves;
     const mens = st ? mensural(st) : list.length > 0 && list.every(mensural);
-    const events = mens ? mPerformance(from) : performance(from);
-    if (!events.length) { ctx.say(mens ? 'Nothing to play here yet: put notes on the mensural staves first.' : 'Nothing to play here yet: read the notes or place a chant first.', true); return; }
+    if (!mens) {
+      const events = performance(from);
+      if (!events.length) { ctx.say('Nothing to play here yet: read the notes or place a chant first.', true); return; }
+      if (ctx.play) ctx.play(events);
+      return;
+    }
+    const start = st || list.find(v => (v.mensural || []).length), voice = start && start.voice;
+    const named = M.voices(ctx.state.doc).filter(v => v.voice).length;
+    if (voice && !alone && named > 1) {
+      const r = mTogether(from || (start && { staff: start.id, i: 0 }), voice);
+      if (!r.events.length) { ctx.say('Nothing to play here yet: put notes on the mensural staves first.', true); return; }
+      if (ctx.play) ctx.play(r.events);
+      ctx.say(`Playing ${named} voices together. ${r.note}`, !r.even);
+      return;
+    }
+    const events = mPerformance(from, voice);
+    if (!events.length) { ctx.say('Nothing to play here yet: put notes on the mensural staves first.', true); return; }
     if (ctx.play) ctx.play(events);
+  }
+  // a mensural staff's voice (a name: Cantus, Altus, Tenor, Bassus …; empty: none)
+  function setVoice(st, name) {
+    const before = snapshot(), v = String(name || '').trim().slice(0, 40);
+    if (v) st.voice = v; else delete st.voice;
+    commit(before);
+    draw();
+    ctx.say(v ? `This staff is the ${v}. Staves of the same voice are played one after another, every voice together.` : 'This staff belongs to no voice now.');
   }
   // where Play starts: the selected neume (or mensural item), else the selected staff, else the page's start
   const playFrom = () => item && selected ? { staff: selected, s: item.s, i: item.i }
@@ -1786,6 +1848,11 @@
         el('polygon', { points: `${x},${y0} ${x + 2.4 * s},${y0 + 1.2 * s} ${x},${y0 + 2.4 * s}` }, m);
         el('title', {}, m).textContent = 'A chant begins here, part way along the staff';
       }
+      // a mensural staff's voice, named above its start
+      if (mensural(st) && st.voice) {
+        const t = el('text', { x: l[0][0], y: l[0][1] - 1.2 * s, 'font-size': 2.2 * s, class: 'mvoice' }, g);
+        t.textContent = st.voice;
+      }
       // a mensural staff's contents: Serenissima's glyphs, and the shapes drawn for ligatures and signs
       if (mensural(st) && (st.mensural || []).length) {
         const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g);
@@ -1898,7 +1965,7 @@
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
       document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
-        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : 'A mensural staff: click an item to select it, drag it, or right-click for more; right-click the staff to add one. Reading mensural notation is still to come.')
+        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: click an item to select it, drag it, or right-click for more; right-click the staff to add one. Reading mensural notation is still to come.`)
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
@@ -2009,7 +2076,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },
