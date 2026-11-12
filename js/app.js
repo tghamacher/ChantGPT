@@ -62,14 +62,13 @@
     pixelCache = null;
     state.doc = C.newDocument({ name: src.name, type: src.type, sizes: src.sizes, url: src.url });
     if (state.book) state.doc.book = bookOf(state.book);
-    $('notation').value = 'chant';
     state.page = 0;
     state.dirty = false;
     E.reset();
     say(`${src.name}: ${src.count} ${src.count === 1 ? 'page' : 'pages'}. Find the staves to begin (or right-click the page).`);
     $('pageCount').textContent = src.count;
     $('pageNo').max = src.count;
-    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'mensGroup', 'checkGroup', 'exportGroup', 'docGroup']) $(id).hidden = false;
+    for (const id of ['pageGroup', 'staffGroup', 'chantGroup', 'mensGroup', 'checkGroup', 'exportGroup', 'docGroup', 'modeGroup']) $(id).hidden = false;
     $('iiifForm').hidden = true;
     $('inspector').hidden = false;
     document.querySelector('.cg-main').classList.add('open');
@@ -139,7 +138,6 @@
     }
     state.doc = doc;
     state.dirty = false;
-    $('notation').value = C.notationOf(doc);
     E.reset();
     const n = C.staves(doc).length;
     say(`${file.name}: ${n} ${n === 1 ? 'staff' : 'staves'} on ${doc.pages.filter(p => p.staves.length).length} pages.` +
@@ -251,6 +249,7 @@
   // items: [{ label, key, run, disabled }], a heading { title }, a rule '-', or a row of shapes { shapes: [{ label, on, run }] };
   // shown at the pointer, kept on the screen; a click outside, Esc, or a choice closes it
   function menu(items, x, y) {
+    items = items.filter(Boolean);                            // (what isn't offered here: left out)
     const m = $('menu');
     m.replaceChildren();
     const button = (it, parent) => {
@@ -301,7 +300,7 @@
   try { const v = localStorage.getItem('cg-model'); if (v) $('readModel').value = v; } catch (e) { }
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
   // chant or mensural: the document's (a staff of the other kind is marked on the staff, from its menu)
-  $('notation').addEventListener('change', () => { if (state.doc) E.setNotation($('notation').value); });
+  for (const b of document.querySelectorAll('#modeGroup [data-notation]')) b.addEventListener('click', () => { if (state.doc) E.setNotation(b.dataset.notation); });
   E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });

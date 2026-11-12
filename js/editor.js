@@ -1496,14 +1496,16 @@
       ctx.menu([
         { title: `Staff ${n}` },
         { label: 'Read the notes', disabled: busy, title: mensural(st) ? 'Read by the mensural reader (models/mensural): what is on the staff is replaced' : '', run: () => readNotes(false) },
-        { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
+        mensural(st) ? null : { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
         { label: 'Play from this staff', disabled: mensural(st) ? !(st.mensural || []).length : !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
-        { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
-        { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
-        typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
-          : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
+        ...(mensural(st) ? [] : [
+          { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
+          { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
+          typeof st.beginsAt === 'number' ? { label: 'Take off the mid-line chant start', run: () => beginsAt(null) }
+            : { label: 'A chant begins here, at this point', title: 'Part way along the staff, where you clicked (before an initial, say)', run: () => beginsAt(p[0]) },
+        ]),
         '-',
-        { label: mensural(st) ? 'Mensural staff ✓' : 'Mensural staff', title: `Mark this staff as ${mensural(st) ? 'chant' : 'mensural notation'} (the document is ${C.notationOf(ctx.state.doc)})`, run: toggleNotation },
+        { label: mensural(st) ? (C.notationOf(ctx.state.doc) === 'mensural' ? 'Make it a chant staff' : 'Make it a chant staff again') : (C.notationOf(ctx.state.doc) === 'chant' ? 'Make it a mensural staff' : 'Make it a mensural staff again'), title: `Mark this staff as ${mensural(st) ? 'chant' : 'mensural notation'} (the document is ${C.notationOf(ctx.state.doc)})`, run: toggleNotation },
         // (on a mensural staff: which voice it is; played alone; a new item where the pointer is, at its height)
         ...(mensural(st) ? (() => {
           const names = [...new Set(['Cantus', 'Altus', 'Tenor', 'Bassus', ...M.voices(ctx.state.doc).map(v => v.voice).filter(Boolean)])];
@@ -1529,28 +1531,29 @@
         { label: 'Find its lines again', key: 'F', run: refit },
         { label: 'Space the lines evenly', key: 'E', run: evenly },
         { label: 'Straighten', disabled: !bent, run: straighten },
-        { label: 'Take its chant off', disabled: !st.syllables.length, run: clearChant },
+        mensural(st) ? { label: 'Take its notes off', disabled: !(st.mensural || []).length, run: () => { const b = snapshot(); st.mensural = []; commit(b); draw(); } }
+          : { label: 'Take its chant off', disabled: !st.syllables.length, run: clearChant },
         { label: 'Delete the staff', key: 'Del', run: remove },
       ], x, y);
       return;
     }
     // the page
     if (selected) { selected = null; letGo(); draw(); }
-    const list = page().staves;
+    const list = page().staves, chantDoc = C.notationOf(ctx.state.doc) === 'chant';
     ctx.menu([
-      { title: `Page ${ctx.state.page + 1}` },
+      { title: `Page ${ctx.state.page + 1}${chantDoc ? '' : ' (mensural)'}` },
       { label: 'Find the staves', disabled: busy, run: findHere },
       // (a book ruled evenly all down the page, the words on every fifth line: its staves aren't inked to be found)
-      { label: `${ctx.state.doc.ruledEvenly ? '✓ ' : ''}Ruled evenly, words on every fifth line`, disabled: busy, run: () => {
+      chantDoc && { label: `${ctx.state.doc.ruledEvenly ? '✓ ' : ''}Ruled evenly, words on every fifth line`, disabled: busy, run: () => {
         ctx.state.doc.ruledEvenly = !ctx.state.doc.ruledEvenly;
         ctx.say(ctx.state.doc.ruledEvenly ? 'Staves will be found as the four ruled lines above each row of words (a book ruled evenly all down the page, like Paris lat. 12044). Delete any found wrongly, then Find the staves.' : 'Staves will be found by their own lines again.');
       } },
       // (a book whose staves have five lines, as the later choirbooks do: found, drawn and read with five)
-      { label: `${ctx.state.doc.fiveLines ? '✓ ' : ''}Five-line staves`, disabled: busy, run: () => {
+      chantDoc && { label: `${ctx.state.doc.fiveLines ? '✓ ' : ''}Five-line staves`, disabled: busy, run: () => {
         ctx.state.doc.fiveLines = !ctx.state.doc.fiveLines;
         ctx.say(ctx.state.doc.fiveLines ? 'Staves will be found with five lines (a choirbook ruled in red, 16th–18th century). Find the staves; the GABC is saved with staff-lines: 5.' : 'Staves will be found with four lines again.');
       } },
-      { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) },
+      chantDoc || list.some(v => !mensural(v)) ? { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) } : null,
       { label: 'Play the page', disabled: !list.some(v => v.syllables.length || (mensural(v) && (v.mensural || []).length)), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
       { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
@@ -2091,6 +2094,26 @@
     if (!fast) info();
   }
 
+  // The notation the tools work in, shown (the toolbar's switch, the rail's chip, the accent's colour) and only its
+  // tools offered: the chant card, words and chant starts for chant; the mensural card for mensural. A staff marked as
+  // the other notation brings its own tools while it is selected (or while the page has such staves).
+  function modeShown(list, st) {
+    const doc = C.notationOf(ctx.state.doc), set = (id, on) => { const e = document.getElementById(id); if (e) e.hidden = !on; };
+    document.body.dataset.mode = doc;
+    for (const b of document.querySelectorAll('#modeGroup [data-notation]')) b.setAttribute('aria-pressed', String(b.dataset.notation === doc));
+    const chip = document.getElementById('modeChip');
+    if (chip) chip.textContent = doc === 'mensural' ? 'Mensural' : 'Chant';
+    const kind = document.getElementById('staffKind');
+    if (kind) kind.textContent = st ? (mensural(st) ? 'mensural staff' : 'chant staff') : '';
+    const chantHere = (st ? !mensural(st) : doc === 'chant') || list.some(v => !mensural(v)) && doc === 'chant';
+    const mensHere = st ? mensural(st) : doc === 'mensural' || list.some(v => mensural(v));
+    set('chantGroup', doc === 'chant' || chantHere);
+    set('mensGroup', doc === 'mensural' || mensHere);
+    const chantStaves = list.some(v => !mensural(v));
+    set('readText', doc === 'chant' || chantStaves);
+    set('acceptStaff', doc === 'chant' || chantStaves);
+    set('beginsRow', !st || !mensural(st));
+  }
   // the side panel: how many staves, and the selected one's measurements
   function info() {
     const out = document.getElementById('staffInfo');
@@ -2104,6 +2127,7 @@
         (bends ? `, bent at ${bends} ${bends === 1 ? 'point' : 'points'}.` : '.');
     }
     out.textContent = text;
+    modeShown(list, st);
     checkList();
     for (const id of ['refit', 'evenly', 'remove']) document.getElementById(id).disabled = !st;
     document.getElementById('findStaves').disabled = busy;
