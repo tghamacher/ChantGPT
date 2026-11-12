@@ -105,7 +105,8 @@
   // after him give them) read backwards. For each note, which stems it takes; and what can't be written.
   //   The first note: a breve has propriety (descending: a stem down on its left; ascending: none); a longa has none
   //     (descending: no stem; ascending: a stem down on its right); two semibreves begin with a stem up on the left
-  //     (opposite propriety).
+  //     (opposite propriety). Begun with an oblique, rising or falling, the first note is a longa without a stem and a
+  //     breve with one down on its left (Dumitrescu's CMME reference sheet, 2004; Duffin's notation manual, rule 5).
   //   The last note: a longa has perfection (descending: written square; ascending: a stem down on its right); a breve
   //     has none (descending: written oblique; ascending: square, no stem).
   //   Between: breves; a maxima, twice as long, anywhere.
@@ -119,8 +120,8 @@
     if (f.v === 'Sb') {
       stems[0].push('upLeft');
       if (notes[1].v !== 'Sb') bad.push('A ligature that begins with a semibreve has two (cum opposita proprietate).');
-    } else if (f.v === 'B') { if (!up(0)) stems[0].push('downLeft'); }
-    else if (f.v === 'L') { if (up(0)) stems[0].push('downRight'); }
+    } else if (f.v === 'B') { if (!up(0) || f.obl) stems[0].push('downLeft'); }       // (an oblique start without a stem is a longa)
+    else if (f.v === 'L') { if (up(0) && !f.obl) stems[0].push('downRight'); }
     const l = notes[n - 1], k = n - 2, desc = notes[n - 1].p < notes[n - 2].p;
     if (!(n === 2 && f.v === 'Sb')) {
       if (l.v === 'L') {

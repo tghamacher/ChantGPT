@@ -179,6 +179,16 @@
       bad.push(...same('B B L ascending', st('[B2 B3 L5]'), [[], [], ['downRight']]));
       bad.push(...same('c.o.p.', st('[Sb6 Sb5 B7]'), [['upLeft'], [], []]));
       bad.push(...same('oblique', st('[B5~B3]'), [['downLeft'], []]));
+      // (the examples of Dumitrescu's CMME reference sheet, 2004)
+      bad.push(...same('ref: recta descending, L L', st('[L5 L3]'), [[], []]));
+      bad.push(...same('ref: obliqua, L B', st('[L5~B3]'), [[], []]));
+      bad.push(...same('ref: recta ascending, B B', st('[B3 B5]'), [[], []]));
+      bad.push(...same('ref: S S B B L', st('[Sb8~Sb4 B9 B10 L8]'), [['upLeft'], [], [], [], []]));
+      bad.push(...same('ref: B B B B, a rising oblique begun with a stem', st('[B2~B5 B3 B6]'), [['downLeft'], [], [], []]));
+      bad.push(...same('ref: L B L B B', st('[L4 B6 L4 B3~B1]'), [['downRight'], [], ['downRight'], [], []]));
+      bad.push(...same('ref: L B L', st('[L6~B2 L6]'), [[], [], ['downRight']]));
+      bad.push(...same('ref: B B Mx B B', st('[B2 B5 Mx4 B4~B2]'), [[], [], [], [], []]));
+      bad.push(...same('a rising oblique begun without a stem: a longa', st('[L2~B5 B3]'), [[], [], []]));
       const errs = M.check(M.parse('[B5 B3] [M3 B4] [Sb3 B4] [B5~B5] [B3~B5]'));
       for (const re of [/descending last breve is written oblique/, /minima can't be/, /semibreve has two/, /different pitch/, /ascending last breve is written square/])
         if (!errs.some(e => re.test(e))) bad.push(`No complaint matching ${re}: ${errs.join(' | ')}`);

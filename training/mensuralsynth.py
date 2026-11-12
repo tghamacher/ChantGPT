@@ -71,8 +71,8 @@ def lig_stems(notes):
     up = lambda i: notes[i + 1]['p'] > notes[i]['p']
     f = notes[0]
     if f['v'] == 'Sb': stems[0].append('upLeft')
-    elif f['v'] == 'B' and not up(0): stems[0].append('downLeft')
-    elif f['v'] == 'L' and up(0): stems[0].append('downRight')
+    elif f['v'] == 'B' and (not up(0) or f.get('obl')): stems[0].append('downLeft')   # (an oblique start without a stem is a longa)
+    elif f['v'] == 'L' and up(0) and not f.get('obl'): stems[0].append('downRight')
     last, desc = notes[-1], notes[-1]['p'] < notes[-2]['p']
     if not (n == 2 and f['v'] == 'Sb') and last['v'] == 'L' and not desc: stems[-1].append('downRight')
     for i in range(1, n - 1):
