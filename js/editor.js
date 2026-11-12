@@ -49,12 +49,15 @@
   // ---------------------------------------------------------------- changes and undo
   // A change is recorded as the page's staves and the chants before and after it.
   // (A change over several pages is recorded as every page's staves: page is then null.)
-  const snapshot = () => ({ page: ctx.state.page, staves: JSON.stringify(page().staves), chants: JSON.stringify(ctx.state.doc.chants) });
-  const snapshotAll = () => ({ page: null, staves: JSON.stringify(ctx.state.doc.pages.map(p => p.staves)), chants: JSON.stringify(ctx.state.doc.chants) });
+  // (a page's staves and its voice areas, as JSON: what undo puts back)
+  const pageState = p => JSON.stringify(p.regions && p.regions.length ? { staves: p.staves, regions: p.regions } : p.staves);
+  const putPage = (p, json) => { const v = JSON.parse(json); if (Array.isArray(v)) { p.staves = v; delete p.regions; } else { p.staves = v.staves; p.regions = v.regions; } };
+  const snapshot = () => ({ page: ctx.state.page, staves: pageState(page()), chants: JSON.stringify(ctx.state.doc.chants) });
+  const snapshotAll = () => ({ page: null, staves: JSON.stringify(ctx.state.doc.pages.map(pageState)), chants: JSON.stringify(ctx.state.doc.chants) });
   function restore(snap) {
     const doc = ctx.state.doc;
-    if (snap.page === null) JSON.parse(snap.staves).forEach((list, k) => { doc.pages[k].staves = list; });
-    else doc.pages[snap.page].staves = JSON.parse(snap.staves);
+    if (snap.page === null) JSON.parse(snap.staves).forEach((json, k) => { if (typeof json === 'string') putPage(doc.pages[k], json); else doc.pages[k].staves = json; });
+    else putPage(doc.pages[snap.page], snap.staves);
     doc.chants = JSON.parse(snap.chants);
   }
   function commit(before) {
@@ -491,6 +494,7 @@
     const st = { id: newId(), lines: lines || S.even(rect, fiveLines() ? 5 : 4), syllables: [] };
     page().staves.push(st);
     settle(st);
+    voiceFromArea(st);
     selected = st.id;
     commit(before);
     ctx.say(!lines ? 'Couldn\'t find four lines there, so they are spread evenly over the box. Drag them into place.'
@@ -524,6 +528,7 @@
       const st = { id: newId(p), lines, syllables: [] };
       p.staves.push(st);
       settle(st, p);
+      voiceFromArea(st, p);
     }
   }
   // on this page, saying what was found
@@ -1410,6 +1415,7 @@
     e.preventDefault();
     const t = e.target.closest('[data-act]'), act = t ? t.dataset.act : 'page', p = at(e), x = e.clientX, y = e.clientY;
     if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
+    if (act === 'area') { const r = (page().regions || [])[+t.dataset.k]; if (r) areaMenu(r, x, y, false); return; }
     if (act === 'mitem') {
       selected = t.dataset.staff; item = null; word = null;
       const st = staffOf(selected), i = +t.dataset.i, it = st.mensural[i];
@@ -1545,11 +1551,15 @@
       ], x, y);
       return;
     }
-    // the page
+    // the page (in a voice area: the area's menu)
+    const hereArea = areaAt(page(), p[0], p[1]);
     if (selected) { selected = null; letGo(); draw(); }
     const list = page().staves, chantDoc = C.notationOf(ctx.state.doc) === 'chant';
     ctx.menu([
+      ...(act === 'page' && hereArea ? [...areaItems(hereArea, false), '-'] : []),
       { title: `Page ${ctx.state.page + 1}${chantDoc ? '' : ' (mensural)'}` },
+      chantDoc ? null : { label: 'Mark a voice area: a box', title: 'Drag a box round where one voice is on the page, then say which', run: () => setAreaTool('box') },
+      chantDoc ? null : { label: 'Mark a voice area: freeform', title: 'Draw round where one voice is on the page, then say which', run: () => setAreaTool('free') },
       { label: 'Find the staves', disabled: busy, run: findHere },
       // (a book ruled evenly all down the page, the words on every fifth line: its staves aren't inked to be found)
       chantDoc && { label: `${ctx.state.doc.ruledEvenly ? '✓ ' : ''}Ruled evenly, words on every fifth line`, disabled: busy, run: () => {
@@ -1760,6 +1770,122 @@
     draw();
   }
 
+  // ---------------------------------------------------------------- voice areas (mensural)
+  // Where each voice is on a page (a choirbook's Cantus top left, Tenor below it, Altus and Bassus on the facing page;
+  // a partbook's page all one voice): areas marked by hand, a box or drawn freehand round it, each named for a voice
+  // (page.regions: [{ id, voice, points: [[x, y] …] }], page units). A staff whose middle is in an area is that voice:
+  // the staves found or added in it are named so. Marked on one page, the areas can be copied to the pages after (a
+  // book laid out alike on every opening), so finding the staves on every page names their voices too.
+  let areaTool = null;                                      // 'box' or 'free' while marking an area
+  const VOICE_NAMES = ['Cantus', 'Altus', 'Tenor', 'Bassus', 'Quintus', 'Sextus'];
+  function inside(pts, x, y) {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  }
+  const middleOf = st => [st.box[0] + st.box[2] / 2, st.box[1] + st.box[3] / 2];
+  const areaAt = (pg, x, y) => (pg.regions || []).slice().reverse().find(r => inside(r.points, x, y)) || null;
+  function voiceFromArea(st, pg = page()) {
+    if (C.notationOf(ctx.state.doc, st) !== 'mensural' || !st.box) return;
+    const r = areaAt(pg, ...middleOf(st));
+    if (r && r.voice) st.voice = r.voice;
+  }
+  function setAreaTool(kind) {
+    areaTool = areaTool === kind ? null : kind;
+    for (const [id, k] of [['voiceArea', 'box'], ['voiceFree', 'free']]) { const b = document.getElementById(id); if (b) b.setAttribute('aria-pressed', String(areaTool === k)); }
+    ctx.say(!areaTool ? 'Done marking voice areas.' : areaTool === 'box'
+      ? 'Drag a box round where one voice is on the page (all its staves), then say which voice it is. Esc when done.'
+      : 'Draw round where one voice is on the page (all its staves), then say which voice it is. Esc when done.');
+    draw();
+  }
+  // a new area: kept at once (unnamed), its voice asked for where it was drawn
+  function newArea(points, x, y) {
+    const before = snapshot(), pg = page();
+    const r = { id: `a${Date.now().toString(36)}`, voice: '', points: points.map(q => [Math.round(q[0] * 10) / 10, Math.round(q[1] * 10) / 10]) };
+    (pg.regions = pg.regions || []).push(r);
+    commit(before);
+    draw();
+    areaMenu(r, x, y, true);
+  }
+  function nameArea(r, v) {
+    const before = snapshot(), pg = page();
+    r.voice = String(v || '').trim().slice(0, 40);
+    let named = 0;
+    for (const st of pg.staves) if (mensural(st) && inside(r.points, ...middleOf(st))) { if (r.voice) st.voice = r.voice; else delete st.voice; named++; }
+    commit(before);
+    draw();
+    return named;
+  }
+  // the staves in an area found (the page's, those already marked left as they are) and named for its voice
+  async function findInArea(r) {
+    if (busy) return;
+    busy = true;
+    const pg = ctx.state.page;
+    ctx.say(`Finding the staves${r.voice ? ` of the ${r.voice}` : ''} …`);
+    try {
+      const found = await findOn(pg, () => ctx.state.page !== pg);
+      if (found) {
+        const mid = lines => { const xs = lines.flatMap(S.xsOf), ys = lines.flatMap(l => l.filter((v, i) => i & 1)); return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]; };
+        const mine = found.filter(lines => inside(r.points, ...mid(lines)));
+        const before = snapshot();
+        addFound(pg, mine);
+        commit(before);
+        draw();
+        const all = page().staves.filter(st => inside(r.points, ...middleOf(st))).length;
+        ctx.say(mine.length ? `${mine.length} ${mine.length === 1 ? 'staff' : 'staves'} found${r.voice ? ` for the ${r.voice}` : ''} (${all} in the area). Drag a box round any it missed.`
+          : all ? `No more staves found in the area (${all} there).` : 'No staves found in the area: drag a box round each to add it.');
+      }
+    } catch (e) { ctx.say(`Couldn't read the page: ${e.message || e}`, true); }
+    busy = false;
+    info();
+  }
+  // the page's areas copied to the pages after it (every one, or every other: the same side of each opening) that
+  // have none, fitted to each page's size
+  function copyAreas(every) {
+    const doc = ctx.state.doc, from = page(), list = from.regions || [];
+    if (!list.length) return;
+    const before = snapshotAll();
+    let n = 0;
+    for (let i = ctx.state.page + every; i < doc.pages.length; i += every) {
+      const pg = doc.pages[i];
+      if ((pg.regions || []).length) continue;
+      const sx = pg.size[0] / from.size[0], sy = pg.size[1] / from.size[1];
+      pg.regions = list.map((r, k) => ({ id: `${r.id}p${pg.n}`, voice: r.voice, points: r.points.map(([x, y]) => [Math.round(x * sx * 10) / 10, Math.round(y * sy * 10) / 10]) }));
+      for (const st of pg.staves) voiceFromArea(st, pg);
+      n++;
+    }
+    commit(before);
+    draw();
+    ctx.say(n ? `The areas copied to ${n} ${n === 1 ? 'page' : 'pages'}${every === 2 ? ' (every other page: the same side of each opening)' : ''}. Find the staves on all pages (⇊) and each is named for its voice; move an area if a page is laid out otherwise.`
+      : 'The pages after this one have areas of their own already.');
+  }
+  function removeArea(r) {
+    const before = snapshot(), pg = page();
+    pg.regions = (pg.regions || []).filter(v => v !== r);
+    if (!pg.regions.length) delete pg.regions;
+    commit(before);
+    draw();
+  }
+  function areaMenu(r, x, y, fresh) { ctx.menu(areaItems(r, fresh), x, y); }
+  function areaItems(r, fresh) {
+    const names = [...new Set([...VOICE_NAMES.slice(0, 4), ...M.voices(ctx.state.doc).map(v => v.voice).filter(Boolean), ...(r.voice ? [r.voice] : [])])];
+    const pick = v => { const n = nameArea(r, v); if (fresh && v) findInArea(r); else ctx.say(v ? `The area is the ${v}${n ? `: ${n} ${n === 1 ? 'staff' : 'staves'} in it named so` : ''}.` : 'The area has no voice now.'); };
+    return [
+      { title: fresh ? 'Which voice is here?' : `Voice area${r.voice ? `: ${r.voice}` : ' (no voice yet)'}` },
+      { shapes: names.map(v => ({ label: v, on: r.voice === v, title: `The ${v} is here${fresh ? ': its staves found and named so' : ''}`, run: () => pick(v) }))
+        .concat([{ label: 'Other…', title: 'Another name (Superius, Contratenor, Quintus …)', run: () => { const v = global.prompt ? global.prompt('The voice\'s name', r.voice || '') : null; if (v !== null) pick(v); } }]) },
+      fresh ? null : { label: 'Find its staves', disabled: busy, title: 'Find the staves in this area and name them for its voice', run: () => findInArea(r) },
+      '-',
+      { label: 'Copy the areas to every page after this', disabled: ctx.state.page >= ctx.state.doc.pages.length - 1, title: 'For a book laid out alike on every page (partbooks; a choirbook photographed an opening to an image)', run: () => copyAreas(1) },
+      { label: 'Copy the areas to every other page after this', disabled: ctx.state.page >= ctx.state.doc.pages.length - 2, title: 'For a choirbook photographed a page to an image: the same side of each opening (left pages, or right)', run: () => copyAreas(2) },
+      '-',
+      { label: fresh ? 'Cancel: no area here' : 'Delete the area', run: () => removeArea(r) },
+    ];
+  }
+
   // ---------------------------------------------------------------- the pointer
   function down(e) {
     if (e.button !== 0 || !ctx.state.doc) return;
@@ -1767,6 +1893,7 @@
     const act = t ? t.dataset.act : 'new', p = at(e);
     e.preventDefault();
     try { ctx.svg.setPointerCapture(e.pointerId); } catch (err) { }
+    if (areaTool && act !== 'alert') { drag = { act: 'area', kind: areaTool, from: p, to: p, pts: [p], moved: false }; return; }
     if (act === 'new') { drag = { act, from: p, to: p }; return; }
     if (act === 'alert') { goTo(alerts[+t.dataset.k]); return; }
     const id = t.dataset.staff;
@@ -1809,6 +1936,12 @@
     if (!drag.moved && Math.hypot(dx, dy) < MIN_DRAG * unit()) return;
     drag.moved = true;
     if (drag.act === 'new') { drag.to = p; draw(); return; }
+    if (drag.act === 'area') {
+      drag.to = p;
+      const q = drag.pts[drag.pts.length - 1];
+      if (Math.hypot(p[0] - q[0], p[1] - q[1]) > 3 * unit()) drag.pts.push(p);
+      draw(); return;
+    }
     if (drag.act === 'syl') {
       const syl = sylOf();
       if (!syl || !drag.box) return;
@@ -1858,6 +1991,16 @@
     if (!drag) return;
     const d = drag;
     drag = null;
+    if (d.act === 'area') {
+      draw();
+      if (!d.moved) return;
+      const [a, b] = [d.from, d.to];
+      const pts = d.kind === 'box' ? [[Math.min(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.max(a[1], b[1])], [Math.min(a[0], b[0]), Math.max(a[1], b[1])]] : d.pts.concat([d.to]);
+      const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+      if (pts.length < 3 || Math.max(...xs) - Math.min(...xs) < 20 * unit() || Math.max(...ys) - Math.min(...ys) < 10 * unit()) { ctx.say(d.kind === 'box' ? 'Drag a larger box, round all of one voice\'s staves.' : 'Draw right round all of one voice\'s staves.'); return; }
+      newArea(pts, e.clientX, e.clientY);
+      return;
+    }
     if (d.act === 'new') {
       if (!d.moved) { if (selected) { selected = null; letGo(); draw(); } return; }
       const x = Math.min(d.from[0], d.to[0]), y = Math.min(d.from[1], d.to[1]);
@@ -1908,6 +2051,7 @@
     if (mod && !e.altKey && (k === 'z' || k === 'Z')) { (e.shiftKey ? redo : undo)(); return true; }
     if (mod && !e.altKey && (k === 'y' || k === 'Y')) { redo(); return true; }
     if (mod || e.altKey) return false;
+    if (areaTool && k === 'Escape') { setAreaTool(areaTool); return true; }
     const u = unit() * (e.shiftKey ? 10 : 1);
     // Shift+Enter: the staff accepted; [ and ]: the selected syllable to the line before, or the next
     if (k === 'Enter' && e.shiftKey && selected) { acceptStaff(); return true; }
@@ -1996,6 +2140,13 @@
 
   // ---------------------------------------------------------------- drawing
   // fast: while dragging, only the overlay is redrawn, not the side panel
+  // a voice's colour (its hue): the usual four apart, any other name by its letters
+  function areaHue(v) {
+    const known = { cantus: 4, superius: 4, discantus: 4, altus: 140, contratenor: 140, tenor: 215, bassus: 280 }, n = String(v || '').toLowerCase();
+    if (!n) return 35;
+    const k = Object.keys(known).find(w => n.startsWith(w));
+    return k ? known[k] : [...n].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+  }
   function draw(fast) {
     const svg = ctx.svg, pg = page();
     svg.setAttribute('viewBox', `0 0 ${pg.size[0]} ${pg.size[1]}`);
@@ -2004,6 +2155,18 @@
     const u = unit(), r = HANDLE * u;
     const el = (name, attrs, parent = svg) => { const x = document.createElementNS(SVG, name); for (const k in attrs) x.setAttribute(k, attrs[k]); parent.appendChild(x); return x; };
     el('rect', { x: 0, y: 0, width: pg.size[0], height: pg.size[1], class: 'bg' });
+    // the voice areas, under the staves, each in its voice's colour with its name (the name grabs it: right-click)
+    if (C.notationOf(ctx.state.doc) === 'mensural' || (pg.regions || []).length) (pg.regions || []).forEach((r, k) => {
+      const hue = areaHue(r.voice), xs = r.points.map(q => q[0]), ys = r.points.map(q => q[1]);
+      el('polygon', { points: r.points.map(q => q.join(',')).join(' '), class: 'varea', style: `--hue:${hue}` });
+      const t = el('text', { x: Math.min(...xs) + 6 * u, y: Math.min(...ys) + 16 * u, 'font-size': 14 * u, class: 'varea-name', style: `--hue:${hue}`, 'data-act': 'area', 'data-k': k });
+      t.textContent = r.voice || 'Which voice? (right-click)';
+    });
+    if (drag && drag.act === 'area' && drag.moved) {
+      const [a, b] = [drag.from, drag.to];
+      if (drag.kind === 'box') el('rect', { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), width: Math.abs(b[0] - a[0]), height: Math.abs(b[1] - a[1]), class: 'varea drawing' });
+      else el('polyline', { points: drag.pts.concat([drag.to]).map(q => q.join(',')).join(' '), class: 'varea drawing' });
+    }
     for (const st of pg.staves) {
       const sel = st.id === selected, g = el('g', { class: 'staff' + (sel ? ' sel' : '') + (mensural(st) ? ' mensural' : '') });
       const l = st.lines, s = S.spacing(l) / 2, n = S.count(l[0]);
@@ -2121,6 +2284,8 @@
     set('readText', doc === 'chant' || chantStaves);
     set('acceptStaff', doc === 'chant' || chantStaves);
     set('beginsRow', !st || !mensural(st));
+    set('voiceArea', doc === 'mensural'); set('voiceFree', doc === 'mensural');
+    if (doc !== 'mensural' && areaTool) areaTool = null;
     const anyMens = C.staves(ctx.state.doc).some(v => mensural(v)), anyChant = C.staves(ctx.state.doc).some(v => !mensural(v));
     set('mensExport', doc === 'mensural' || anyMens); set('mensExportHint', doc === 'mensural' || anyMens);
     set('chantExport', doc === 'chant' || anyChant);
@@ -2280,7 +2445,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, mensuralMusicXml, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, setNotation, setAreaTool, toggleNotation, putMensural, mensuralMei, mensuralMusicXml, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

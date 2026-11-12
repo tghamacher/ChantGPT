@@ -375,6 +375,8 @@
   // given the file at a blob: address of this page's (one site can read another's blob: while this tab is open); from
   // elsewhere (a copy run locally) the file is saved, to open there by hand
   const SERENISSIMA = 'https://tghamacher.github.io/serenissima-press/';
+  $('voiceArea').addEventListener('click', () => E.setAreaTool('box'));
+  $('voiceFree').addEventListener('click', () => E.setAreaTool('free'));
   $('downloadMusicXml').addEventListener('click', () => {
     const r = E.mensuralMusicXml();
     if (r) { download(new Blob([r.text], { type: 'application/vnd.recordare.musicxml+xml' }), r.name); say(`Saved as ${r.name}: open it in MuseScore, Finale, Sibelius or Dorico, or in Serenissima Press.`); }

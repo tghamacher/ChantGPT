@@ -233,3 +233,9 @@ body[data-mode] .cg-top { box-shadow: inset 0 -3px 0 var(--accent); }
 .cg-modechip { font-size: 9.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; text-align: center; color: var(--accent-ink); background: var(--accent); border-radius: 6px; padding: 3px 2px; margin: 0 2px 6px; }
 .cg-staffkind { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); border: 1px solid currentColor; border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
 .cg-staffkind:empty { display: none; }
+
+/* voice areas (mensural): where each voice is on the page, in its colour */
+.cg-overlay .varea { fill: hsla(var(--hue, 35), 70%, 50%, .07); stroke: hsl(var(--hue, 35) 60% 42%); stroke-width: 2; stroke-dasharray: 8 5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.cg-overlay .varea.drawing { fill: var(--sel-fill); stroke: var(--sel); }
+.cg-overlay .varea-name { fill: hsl(var(--hue, 35) 60% 36%); font-family: var(--ui); font-weight: 700; paint-order: stroke; stroke: rgba(255, 253, 248, .85); stroke-width: 3px; vector-effect: non-scaling-stroke; cursor: context-menu; }
+.cg-rail button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }

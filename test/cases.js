@@ -565,6 +565,39 @@
       return [].concat(same('pages', s.count, 2), same('order', s.names, ['page2.png', 'page10.png']), same('size in pixels', s.sizes[0], [420, 595]))
         .concat(inked(w.document.getElementById('canvas')) ? [] : ['The first page is blank.']);
     } },
+    { name: 'app: voice areas name the mensural staves in them, and are copied to the pages after', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page10.png', 'test/pages/page2.png');
+      const E = w.CGEditor, doc = w.CGApp.state.doc, bad = [];
+      E.setNotation('mensural');
+      const [W, H] = doc.pages[0].size;
+      doc.pages[0].staves.push({ id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [0.1 * W, 0.2 * H + 6 * k, 0.4 * W, 0.2 * H + 6 * k]), syllables: [] },
+        { id: 'p1s2', lines: [0, 1, 2, 3, 4].map(k => [0.6 * W, 0.7 * H + 6 * k, 0.9 * W, 0.7 * H + 6 * k]), syllables: [] });
+      for (const st of doc.pages[0].staves) st.box = [st.lines[0][0], st.lines[0][1], st.lines[0][2] - st.lines[0][0], 24];
+      E.draw();
+      E.setAreaTool('box');
+      bad.push(...same('the tool pressed', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'true'));
+      await drag(w, [0.05 * W, 0.1 * H], [0.5 * W, 0.4 * H]);
+      bad.push(...same('an area kept', (doc.pages[0].regions || []).length, 1));
+      const tenor = [...w.document.querySelectorAll('#menu button')].find(b => b.textContent === 'Tenor');
+      if (!tenor) return bad.concat(['No voice offered for the area.']);
+      tenor.click();
+      bad.push(...same('the area named', doc.pages[0].regions[0].voice, 'Tenor'));
+      bad.push(...same('the staff in it named', doc.pages[0].staves.find(st => st.id === 'p1s1').voice, 'Tenor'), ...same('the one outside not', doc.pages[0].staves.find(st => st.id === 'p1s2').voice, undefined));
+      E.key(new w.KeyboardEvent('keydown', { key: 'Escape' }));
+      bad.push(...same('Esc ends the tool', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'false'));
+      E.undo();
+      bad.push(...same('undo takes the name off', doc.pages[0].regions[0].voice, ''));
+      E.redo();
+      // copied to the page after: a staff there in the same place named Tenor
+      const right = w.document.getElementById('overlay').querySelector('.varea-name');
+      const rect = right.getBoundingClientRect();
+      right.dispatchEvent(new w.MouseEvent('contextmenu', { clientX: rect.x + 2, clientY: rect.y + 2, bubbles: true, cancelable: true }));
+      const copy = [...w.document.querySelectorAll('#menu button')].find(b => /every page after/.test(b.textContent));
+      if (!copy) return bad.concat(['No way to copy the areas.']);
+      copy.click();
+      bad.push(...same('copied', (doc.pages[1].regions || []).map(r => r.voice), ['Tenor']));
+      return bad;
+    } },
     { name: 'app: mensural items drawn, and changed from the keys', browser: true, unit: async app => {
       const { w } = await app('test/pages/page2.png');
       const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
