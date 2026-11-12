@@ -218,6 +218,23 @@ varied. Each is a five-line strip as `fivestaves.py` cuts real ones (64 rows, 8 
 The label (`labels.jsonl`: `file`, `text`, `tokens`) is the staff in CGMensural's text form, and its tokens (a ligature's
 brackets and its `~` apart). About a thousand staves a second.
 
+## 7a. Mensural notation: real music drawn (the Josquin Research Project)
+
+```
+git clone --depth 1 https://github.com/josquin-research-project/jrp-scores /path/to/jrp
+python -I training/jrp.py --scores /path/to/jrp                   # -> training/data/jrp/lines.jsonl, words.txt
+python -I training/mensuralsynth.py --music training/data/jrp/lines.jsonl --words training/data/jrp/words.txt \
+    --count 30000 --seed 12 --out training/data/mensjrp
+```
+
+The same drawing, but of real music: the Josquin Research Project's scores (Jesse Rodin, Craig Sapp et al.,
+josquin.stanford.edu; CC BY-NC 4.0), 1,276 of its 1,381 works (those whose voices never split in two), which keep the
+original note values, mensuration signs, ligatures and coloration. Each voice gets a period clef for its range, its
+editorial accidentals are left out, its silences (written bar by bar in the edition) joined into one, and it is cut into
+staves of 10 to 30 signs ending with a custos (a double bar where a section ends): 67,082 staves, every one of them
+right by `js/mensural.js` and reading back the same; the words under them are the words the voices sing. Not
+CPDL: its site reserves its content from AI training (robots.txt, `Content-Signal: ai-train=no`).
+
 ## 8. Mensural notation: real staves
 
 ```

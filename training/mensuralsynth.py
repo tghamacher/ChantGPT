@@ -10,6 +10,9 @@ The label is the staff in CGMensural's text form (js/mensural.js): c4 O B5 Sb6 [
 
     python -I training/mensuralsynth.py --text breviarium.txt --count 20000 [--out training/data/mens] [--seed 1]
 
+    python -I training/mensuralsynth.py --music training/data/jrp/lines.jsonl --out training/data/mensjrp …
+        # the Josquin Research Project's music (jrp.py) drawn instead of made-up melodies
+
 Writes <out>/NNNNNN.jpg and <out>/labels.jsonl ({file, text, tokens}: the text form, and its tokens, as recognizer.py
 learns them)."""
 import argparse, glob, json, os, random, re, sys
@@ -288,14 +291,27 @@ def ligature(it, x0, y, sp, d, lw):
     return cells[-1][1]
 
 
+def flip_stems(items, rng):
+    """A copy of real music's items with stems turned now and then, as compose() turns them (high minims down)."""
+    out = []
+    for it in items:
+        it = dict(it)
+        if it['k'] == 'note' and it['v'] in HAS_STEM and rng.random() < (0.35 if (HAS_STEM[it['v']] == 'up' and it['p'] >= 6) else 0.04):
+            it['stem'] = 'down' if HAS_STEM[it['v']] == 'up' else 'up'
+        out.append(it)
+    return out
+
+
 def main(o):
     rng = random.Random(o.seed)
     sg = signs()
+    music = [json.loads(l)['items'] for l in open(o.music, encoding='utf-8')] if o.music else None
     words = [w for w in ' '.join(L.leaves(o.text).values()).split() if w.isascii() and w.isalpha()] if o.text else []
+    if o.words: words += open(o.words, encoding='utf-8').read().split()
     os.makedirs(o.out, exist_ok=True)
     with open(os.path.join(o.out, 'labels.jsonl'), 'w', encoding='utf-8') as f:
         for n in range(o.count):
-            items = compose(rng, rng.randint(8, 30))
+            items = flip_stems(rng.choice(music), rng) if music and rng.random() < o.real_share else compose(rng, rng.randint(8, 30))
             style = o.style if o.style != 'mixed' else rng.choice(['choirbook', 'choirbook', 'print'])
             im = draw_staff(items, rng, sg, words, style)
             name = f'{n:06d}.jpg'
@@ -312,4 +328,7 @@ if __name__ == '__main__':
     a.add_argument('--seed', type=int, default=1)
     a.add_argument('--style', default='mixed', choices=['choirbook', 'print', 'mixed'])
     a.add_argument('--out', default=os.path.join(HERE, 'data', 'mens'))
+    a.add_argument('--words', help='words for under the staves, a plain text (jrp.py\'s words.txt)')
+    a.add_argument('--music', help='real music to draw (jrp.py\'s lines.jsonl) instead of made-up melodies')
+    a.add_argument('--real-share', type=float, default=1.0, help='with --music: the share of staves from it (the rest made up)')
     main(a.parse_args())
