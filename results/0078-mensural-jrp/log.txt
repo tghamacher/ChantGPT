@@ -173,3 +173,40 @@ epoch 8 batch 300: loss 0.113 (2182 s)
 epoch 8 batch 400: loss 0.115 (2196 s)
 epoch 8 batch 500: loss 0.111 (2210 s)
 epoch 8 batch 600: loss 0.110 (2223 s)
+epoch 8 batch 700: loss 0.111 (2238 s)
+epoch 8 batch 800: loss 0.114 (2251 s)
+epoch 8 batch 900: loss 0.116 (2265 s)
+epoch 8 batch 1000: loss 0.115 (2278 s)
+epoch 8 batch 1100: loss 0.116 (2292 s)
+epoch 8 batch 1200: loss 0.115 (2306 s)
+epoch 8 batch 1300: loss 0.117 (2320 s)
+epoch 8 batch 1400: loss 0.117 (2333 s)
+epoch 8 batch 1500: loss 0.118 (2347 s)
+epoch 8 batch 1600: loss 0.116 (2361 s)
+epoch 8 batch 1700: loss 0.115 (2375 s)
+epoch 8 batch 1800: loss 0.116 (2388 s)
+epoch 8 batch 1900: loss 0.117 (2402 s)
+epoch 8 batch 2000: loss 0.117 (2415 s)
+epoch 8 batch 2100: loss 0.117 (2429 s)
+epoch 8: loss 0.116; synthetic test staves: token errors 1.30%, note errors 1.46%; real: token errors 39.95%, note errors 39.62% (2440 s)
+
+$ recognizer.py test --model training/data/m0078/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+51 staves: token errors 21.01%, note errors 20.58%
+
+$ recognizer.py test --model training/data/m0075/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+51 staves: token errors 20.92%, note errors 20.13%
+
+$ recognizer.py test --model training/data/m0078/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 73.11%, note errors 72.82%
+
+$ recognizer.py test --model training/data/m0075/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 80.14%, note errors 79.93%
+
+$ recognizer.py test --model training/data/m0078/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+61 staves: token errors 33.55%, note errors 33.16%
+
+$ recognizer.py test --model training/data/m0075/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+61 staves: token errors 34.01%, note errors 33.81%
+
+$ recognizer.py export --model training/data/m0078/best.pt --mensural --onnx OUT/mensural.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0078-mensural-jrp/mensural.onnx (5.8 MB)
