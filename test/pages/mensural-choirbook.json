@@ -1,0 +1,73 @@
+{
+ "style": "choirbook",
+ "size": [
+  1100,
+  1500
+ ],
+ "spacing": 14,
+ "staves": [
+  {
+   "voice": "Cantus",
+   "top": 173.5,
+   "bottom": 229.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c2 b1 Sb7 Sb10 Sb7 B8 M7 Sb4 Sb0 Sm-1 Sb-2 M-2 Sb-2 Sb-2* M-2* Sm1 rSb4 rSb4 F4v B2 .3 Sm0 M1 [Sb3 Sb6 B7] +8"
+  },
+  {
+   "voice": "Cantus",
+   "top": 293.5,
+   "bottom": 349.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f3 M4 B3 Sm6 M5 n10 B10 Sb9 b8 Sm8 rSm2 M8 rSm4 M5 M6v Sb5 Mx5 M4 [B2 B4] rM2 M2 M1 M4 Sm3 Sb2 Sb1 .1 #0 Sb0 B1 B2 +2"
+  },
+  {
+   "voice": "Cantus",
+   "top": 413.5,
+   "bottom": 469.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c4 b5 C. rB3 rM2 M-2 Sb0 Sm-1 Sb4 rSb6 M1 L3 F4 Sm5 Sb4 [L2 L-1] Sb3 Sb2 Sb3 Sb0 Sb1 Sb2 Sb1 .1 [B2 B4 L2] M3 M4 Sm5 F4 M1v Sb2 +3"
+  },
+  {
+   "voice": "Tenor",
+   "top": 598.5,
+   "bottom": 654.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f4 b2 Sb3 Sb8 Sb8 rM2 Sb8 M4 B0 M0 M1 Sm0 M-2 M-2 Sb-2 .-1 Sb0 M2 M1 F4 M5 n4 M4 L3 Sb5 Sb5 .5 Sb5 Sb7 Sb5 [L2 L3] Sb4 B7 .7 +5"
+  },
+  {
+   "voice": "Tenor",
+   "top": 718.5,
+   "bottom": 774.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f4 b2 C| Sm-2 Sb-2 M1 M0 M3 [Sb4 Sb6] Sm5 Sb5 Sb5 Sm6 M5 Sb5 Sb5 Sb6 M7 B5 .5 b5 F5 M2 .3 M5v .5 rSb6 rSb6 Sm8 Sb7 +6"
+  },
+  {
+   "voice": "Tenor",
+   "top": 838.5,
+   "bottom": 894.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c3 O n2 F2 Sb3 Sb3 rSm4 [L3 B5~Mx4 L3] M3 M1 B-2 Sm0 Sb0 M1 M4* F3 rM4 M4* Sb3* Sb6 Mx7 Sb6 Sb2* Sm5 Sb5 #6 Sb6 +7"
+  },
+  {
+   "voice": "",
+   "top": 979.5,
+   "bottom": 1035.5,
+   "left": 88,
+   "right": 1012,
+   "empty": true,
+   "text": null
+  }
+ ]
+}

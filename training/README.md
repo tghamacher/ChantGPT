@@ -253,6 +253,26 @@ bottom (L1, S1). Capitan: 511 kept (34 unlabelled, 13 with chant or a smudge, 18
 only the pages where as many staves are found as its symbols have (each staff ends with a custos): 161 staves for now;
 a finder for its broken, typeset lines would give more.
 
+## 8a. Printed staves (partbooks set from type): SEILS again
+
+```
+python -I training/printstaves.py --pages DIR [--show NAME]         # the staves of printed pages of polyphony
+python -I training/seils.py --scans DIR --labels DIR --out training/data/seils2
+python -I training/mensuralpage.py --style print|choirbook --out test/pages/mensural-print.png   # made-up pages, for tests
+```
+
+A printed book's staff lines are set from short pieces of type, a note to a piece: broken lines, the pieces a hair
+apart and out of true, the staves small on the page (Il Lauro Secco's openings, 1200 by 813 pixels: 9 pixels a
+space). `fivestaves.py` found too few of them (22 of SEILS's 145 pages with as many staves as the edition has).
+`printstaves.py` finds the lines as long horizontal runs of ink (the gaps between pieces of type bridged; faint lines
+too), the page's own spacing from the gaps between them, five at a time evenly spaced and thin (not a scan's black
+edge nor a woodcut), a negative turned round, each staff followed out to its ends (its clef), and the empty staves at
+a page's foot left out: 125-128 of the 145 pages, 933 staves labelled (seils2-1 on training-data), against 161. The
+app has the same finder (`CGStaves.byPrintedLines`): a mensural book's staves are found by red ruling or by black
+printed lines, whichever finds more. `seils.py` also cuts the edition's symbols at a section's end (a bar, then the
+next staff's clef), where there is no custos. (Also fixed, in `fivestaves.assemble` and `byFiveLines`: one staff
+found twice in a strip, a row apart, began a second chain and split the staff in two.)
+
 ## 9. Mensural notation: the Occo Codex (CMME's edition, IDEM's pages), private for now
 
 ```

@@ -90,14 +90,23 @@ def page(path, spacing=None):
         if DARK: prof = np.clip(prof - np.convolve(prof, np.ones(int(2 * lo) | 1) / (int(2 * lo) | 1), 'same'), 0, None)   # (thin lines, not words)
         for rows, g in fives(peaks(prof, max(2, int(lo / 2))), lo, hi):
             found.append((x + STRIP / 2, rows, g))
+    return gray, assemble(found, x0, x1)
+
+
+def assemble(found, x0, x1, strip=None):
+    """Staves from the fives found strip by strip ([(strip centre, [rows], g)]): followed across the page, fitted
+    straight, overlaps left out (the longer kept), top to bottom: [(lines, g)]."""
+    STRIP_ = strip or STRIP
     # staves followed across the page: strips' fives whose top lines agree within half a space
     staves = []
     for c, rows, g in sorted(found, key=lambda f: f[0]):
         best = None
         for s in staves:
             lc, lrows, lg = s[-1]
-            if c - lc <= 4 * STRIP and abs(rows[0] - lrows[0]) < 0.5 * g and (best is None or abs(rows[0] - lrows[0]) < abs(rows[0] - best[-1][1][0])): best = s
-        if best is not None and best[-1][0] < c: best.append((c, rows, g))
+            if c - lc <= 4 * STRIP_ and abs(rows[0] - lrows[0]) < 0.5 * g and (best is None or abs(rows[0] - lrows[0]) < abs(rows[0] - best[-1][1][0])): best = s
+        if best is not None:
+            if best[-1][0] < c: best.append((c, rows, g))
+            # (the same staff found twice in one strip, a row apart: once is enough, not a second staff begun)
         else: staves.append([(c, rows, g)])
     out = []
     for s in staves:
@@ -113,7 +122,7 @@ def page(path, spacing=None):
         if keep.sum() < 3 or cs[keep][-1] - cs[keep][0] < 0.2 * (x1 - x0): continue
         cs, R = cs[keep], R[keep]
         icpt = np.median(R - slope * cs[:, None], axis=0)
-        xa, xb = float(cs[0] - STRIP / 2), float(cs[-1] + STRIP / 2)
+        xa, xb = float(cs[0] - STRIP_ / 2), float(cs[-1] + STRIP_ / 2)
         lines = [[round(xa, 1), round(slope * xa + icpt[k], 1), round(xb, 1), round(slope * xb + icpt[k], 1)] for k in range(N)]
         out.append((lines, g))
     # (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer, as
@@ -123,7 +132,7 @@ def page(path, spacing=None):
         if not any(lines[0][1] < k[-1][1] and lines[-1][1] > k[0][1] and lines[0][0] < k[0][2] and lines[0][2] > k[0][0] for k, _ in kept):
             kept.append((lines, g))
     kept.sort(key=lambda t: t[0][0][1])
-    return gray, kept
+    return kept
 
 
 def straighten5(gray, lines):

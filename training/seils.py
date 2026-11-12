@@ -6,8 +6,8 @@ crediting the authors, sharing alike. https://github.com/SEILSdataset/SEILSdatas
     pdfimages -j <particellas_original>/NAME.pdf <scans>/NAME                (each page's image, as scanned)
     python -I training/seils.py --scans DIR --labels DIR [--out training/data/seils]
 
-Each page's staves found (fivestaves.py, by their ink: printed staves, set from short pieces, are found well where the
-page is clean); its symbols cut into staves (each staff ends with a custos, the next begins with its clef); and where
+Each page's staves found (printstaves.py: lines set from short pieces of type, at the page's own spacing; the empty
+staves at a page's foot left out: on 127 of the 145 pages as many as the symbols have, against 22 with fivestaves.py); its symbols cut into staves (each staff ends with a custos, the next begins with its clef); and where
 the page has as many staves found as its symbols have, each staff straightened as the mensural strips are (64 rows, 8 to
 a space, the top line at row 14) and labelled in CGMensural's text form (js/mensural.js). A page whose counts differ
 is left out (its staves would be paired wrongly).
@@ -20,7 +20,8 @@ import argparse, glob, json, os, re, sys
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import fivestaves as F
+import fivestaves as F, printstaves as P
+import numpy as np
 
 VAL = {'maxima': 'Mx', 'longa': 'L', 'brevis': 'B', 'semibrevis': 'Sb', 'minima': 'M', 'semiminima': 'Sm', 'fusa': 'F', 'semifusa': 'Sf'}
 
@@ -28,14 +29,17 @@ VAL = {'maxima': 'Mx', 'longa': 'L', 'brevis': 'B', 'semibrevis': 'Sb', 'minima'
 def position(code):
     """L3 (a line, from the bottom) or S2 (a space) as steps up from the bottom line."""
     m = re.fullmatch(r'([LS])(-?\d+)', code)
+    if not m: return None                                   # (a symbol without a place: the staff can't be said)
     k = int(m.group(2))
     return 2 * (k - 1) if m.group(1) == 'L' else 2 * k - 1
 
 
 def staves_of(tokens):
-    """The symbols cut into staves: each ends with its custos (the last, perhaps, without one)."""
+    """The symbols cut into staves: each ends with its custos (the last, perhaps, without one); one ending a section
+    with a bar, and no custos, ends where the next begins with its clef."""
     out, cur = [], []
     for t in tokens:
+        if t.startswith('clef.') and cur and cur[-1].startswith('barline'): out.append(cur); cur = []
         cur.append(t)
         if t.startswith('custos'): out.append(cur); cur = []
     if cur: out.append(cur)
@@ -55,6 +59,7 @@ def convert(symbols):
         if name.startswith('metersign.'): out.append({'C': 'C', 'C/': 'C|', 'O': 'O', 'O/': 'O|'}.get(name[10:], None) or ''); continue
         if name.startswith('digit.'): out.append(name[6:]); continue
         p = position(code)
+        if p is None: return None
         m = re.fullmatch(r'note\.([a-z]+)([\\/]?)~?', name)
         if m and m.group(1) in VAL:
             v = VAL[m.group(1)]
@@ -76,7 +81,6 @@ def convert(symbols):
 
 def main(o):
     os.makedirs(o.out, exist_ok=True)
-    F.N, F.DARK, F.NEAR, F.EVEN = 5, True, 0.2, 0.25
     pages = kept = 0
     with open(os.path.join(o.out, 'labels.jsonl'), 'w', encoding='utf-8') as f:
         for lab in sorted(glob.glob(os.path.join(o.labels, '*.agnostic'))):
@@ -85,7 +89,9 @@ def main(o):
             if not scans: continue
             tokens = [t.strip() for t in open(lab, encoding='utf-8').read().split('\t') if t.strip()]
             parts = staves_of(tokens)
-            gray, found = F.page(scans[0], spacing=(6.5, 12.5))
+            gray = np.asarray(Image.open(scans[0]).convert('L')).astype(np.float32)
+            if np.median(gray) < 100: gray = 255 - gray              # (a negative)
+            found = P.find(gray)
             pages += 1
             if len(found) != len(parts): continue
             for k, ((lines, g), part) in enumerate(zip(found, parts)):

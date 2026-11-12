@@ -1,0 +1,100 @@
+{
+ "style": "print",
+ "size": [
+  1100,
+  1500
+ ],
+ "spacing": 10,
+ "staves": [
+  {
+   "voice": "Tenor",
+   "top": 154.5,
+   "bottom": 194.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f5 [Sb1 Sb3 L2] Mx0 L0 Sb1 Sb2 .3 B4 M2 Sm4 rLp4 B5 Sm6 b7 M7 Sb6 rL2 Sb5 M7v Sm4 B6* Sb7* Sb9 Sb10 Sb9 .9 +9"
+  },
+  {
+   "voice": "Tenor",
+   "top": 240.5,
+   "bottom": 280.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c1 O. B-1 Sm-2 Sb1* B0* M1* B0 M0 B0 M0 Sm1v 3/2 Sb0 .1 Sm-2 B-1 .-1 Sm2 B1 rM4 M1 .1 B3 Sb3 M7v M8 M6 +6"
+  },
+  {
+   "voice": "Tenor",
+   "top": 326.5,
+   "bottom": 366.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c3 B2 M2 M2* Sb1* M1* .1 b1 Sb1 B0 M0 M1 L4 M2 M-1 Sb-2 [Sb0 Sb-1] rM4 [L0 B-1 L-1] B1* Sm0 Sm1 B2* rM4 [B1 B0 B1~B0]* Sb2 rM2 Sm1 [L4 B5* L3*] rB5"
+  },
+  {
+   "voice": "Tenor",
+   "top": 412.5,
+   "bottom": 452.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c1 M5 F5 F4 Sb5 Sb4 Sb0* Sm-1 Sb2* Sb0 B1 M0 F0 L1 B-1 Sm0 B2 M-1 Sm0 Sm1 Sb0 rSm4 Sb8 [L9 B6 L5] B6 Sb7 M8v +9"
+  },
+  {
+   "voice": "Tenor",
+   "top": 498.5,
+   "bottom": 538.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f4 rB5 Sm7 #5 Sb5 M2 M3 Sm5 M6 Sb7 Sb9 Sb8 Sb7 Sb7 M8 b9 M9 M8 Sb7 M6 Sb7 M8 Sb7 M10v B8 ||"
+  },
+  {
+   "voice": "Tenor",
+   "top": 584.5,
+   "bottom": 624.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c3 Sm4 rM2 F2 rSm4 M-2 .-1 M-2 Mx-2 Sb1 L3 M-1 M1 Sm2 Sm6 Sb6 Sm8 [B9 L9] Sm8v b5 L5 rSb4 B8 M7 Sm9v +9"
+  },
+  {
+   "voice": "Tenor",
+   "top": 670.5,
+   "bottom": 710.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c1 b6 b6 F6v L7 rSb6 Sb5 B5 B2 L3 M6v Sb7 rSb6 Sb7 B7 Sb10 B8 b7 B7 Sm8 Sm5 B10 M7 Sb7 Sb8 .9 B8 +7"
+  },
+  {
+   "voice": "Tenor",
+   "top": 756.5,
+   "bottom": 796.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c3 O Sm5 [L7 L8]* B5 Sb5 Sb7 M8 #8 B8 Sm7 Sb7 B7 B5 B8 B5 B4 B3 Sb6 [B6 L7] M8 [L7~B5] M7 Sb6 Sm4 M3 Sb4 F1 M1 Sb1 Sb1"
+  },
+  {
+   "voice": "",
+   "top": 857.5,
+   "bottom": 897.5,
+   "left": 88,
+   "right": 1012,
+   "empty": true,
+   "text": null
+  },
+  {
+   "voice": "",
+   "top": 943.5,
+   "bottom": 983.5,
+   "left": 88,
+   "right": 1012,
+   "empty": true,
+   "text": null
+  }
+ ]
+}

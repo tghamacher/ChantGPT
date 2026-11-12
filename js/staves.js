@@ -397,10 +397,11 @@
   // book from one ruled a staff at a time reliably enough to choose for them).
   function findStaves(gray, w, h, { skip = [], lines = null, tint = null, reds = null, ruled = false, five = false, trace } = {}) {
     // (a book of five-line staves ruled in red, as the 16th-18th-century choirbooks are: the person says so)
-    if (five && reds) {
-      const by5 = byFiveLines(reds, w, h, skip);
-      if (trace) trace.byFiveLines = by5.length;
-      if (by5.length) return by5;
+    // (five-line staves: ruled in red, as the choirbooks are, or printed in black, set from type: whichever finds more)
+    if (five) {
+      const by5 = reds ? byFiveLines(reds, w, h, skip) : [], byP = byPrintedLines(gray, w, h, skip);
+      if (trace) Object.assign(trace, { byFiveLines: by5.length, byPrintedLines: byP.length });
+      if (by5.length || byP.length) return byP.length > by5.length ? byP : by5;
     }
     if (ruled && tint) {
       const byR = byRuling(gray, tint, w, h, skip);
@@ -484,9 +485,10 @@
       let best = null;
       for (const ch of chains) {
         const l = ch[ch.length - 1];
-        if (l.c < f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!best || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - best[best.length - 1].rows[0]))) best = ch;
+        if (l.c <= f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!best || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - best[best.length - 1].rows[0]))) best = ch;
       }
-      if (best) best.push(f); else chains.push([f]);
+      // (the same staff found twice in one strip, a row apart: once is enough, not a second staff begun)
+      if (best) { if (best[best.length - 1].c < f.c) best.push(f); } else chains.push([f]);
     }
     const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
     const out = [];
@@ -514,6 +516,149 @@
       if (!clash) kept.push(st);
     }
     return kept.sort((a, b) => a.lines[0][1] - b.lines[0][1]);
+  }
+
+  // Staves of a printed book of polyphony (partbooks and choirbooks set from movable type: Gardano, Scotto, Baldini),
+  // found by their black lines. Each line is set from short pieces of type, one to a note, butted end to end: a broken
+  // line, a hair out of true. The page's dark pixels (Otsu's threshold; a negative turned round); of them, those in
+  // long horizontal runs, the gaps between pieces of type bridged (the lines: a note's head or a letter is short); in
+  // strips across the page, the rows those runs crowd, five at a time where five stand evenly spaced at the page's own
+  // spacing (measured from the gaps between such rows) and thin (little between them: not a scan's black edge, not a
+  // woodcut); followed from strip to strip, fitted straight, and their ends followed out along the lines (the clef,
+  // the last notes); a staff with nothing on it (the ruled staves at a page's foot) left out. As
+  // training/printstaves.py, which found Il Lauro Secco's (SEILS) staves: 128 of 145 pages as the edition counts them.
+  function byPrintedLines(gray, w, h, skip = []) {
+    const N = w * h, u = w / 1200;
+    // the threshold (Otsu's), a negative turned round
+    const hist = new Float64Array(256);
+    for (let i = 0; i < N; i++) hist[Math.max(0, Math.min(255, gray[i] | 0))]++;
+    let acc = 0, med = 0;
+    for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= N / 2) { med = v; break; } }
+    const neg = med < 100, g8 = i => neg ? 255 - gray[i] : gray[i];
+    if (neg) hist.reverse();
+    let wB = 0, mB = 0, mT = 0, best = -1, thr = 128;
+    for (let v = 0; v < 256; v++) mT += v * hist[v];
+    for (let v = 0; v < 256; v++) { wB += hist[v]; mB += v * hist[v]; if (!wB || wB === N) continue; const a = mB / wB, b = (mT - mB) / (N - wB), s = wB * (N - wB) * (a - b) ** 2; if (s > best) { best = s; thr = v; } }
+    let pc = 0, paper = 255;
+    for (let v = 0; v < 256; v++) { pc += hist[v]; if (pc >= 0.9 * N) { paper = v; break; } }
+    const lineThr = (thr + paper) / 2;                         // (lines: faint ones too, halfway to the paper)
+    const dark = new Uint8Array(N), black = new Uint8Array(N);
+    for (let i = 0; i < N; i++) { const v = g8(i); dark[i] = v < lineThr ? 1 : 0; black[i] = v < 0.7 * thr ? 1 : 0; }
+    // the lines: dark runs at least minRun long, gaps of up to gap pixels bridged
+    const gap = Math.max(4, Math.round(4 * u)), minRun = Math.max(12, Math.round(24 * u)), mask = new Uint8Array(N);
+    for (let y = 0; y < h; y++) {
+      const o = y * w;
+      let start = -1, last = -1;
+      for (let x = 0; x <= w; x++) {
+        const on = x < w && dark[o + x];
+        if (on) { if (start < 0) start = x; else if (x - last - 1 > gap) { if (last - start + 1 >= minRun) mask.fill(1, o + start, o + last + 1); start = x; } last = x; }
+        if (x === w && start >= 0 && last - start + 1 >= minRun) mask.fill(1, o + start, o + last + 1);
+      }
+    }
+    // the page's spacing: the commonest gap between neighbouring thin rows crowded with lines, strip by strip
+    const STRIP = Math.max(20, Math.round(60 * u)), counts = new Map(), thin = Math.max(4, Math.round(4 * u));
+    const profOf = x => { const xe = Math.min(w, x + STRIP), p = new Float64Array(h); for (let y = 0; y < h; y++) { let c = 0; for (let i = y * w + x, e = y * w + xe; i < e; i++) c += mask[i]; p[y] = c / (xe - x); } return p; };
+    const profs = [];
+    for (let x = 0; x < w - STRIP / 2; x += STRIP) {
+      const p = profOf(x); profs.push({ x, p });
+      const cs = [];
+      for (let y = 0; y < h;) { if (p[y] > 0.4) { let e = y; while (e < h && p[e] > 0.4) e++; if (e - y <= thin) cs.push((y + e - 1) / 2); y = e; } else y++; }
+      for (let k = 1; k < cs.length; k++) { const d = Math.round(cs[k] - cs[k - 1]); if (d >= Math.max(4, 4 * u) && d <= h / 25) counts.set(d, (counts.get(d) || 0) + 1); }
+    }
+    if (!counts.size) return [];
+    const top = [...counts].sort((a, b) => b[1] - a[1])[0][0];
+    let sw = 0, sv = 0;
+    for (const d of [top - 1, top, top + 1]) { const c = counts.get(d) || 0; sw += c; sv += c * d; }
+    const G = sv / sw, lo = 0.82 * G, hi = 1.22 * G;
+    // in each strip: rows crowded with lines, five evenly spaced, thin
+    const found = [];
+    for (const { x, p: raw } of profs) {
+      const p = raw.map((v, y) => 0.25 * raw[Math.max(0, y - 1)] + 0.5 * v + 0.25 * raw[Math.min(h - 1, y + 1)]);
+      const srt = Array.from(p).sort((a, b) => a - b), cut = Math.max(0.3, 0.6 * srt[Math.floor(0.9 * (h - 1))]), apart = Math.max(2, Math.floor(G / 3));
+      const pk = [];
+      for (let y = 1; y < h - 1; y++) {
+        if (p[y] < cut) continue;
+        let isTop = true;
+        for (let d = -apart; d <= apart && isTop; d++) if (y + d >= 0 && y + d < h && p[y + d] > p[y]) isTop = false;
+        if (isTop) pk.push(y);
+      }
+      const used = new Set();
+      for (let i = 0; i < pk.length; i++) {
+        if (used.has(pk[i])) continue;
+        for (let j = i + 1; j < pk.length; j++) {
+          const g = pk[j] - pk[i];
+          if (g < lo) continue;
+          if (g > hi) break;
+          const run = [pk[i], pk[j]];
+          for (let k = 0; k < 3; k++) {
+            const want = run[run.length - 1] + g;
+            let b = null;
+            for (const y of pk) if (Math.abs(y - want) <= 0.2 * g && (b === null || Math.abs(y - want) < Math.abs(b - want))) b = y;
+            if (b === null) break;
+            run.push(b);
+          }
+          if (run.length !== 5) continue;
+          const gaps = run.slice(1).map((y, k) => y - run[k]), mean = gaps.reduce((a, c) => a + c) / 4;
+          if (Math.max(...gaps) - Math.min(...gaps) > 0.25 * mean) continue;
+          const between = gaps.map((d, k) => p[Math.round(run[k] + d / 2)]).reduce((a, c) => a + c) / 4, on = run.reduce((a, y) => a + p[y], 0) / 5;
+          if (between > 0.35 * on) continue;
+          found.push({ c: x + STRIP / 2, rows: run, g: mean }); run.forEach(y => used.add(y)); break;
+        }
+      }
+    }
+    if (!found.length) return [];
+    const x0 = Math.min(...found.map(f => f.c)) - STRIP / 2, x1 = Math.max(...found.map(f => f.c)) + STRIP / 2;
+    const chains = [];
+    for (const f of found.sort((a, b) => a.c - b.c)) {
+      let b = null;
+      for (const ch of chains) { const l = ch[ch.length - 1]; if (l.c <= f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!b || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - b[b.length - 1].rows[0]))) b = ch; }
+      if (b) { if (b[b.length - 1].c < f.c) b.push(f); } else chains.push([f]);
+    }
+    const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
+    const out = [];
+    for (let ch of chains) {
+      if (ch.length < 3) continue;
+      const g = median(ch.map(f => f.g)), mean = f => f.rows.reduce((a, c) => a + c) / 5, sl = [];
+      for (let i = 0; i < ch.length; i++) for (let j = i + 1; j < ch.length; j++) sl.push((mean(ch[j]) - mean(ch[i])) / (ch[j].c - ch[i].c));
+      const slope = sl.length ? median(sl) : 0, icpt = k => median(ch.map(f => f.rows[k] - slope * f.c));
+      let ic = [0, 1, 2, 3, 4].map(icpt);
+      ch = ch.filter(f => Math.abs(f.rows.reduce((t, y, k) => t + y - slope * f.c - ic[k], 0) / 5) < 0.35 * g);
+      if (ch.length < 3 || ch[ch.length - 1].c - ch[0].c < 0.2 * (x1 - x0)) continue;
+      ic = [0, 1, 2, 3, 4].map(icpt);
+      // its ends followed out along its lines, a gap of up to two spaces bridged; not into a scan's black edge
+      const yAt = (k, x) => ic[k] + slope * x;
+      const there = x => {
+        if (x < 0 || x >= w) return false;
+        let n = 0, between = 0;
+        for (let k = 0; k < 5; k++) {
+          const y = Math.round(yAt(k, x));
+          if ([-1, 0, 1].some(d => y + d >= 0 && y + d < h && mask[(y + d) * w + x])) n++;
+          if (k < 4) { const ym = Math.round((yAt(k, x) + yAt(k + 1, x)) / 2); if (ym >= 0 && ym < h && mask[ym * w + x]) between++; }
+        }
+        return n >= 4 && between <= 1;
+      };
+      const reach = (from, step) => { let x = from, last = from; while (x >= 0 && x < w && Math.abs(x - last) <= 2 * g) { if (there(x)) last = x; x += step; } return last; };
+      const xa = reach(Math.round(ch[0].c - STRIP / 2), -1), xb = reach(Math.round(ch[ch.length - 1].c + STRIP / 2), 1);
+      const lines5 = ic.map(b0 => [xa, b0 + slope * xa, xb, b0 + slope * xb]);
+      const midY = (lines5[0][1] + lines5[4][1]) / 2, midX = (xa + xb) / 2;
+      if (skip.some(b0 => midY > b0[1] && midY < b0[1] + b0[3] && midX > b0[0] && midX < b0[0] + b0[2])) continue;
+      // its ink: in its inkiest stretch (eight spaces long, past its start), the black pixels between and about its
+      // lines that aren't its lines
+      const ya = Math.max(0, Math.round(Math.min(lines5[0][1], lines5[0][3]) - 0.5 * g)), yb = Math.min(h, Math.round(Math.max(lines5[4][1], lines5[4][3]) + 0.5 * g));
+      const from = Math.max(0, Math.round(xa + 3 * g)), to = Math.min(w, Math.round(xb)), col = [];
+      for (let x = from; x < to; x++) { let c = 0; for (let y = ya; y < yb; y++) { const i = y * w + x; if (black[i] && !mask[i]) c++; } col.push(c / Math.max(1, yb - ya)); }
+      const win = Math.max(1, Math.round(8 * g));
+      let ink = 0, t = 0;
+      for (let k = 0; k < col.length; k++) { t += col[k]; if (k >= win) t -= col[k - win]; if (k >= win - 1) ink = Math.max(ink, t / win); }
+      if (col.length < win) ink = col.reduce((a, c) => a + c, 0) / Math.max(1, col.length);
+      out.push({ lines: lines5, spacing: g, ink });
+    }
+    const len = st => st.lines[0][2] - st.lines[0][0], kept = [];
+    for (const st of out.sort((a, b) => len(b) - len(a))) {
+      if (!kept.some(k => st.lines[0][1] < k.lines[4][1] && st.lines[4][1] > k.lines[0][1] && st.lines[0][0] < k.lines[0][2] && st.lines[0][2] > k.lines[0][0])) kept.push(st);
+    }
+    const usual = kept.length ? median(kept.map(st => st.ink)) : 0;
+    return kept.filter(st => st.ink > Math.max(0.012, 0.5 * usual)).map(st => ({ lines: st.lines, spacing: st.spacing })).sort((a, b) => a.lines[0][1] - b.lines[0][1]);
   }
 
   // Staves of a page ruled evenly in pale red-brown from top to bottom, the words written on every fifth ruled line
@@ -941,7 +1086,7 @@
     return { mass: mass / (g * g), words: words / (g * g), custos, clef: clefTo > clefFrom };
   }
 
-  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, byRuling, byFiveLines, redness, tint, columns, order, beginnings, fitStaff, fit, grey, ruling };
+  const api = { carries, count, xsOf, yAt, atXs, spacing, tilt, bend, middle, even, spaceEvenly, addBend, removeBend, simplify, box, roundLines, findStaves, byRedLine, byRuling, byFiveLines, byPrintedLines, redness, tint, columns, order, beginnings, fitStaff, fit, grey, ruling };
   global.CGStaves = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

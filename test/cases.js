@@ -584,23 +584,27 @@
         .concat(inked(w.document.getElementById('canvas')) ? [] : ['The first page is blank.']);
     } },
     { name: 'app: voice areas name the mensural staves in them, and are copied to the pages after', browser: true, unit: async app => {
-      const { w } = await app('test/pages/page10.png', 'test/pages/page2.png');
+      // (a made-up choirbook page: Cantus, three staves, above the Tenor, three, an empty staff at the foot; training/mensuralpage.py)
+      const { w } = await app('test/pages/mensural-choirbook.png', 'test/pages/mensural-choirbook.png');
       const E = w.CGEditor, doc = w.CGApp.state.doc, bad = [];
       E.setNotation('mensural');
-      const [W, H] = doc.pages[0].size;
-      doc.pages[0].staves.push({ id: 'p1s1', lines: [0, 1, 2, 3, 4].map(k => [0.1 * W, 0.2 * H + 6 * k, 0.4 * W, 0.2 * H + 6 * k]), syllables: [] },
-        { id: 'p1s2', lines: [0, 1, 2, 3, 4].map(k => [0.6 * W, 0.7 * H + 6 * k, 0.9 * W, 0.7 * H + 6 * k]), syllables: [] });
-      for (const st of doc.pages[0].staves) st.box = [st.lines[0][0], st.lines[0][1], st.lines[0][2] - st.lines[0][0], 24];
-      E.draw();
+      const truth = await (await fetch('pages/mensural-choirbook.json')).json();
+      const [W, H] = doc.pages[0].size, k = W / truth.size[0];
+      await E.findHere();
+      const n = doc.pages[0].staves.length;
+      bad.push(...same('its staves found (the empty one at the foot too, or not)', [6, 7].includes(n), true));
+      const tenor = truth.staves.filter(v => v.voice === 'Tenor'), sp = truth.spacing * k;
       E.setAreaTool('box');
       bad.push(...same('the tool pressed', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'true'));
-      await drag(w, [0.05 * W, 0.1 * H], [0.5 * W, 0.4 * H]);
+      await drag(w, [0.03 * W, tenor[0].top * k - 4 * sp], [0.97 * W, tenor[tenor.length - 1].bottom * k + sp]);
       bad.push(...same('an area kept', (doc.pages[0].regions || []).length, 1));
-      const tenor = [...w.document.querySelectorAll('#menu button')].find(b => b.textContent === 'Tenor');
-      if (!tenor) return bad.concat(['No voice offered for the area.']);
-      tenor.click();
+      const pick = [...w.document.querySelectorAll('#menu button')].find(b => b.textContent === 'Tenor');
+      if (!pick) return bad.concat(['No voice offered for the area.']);
+      pick.click();
+      await until(() => !w.document.getElementById('findStaves').disabled);
       bad.push(...same('the area named', doc.pages[0].regions[0].voice, 'Tenor'));
-      bad.push(...same('the staff in it named', doc.pages[0].staves.find(st => st.id === 'p1s1').voice, 'Tenor'), ...same('the one outside not', doc.pages[0].staves.find(st => st.id === 'p1s2').voice, undefined));
+      const voiceOf = st => st.voice || '';
+      bad.push(...same('the Tenor\'s staves named, the Cantus\'s not', doc.pages[0].staves.map(voiceOf).slice(0, 6), ['', '', '', 'Tenor', 'Tenor', 'Tenor']));
       E.key(new w.KeyboardEvent('keydown', { key: 'Escape' }));
       bad.push(...same('Esc ends the tool', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'false'));
       E.undo();
@@ -616,11 +620,32 @@
       bad.push(...same('copied', (doc.pages[1].regions || []).map(r => r.voice), ['Tenor']));
       return bad;
     } },
+    { name: 'app: a printed mensural page: its five-line staves found by their black lines, the empty ones left out', browser: true, unit: async app => {
+      // (a made-up partbook page: eight staves of music, two empty under them; training/mensuralpage.py)
+      const { w } = await app('test/pages/mensural-print.png');
+      const E = w.CGEditor, doc = w.CGApp.state.doc, bad = [];
+      E.setNotation('mensural');
+      await E.findHere();
+      const truth = await (await fetch('pages/mensural-print.json')).json(), k = doc.pages[0].size[0] / truth.size[0];
+      const found = doc.pages[0].staves, want = truth.staves.filter(v => !v.empty);
+      bad.push(...same('eight staves, the empty two left out', found.length, want.length));
+      bad.push(...same('five lines each', found.every(st => st.lines.length === 5), true));
+      found.forEach((st, i) => { const t = want[i]; if (t && (Math.abs(st.lines[0][1] - t.top * k) > 3 * k || Math.abs(st.lines[4][1] - t.bottom * k) > 3 * k)) bad.push(`Staff ${i + 1}: its lines at ${st.lines[0][1].toFixed(0)}-${st.lines[4][1].toFixed(0)}, not ${(t.top * k).toFixed(0)}-${(t.bottom * k).toFixed(0)}.`); });
+      bad.push(...same('from its clef to its end', found.every((st, i) => st.lines[0][0] < want[i].left * k + 4 * truth.spacing * k && st.lines[0][2] > want[i].right * k - 6 * truth.spacing * k), true));
+      return bad;
+    } },
+    { name: 'app: a mensural choirbook page ruled in red: its five-line staves found by their ruling', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-choirbook.png');
+      const E = w.CGEditor, doc = w.CGApp.state.doc;
+      E.setNotation('mensural');
+      await E.findHere();
+      return same('six staves (the empty one at the foot left out, or found: six or seven)', [6, 7].includes(doc.pages[0].staves.length), true);
+    } },
     { name: 'app: mensural items drawn, and changed from the keys', browser: true, unit: async app => {
-      const { w } = await app('test/pages/page2.png');
+      const { w } = await app('test/pages/mensural-print.png');
       const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
       doc.notation = 'mensural';
-      const st = { id: 'p1s1', box: [20, 40, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, 60 + 12 * k, 390, 60 + 12 * k]), syllables: [] };
+      const st = Object.assign({ id: 'p1s1', syllables: [] }, await printedStaff(0));
       doc.pages[0].staves.push(st);
       E.selected = 'p1s1';
       E.putMensural('c4 O B5 Sb6 M5 [B5 L2] rB4 B3');
@@ -646,9 +671,10 @@
       key('.'); bad.push(...same('a dot after, in the space', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3] .3'));
       key('Delete'); bad.push(...same('deleted', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3]'));
       E.undo(); bad.push(...same('undone', txt(), 'c4 O B5 M7v* M5 [B6~Mx2] [B4 B3] .3'));
-      E.selectMensural('p1s1', 6, 0); key('ArrowLeft');
-      const ms = doc.pages[0].staves[0].mensural;
-      bad.push(...same('nudged along the staff', ms[6].x < ms[5].x + 100, true));
+      E.selectMensural('p1s1', 6, 0);
+      const ms = () => doc.pages[0].staves[0].mensural, was = ms()[6].x;
+      key('ArrowLeft');
+      bad.push(...same('nudged along the staff, a little to the left', ms()[6].x < was && ms()[6].x > was - 50, true));
       bad.push(...same('the side panel says what it is', /Ligature of 2: Breve, Breve\. This note: breve on A3/.test(w.document.getElementById('chantInfo').textContent), true));
       bad.push(...same('MEI', /<ligature xml:id="m\d+" form="obliqua">/.test(E.mensuralMei().text), true));
       // played from the selected item: the player given its notes, a beat a minim; each marked as it sounds
@@ -663,11 +689,11 @@
       return bad;
     } },
     { name: 'app: mensural voices played together, each marked as it sounds; one alone', browser: true, unit: async app => {
-      const { w } = await app('test/pages/page2.png');
+      const { w } = await app('test/pages/mensural-print.png');
       const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
       doc.notation = 'mensural';
-      const staff = (id, y, t) => ({ id, box: [20, y - 20, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, y + 12 * k, 390, y + 12 * k]), syllables: [], mensural: M.parse(t) });
-      doc.pages[0].staves.push(staff('p1s1', 60, 'c1 C Sb2 Sb3 B2'), staff('p1s2', 200, 'c4 C B4 Sb5'));
+      const staff = async (id, i, t) => Object.assign({ id, syllables: [], mensural: M.parse(t) }, await printedStaff(i));
+      doc.pages[0].staves.push(await staff('p1s1', 0, 'c1 C Sb2 Sb3 B2'), await staff('p1s2', 2, 'c4 C B4 Sb5'));
       E.selected = 'p1s1';
       E.setVoice(doc.pages[0].staves[0], 'Cantus'); E.setVoice(doc.pages[0].staves[1], 'Tenor');
       bad.push(...same('the voices named on the page', [...w.document.querySelectorAll('#overlay .mvoice')].map(t => t.textContent), ['Cantus', 'Tenor']));
@@ -702,10 +728,10 @@
       return bad;
     } },
     { name: 'app: mensural music typed in, as the Measuring Polyphony editor takes it', browser: true, unit: async app => {
-      const { w } = await app('test/pages/page2.png');
+      const { w } = await app('test/pages/mensural-print.png');
       const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
       doc.notation = 'mensural';
-      doc.pages[0].staves.push({ id: 'p1s1', box: [20, 40, 380, 90], lines: [0, 1, 2, 3, 4].map(k => [30, 60 + 12 * k, 390, 60 + 12 * k]), syllables: [] });
+      doc.pages[0].staves.push(Object.assign({ id: 'p1s1', syllables: [] }, await printedStaff(0)));
       E.selected = 'p1s1';
       const key = (k, shiftKey = false) => E.key({ key: k, shiftKey, ctrlKey: false, metaKey: false, altKey: false });
       const txt = () => M.text(doc.pages[0].staves[0].mensural || []);
@@ -1487,6 +1513,13 @@
     }
     if (words) for (let x = 120; x < 880; x++) if ((x % 9) < 6) for (let y = 300; y < 312; y++) if ((x + y) % 3) ink(x, y);
     return { g, w, h };
+  }
+
+  // a staff of the made-up printed mensural page (test/pages/mensural-print.png, training/mensuralpage.py) where it
+  // is on the page: { lines (five), box }, in the page's pixels (its units)
+  async function printedStaff(i) {
+    const t = (await (await fetch('pages/mensural-print.json')).json()).staves[i], g = (t.bottom - t.top) / 4;
+    return { lines: [0, 1, 2, 3, 4].map(k => [t.left, t.top + g * k, t.right, t.top + g * k]), box: [t.left - g, t.top - 2.5 * g, t.right - t.left + 2 * g, 9 * g] };
   }
 
   // a drag with the mouse in the app's overlay, between two points in page units
