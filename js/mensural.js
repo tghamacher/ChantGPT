@@ -15,6 +15,7 @@
 //   { k: 'acc', a: 'b' | 'n' | '#', p }                    an accidental
 //   { k: 'custos', p }
 //   { k: 'bar', form: 'single' | 'double' | 'end' }
+//   { k: 'congr', p }                                      a signum congruentiae
 // A staff position p counts steps up from the bottom line (0), line by line and space by space: on five lines the
 // top line is 8, the space above it 9, the space below the bottom line -1. color: 'black' for a note blackened in
 // white notation (coloration), absent for white.
@@ -27,6 +28,7 @@
 //   [B5 L2]  [Sb6 Sb5 B7]  [L5 B3~B1]*   a ligature: its notes; ~ joins two into an oblique; * blackens it all
 //   [B5* B4* L2]       a ligature black in part: * after a note blackens that one (an oblique's two notes alike)
 //   .5  b6  n6  #6  +5  |  ||  |||       a dot, flat, natural, sharp, custos, bars
+//   S10                a signum congruentiae (where the voices meet, or a voice goes on elsewhere), at its place
 // Used for tests, for typing a staff in, and for the recognizer's labels.
 (function (global) {
   'use strict';
@@ -67,6 +69,7 @@
       else if ((m = /^\.(-?\d+)$/.exec(t))) out.push({ k: 'dot', p: +m[1] });
       else if ((m = /^([bn#])(-?\d+)$/.exec(t))) out.push({ k: 'acc', a: m[1], p: +m[2] });
       else if ((m = /^\+(-?\d+)$/.exec(t))) out.push({ k: 'custos', p: +m[1] });
+      else if ((m = /^S(-?\d+)$/.exec(t))) out.push({ k: 'congr', p: +m[1] });
       else if (/^\|{1,3}$/.test(t)) out.push({ k: 'bar', form: ['single', 'double', 'end'][t.length - 1] });
       else bad.push(`"${t}" is not mensural notation`);
     }
@@ -92,6 +95,7 @@
         case 'dot': return '.' + it.p;
         case 'acc': return it.a + it.p;
         case 'custos': return '+' + it.p;
+        case 'congr': return 'S' + it.p;
         case 'bar': return '|'.repeat({ single: 1, double: 2, end: 3 }[it.form] || 1);
         default: return '?';
       }
@@ -171,7 +175,7 @@
           bad.push(...ligRules(it.notes).bad.map(b => `${at}: ${b}`));
           if (it.notes.some((n, j) => n.obl && j + 1 < it.notes.length && blackIn(it, j) !== blackIn(it, j + 1))) bad.push(`${at}: an oblique's two notes are both black or both white.`);
           break;
-        case 'dot': case 'custos': if (!pos(it.p)) bad.push(`${at}: it needs a position.`); break;
+        case 'dot': case 'custos': case 'congr': if (!pos(it.p)) bad.push(`${at}: it needs a position.`); break;
         case 'acc': if (!['b', 'n', '#'].includes(it.a) || !pos(it.p)) bad.push(`${at}: an accidental is b, n or # at a position.`); break;
         case 'bar': if (!['single', 'double', 'end'].includes(it.form)) bad.push(`${at}: a bar is single, double or end.`); break;
         default: bad.push(`${at}: "${it.k}" is not a kind of mensural item.`);
@@ -200,7 +204,7 @@
   }
   const REST = { Mx: 'rL', L: 'rL', B: 'rB', Sb: 'rSb', M: 'rM', Sm: 'rSm', F: 'rF', Sf: 'rF' };
   // how wide each item is, in spaces (to set out items without an x, and to box them)
-  const WIDTH = { clef: 1.7, sign: 1.8, num: 1.4, note: 1.6, rest: 1.2, dot: 0.7, acc: 1.3, custos: 1.8, bar: 0.8 };
+  const WIDTH = { clef: 1.7, sign: 1.8, num: 1.4, note: 1.6, rest: 1.2, dot: 0.7, acc: 1.3, custos: 1.8, bar: 0.8, congr: 1.5 };
   const BLOCK = 1.07, OBL = 2.1, HIGH = 0.9, STEM = 3.0, PEN = 0.13;   // (a ligature's note: width, height (Serenissima's breve); an oblique's run; in spaces)
   const ligWidth = notes => notes.reduce((w, n, i) => w + (i > 0 && notes[i - 1].obl ? OBL - BLOCK : 0) + (n.v === 'Mx' ? 2 * BLOCK : BLOCK), 0);
   const widthOf = it => it.k === 'lig' ? ligWidth(it.notes) + 0.9 : it.k === 'rest' && it.v === 'Mx' ? 1.6 : WIDTH[it.k] || 1;
@@ -251,6 +255,14 @@
           box(it.p - 2, it.p + 3); break;
         case 'custos': sign('custos', it.p); box(it.p - 2, it.p + 4); break;
         case 'dot': sign('dot', it.p); box(it.p - 1, it.p + 1); break;
+        case 'congr': {
+          // (a signum congruentiae: an S drawn upright, a dot either side of its middle, its foot at its place)
+          const cx = x0 + 0.75 * s, y0 = g.y(it.p, cx), h = 2.6 * s, w2 = 0.45 * s;
+          shape(`M${f(cx + w2)} ${f(y0 - h + 0.35 * s)}C${f(cx + w2)} ${f(y0 - h - 0.1 * s)} ${f(cx - w2)} ${f(y0 - h - 0.1 * s)} ${f(cx - w2)} ${f(y0 - h + 0.55 * s)}` +
+            `C${f(cx - w2)} ${f(y0 - h / 2)} ${f(cx + w2)} ${f(y0 - h / 2)} ${f(cx + w2)} ${f(y0 - 0.55 * s)}C${f(cx + w2)} ${f(y0 + 0.1 * s)} ${f(cx - w2)} ${f(y0 + 0.1 * s)} ${f(cx - w2)} ${f(y0 - 0.35 * s)}`, false);
+          shape(circle(cx - 0.75 * s, y0 - h / 2, 0.16 * s), true); shape(circle(cx + 0.75 * s, y0 - h / 2, 0.16 * s), true);
+          box(it.p - 1, it.p + 6); break;
+        }
         case 'num': out.texts.push({ text: it.text, x: x0, y: g.y(4, x0) + 0.5 * s, size: 1.6 * s, item: i }); box(2, 6); break;
         case 'bar': {
           const n = { single: 1, double: 2, end: 3 }[it.form] || 1;
@@ -395,9 +407,30 @@
 
   // A document's mensural staves by voice (each staff's voice, as the staff menu sets it; '' for those without), each
   // voice's staves in the document's order: [{ voice, staves }], in the order the voices first appear.
+  // (on a page with voice areas, a voice's staves in the order of its areas, then down each: a voice that goes on
+  // in a second area, as at the foot of the facing page after a sign, is read after the first, wherever it stands)
+  function inArea(pts, x, y) {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  }
+  function inOrder(pg) {
+    const list = pg.staves || [], areas = pg.regions || [];
+    if (!areas.length) return list;
+    const rank = st => {
+      if (!st.box) return 0;
+      const x = st.box[0] + st.box[2] / 2, y = st.box[1] + st.box[3] / 2;
+      const k = areas.findIndex(r => r.voice && r.voice === st.voice && inArea(r.points, x, y));
+      return k < 0 ? 0 : k;
+    };
+    return list.map((st, i) => [rank(st), i, st]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(v => v[2]);
+  }
   function voices(doc) {
     const C = global.CGChant, by = new Map();
-    for (const pg of doc.pages || []) for (const st of pg.staves || []) {
+    for (const pg of doc.pages || []) for (const st of inOrder(pg)) {
       if (C.notationOf(doc, st) !== 'mensural') continue;
       const v = st.voice || '';
       if (!by.has(v)) by.set(v, []);
@@ -461,6 +494,26 @@
       }
       return beats.size ? beats : null;
     } catch (e) { return null; }
+  }
+
+  // ---------------------------------------------------------------- a voice keeps its clef
+  // Each voice's usual clef (the one most of its staves begin with, where at least three do and two in three agree),
+  // and the staves that begin with another: { clefs: Map voice → 'c4', odd: [{ staff, voice, clef, usual }] }. A
+  // voice keeps its clef through a book, as a rule (a few change it, for a high or low passage): one that doesn't is
+  // likely misread.
+  function clefsOf(doc) {
+    const clefs = new Map(), odd = [];
+    for (const { voice, staves } of voices(doc)) {
+      if (!voice) continue;
+      const first = staves.map(st => [st, (st.mensural || []).find(it => it.k === 'clef')]).filter(v => v[1]);
+      const name = it => it.shape.toLowerCase() + it.line, count = {};
+      for (const [, c] of first) count[name(c)] = (count[name(c)] || 0) + 1;
+      const [best, n] = Object.entries(count).sort((a, b) => b[1] - a[1])[0] || [];
+      if (!best || first.length < 3 || n < 2 * first.length / 3) continue;
+      clefs.set(voice, best);
+      for (const [st, c] of first) if (name(c) !== best) odd.push({ staff: st, voice, clef: name(c), usual: best });
+    }
+    return { clefs, odd };
   }
 
   // ---------------------------------------------------------------- MusicXML
@@ -645,5 +698,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
+  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, clefsOf, inArea, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -212,6 +212,24 @@
       bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
       return bad;
     } },
+    { name: 'mensural: a voice keeps its clef; one going on in a second area is read after its first; the signum', unit: () => {
+      const M = global.CGMensural, C = global.CGChant, bad = [];
+      const five = y => [0, 1, 2, 3, 4].map(k => [100, y + 10 * k, 900, y + 10 * k]);
+      const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000]] });
+      doc.notation = 'mensural';
+      const st = (id, y, voice, text) => ({ id, lines: five(y), syllables: [], voice, mensural: M.parse(text), box: [100, y, 800, 40] });
+      // the Tenor's run-on (in the second area) stands above its first staff on the page, but is read after it
+      doc.pages[0].staves = [st('run', 100, 'Tenor', 'c4 B4'), st('t1', 400, 'Tenor', 'c4 L2'), st('t2', 500, 'Tenor', 'c3 Sb5'), st('t3', 600, 'Tenor', 'c4 M3')];
+      doc.pages[0].regions = [{ id: 'a', voice: 'Tenor', points: [[0, 350], [1000, 350], [1000, 700], [0, 700]] }, { id: 'b', voice: 'Tenor', points: [[0, 50], [1000, 50], [1000, 200], [0, 200]] }];
+      bad.push(...same('the run-on read after the first area', M.voices(doc)[0].staves.map(v => v.id), ['t1', 't2', 't3', 'run']));
+      const { clefs, odd } = M.clefsOf(doc);
+      bad.push(...same('the Tenor\'s clef', clefs.get('Tenor'), 'c4'), ...same('the odd one out', odd.map(o => o.staff.id + ' ' + o.clef), ['t2 c3']));
+      const items = M.parse('c4 S10 B4');
+      bad.push(...same('a signum', items[1], { k: 'congr', p: 10 }), ...same('written back', M.text(items), 'c4 S10 B4'), ...same('right', M.check(items), []));
+      const lines = five(200), L = M.layout({ lines, mensural: items });
+      bad.push(...same('drawn: an S and two dots', L.shapes.filter(v => v.item === 1).length, 3));
+      return bad;
+    } },
     { name: 'mensural: MusicXML (modern notation, for notation programs and Serenissima Press)', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);

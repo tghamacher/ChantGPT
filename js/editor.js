@@ -427,6 +427,7 @@
       case 'dot': return `A dot, on ${name(it.p)}.`;
       case 'acc': return `${{ b: 'Flat', n: 'Natural', '#': 'Sharp' }[it.a]} on ${name(it.p)}.`;
       case 'custos': return `Custos: the next staff begins on ${name(it.p)}.`;
+      case 'congr': return 'Signum congruentiae: where the voices meet (a canon\'s entry, a hold), or where this voice goes on elsewhere (the same sign there).';
       case 'num': return `Proportion ${it.text}.`;
       case 'bar': return `Bar (${it.form}).`;
     }
@@ -1523,7 +1524,13 @@
         // (on a mensural staff: which voice it is; played alone; a new item where the pointer is, at its height)
         ...(mensural(st) ? (() => {
           const names = [...new Set(['Cantus', 'Altus', 'Tenor', 'Bassus', ...M.voices(ctx.state.doc).map(v => v.voice).filter(Boolean)])];
+          const { clefs } = M.clefsOf(ctx.state.doc), first = (st.mensural || []).find(it => it.k === 'clef');
+          const mine = first ? first.shape.toLowerCase() + first.line : null, usual = st.voice && clefs.get(st.voice);
+          const byClef = !st.voice && mine ? [...clefs].filter(([, c]) => c === mine).map(([v]) => v) : [];
           return [
+            usual && mine && usual !== mine ? { label: `Use the ${st.voice}'s clef (${usual.toUpperCase()})`, title: `This staff begins with ${mine.toUpperCase()}; the ${st.voice}'s others with ${usual.toUpperCase()}. The notes stay where they are on the staff.`,
+              run: () => { const b = snapshot(); first.shape = usual[0].toUpperCase(); first.line = +usual.slice(1); commit(b); draw(); ctx.say(`The clef is ${usual.toUpperCase()}, as the ${st.voice}'s.`); } } : null,
+            byClef.length === 1 ? { label: `The ${byClef[0]}, by its clef (${mine.toUpperCase()})`, title: `No other voice has ${mine.toUpperCase()}`, run: () => setVoice(st, byClef[0]) } : null,
             { title: `Voice${st.voice ? `: ${st.voice}` : ''}` },
             { shapes: names.map(v => ({ label: v, on: st.voice === v, title: `This staff is the ${v}`, run: () => setVoice(st, v) }))
               .concat([{ label: 'Other…', title: 'Another name (Quintus, Sextus, Superius …)', run: () => { const v = global.prompt ? global.prompt('The voice\'s name', st.voice || '') : null; if (v !== null) setVoice(st, v); } },
@@ -1537,7 +1544,7 @@
             { title: 'Add here' },
             { shapes: VALUE_KEYS.map(w => ({ label: w, title: `A ${VALUE_NAMES[w].toLowerCase()} here`, run: add({ k: 'note', v: w, p: here }) })) },
             { shapes: [['Rest', { k: 'rest', v: 'Sb', p: 4 }], ['Clef', { k: 'clef', shape: 'C', line: Math.max(1, Math.min(5, Math.round(here / 2) + 1)) }], ['Sign', { k: 'sign', sign: 'O' }],
-              ['Dot', { k: 'dot', p: here }], ['♭', { k: 'acc', a: 'b', p: here }], ['♯', { k: 'acc', a: '#', p: here }], ['Custos', { k: 'custos', p: here }], ['Bar', { k: 'bar', form: 'single' }]]
+              ['Dot', { k: 'dot', p: here }], ['♭', { k: 'acc', a: 'b', p: here }], ['♯', { k: 'acc', a: '#', p: here }], ['Custos', { k: 'custos', p: here }], ['Bar', { k: 'bar', form: 'single' }], ['Signum', { k: 'congr', p: here }]]
               .map(([lab, it]) => ({ label: lab, run: add(it) })) },
           ];
         })() : []),
@@ -2156,11 +2163,13 @@
     const el = (name, attrs, parent = svg) => { const x = document.createElementNS(SVG, name); for (const k in attrs) x.setAttribute(k, attrs[k]); parent.appendChild(x); return x; };
     el('rect', { x: 0, y: 0, width: pg.size[0], height: pg.size[1], class: 'bg' });
     // the voice areas, under the staves, each in its voice's colour with its name (the name grabs it: right-click)
+    const areaClefs = (pg.regions || []).length ? M.clefsOf(ctx.state.doc).clefs : new Map();
     if (C.notationOf(ctx.state.doc) === 'mensural' || (pg.regions || []).length) (pg.regions || []).forEach((r, k) => {
       const hue = areaHue(r.voice), xs = r.points.map(q => q[0]), ys = r.points.map(q => q[1]);
       el('polygon', { points: r.points.map(q => q.join(',')).join(' '), class: 'varea', style: `--hue:${hue}` });
       const t = el('text', { x: Math.min(...xs) + 6 * u, y: Math.min(...ys) + 16 * u, 'font-size': 14 * u, class: 'varea-name', style: `--hue:${hue}`, 'data-act': 'area', 'data-k': k });
-      t.textContent = r.voice || 'Which voice? (right-click)';
+      const same = (pg.regions || []).filter(v => v.voice && v.voice === r.voice), clef = r.voice && areaClefs.get(r.voice);
+      t.textContent = r.voice ? `${r.voice}${same.length > 1 ? ` (${same.indexOf(r) + 1})` : ''}${clef ? ` · ${clef.toUpperCase()}` : ''}` : 'Which voice? (right-click)';
     });
     if (drag && drag.act === 'area' && drag.moved) {
       const [a, b] = [drag.from, drag.to];
@@ -2246,7 +2255,7 @@
       }
     }
     // the checks' findings on this page: a mark over each place (a whole staff's at its start), to click
-    if (!fast) alerts = K.check(ctx.state.doc);
+    if (!fast) alerts = K.check(ctx.state.doc).concat(clefAlerts());
     for (const [k, a] of alerts.entries()) {
       if (a.page !== ctx.state.page) continue;
       const st = pg.staves.find(v => v.id === a.staff), it = st && a.i !== null && st.syllables[a.s] && st.syllables[a.s].items[a.i];
@@ -2389,10 +2398,18 @@
     selected = a.staff; letGo();
     const st = ctx.state.doc.pages[a.page].staves.find(v => v.id === a.staff);
     if (a.i !== null && st && st.syllables[a.s] && st.syllables[a.s].items[a.i]) item = { s: a.s, i: a.i };
+    if (a.kind === 'clef' && st && mensural(st)) { const k = (st.mensural || []).findIndex(it => it.k === 'clef'); if (k >= 0) mitem = { i: k, n: null }; }
     if (show) ctx.show(a.page); else draw();
     ctx.say(a.text, a.level === 'warn');
   }
 
+  // a mensural staff that begins with another clef than its voice's other staves: likely misread
+  function clefAlerts() {
+    const doc = ctx.state.doc, pageOf = new Map();
+    doc.pages.forEach((pg, k) => pg.staves.forEach(st => pageOf.set(st, k)));
+    return M.clefsOf(doc).odd.map(o => ({ staff: o.staff.id, page: pageOf.get(o.staff), s: null, i: null, kind: 'clef', level: 'note',
+      text: `This ${o.voice} staff begins with ${o.clef.toUpperCase()}, the ${o.voice}'s others with ${o.usual.toUpperCase()}: a voice keeps its clef, as a rule. Misread? (Right-click the staff to use the ${o.voice}'s.)` }));
+  }
   // the findings listed in the side panel, page by page
   function checkList() {
     const list = document.getElementById('checkList');
