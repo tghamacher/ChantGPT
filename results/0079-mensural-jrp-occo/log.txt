@@ -186,3 +186,32 @@ epoch 8 batch 900: loss 0.127 (2404 s)
 epoch 8 batch 1000: loss 0.126 (2418 s)
 epoch 8 batch 1100: loss 0.126 (2433 s)
 epoch 8 batch 1200: loss 0.126 (2447 s)
+epoch 8 batch 1300: loss 0.127 (2461 s)
+epoch 8 batch 1400: loss 0.127 (2475 s)
+epoch 8 batch 1500: loss 0.127 (2489 s)
+epoch 8 batch 1600: loss 0.128 (2504 s)
+epoch 8 batch 1700: loss 0.127 (2517 s)
+epoch 8 batch 1800: loss 0.128 (2531 s)
+epoch 8 batch 1900: loss 0.128 (2545 s)
+epoch 8 batch 2000: loss 0.127 (2559 s)
+epoch 8 batch 2100: loss 0.127 (2574 s)
+epoch 8 batch 2200: loss 0.126 (2588 s)
+epoch 8: loss 0.126; synthetic test staves: token errors 1.21%, note errors 1.36%; real: token errors 23.81%, note errors 23.69% (2600 s)
+
+$ recognizer.py test --model training/data/m0079/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+96 staves: token errors 12.63%, note errors 12.63%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+96 staves: token errors 12.75%, note errors 12.75%
+
+$ recognizer.py test --model training/data/m0079/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+52 staves: token errors 19.67%, note errors 19.66%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+52 staves: token errors 19.67%, note errors 19.49%
+
+$ recognizer.py test --model training/data/m0079/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 79.79%, note errors 79.57%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 78.03%, note errors 77.80%

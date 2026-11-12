@@ -1,0 +1,8 @@
+{
+ "status": "done",
+ "failed_step": null,
+ "started": "2026-11-12 10:27:30",
+ "finished": "2026-11-12 11:11:23",
+ "machine": "teds-desktop",
+ "gpu": "AMD Radeon RX 6700 XT\u0000"
+}
