@@ -332,7 +332,7 @@
   const SEMI = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
   function perform(staves, scored) {
     const stream = [];                               // the notes and rests, and what bears on them, in order
-    let tempus = false, prol = false, factor = 1, clef = null, sig = {}, next = {};
+    let tempus = false, prol = false, factor = 1, clef = null, sig = {}, next = {}, sign = null;
     for (const st of staves) {
       let afterClef = false;
       (st.mensural || []).forEach((it, i) => {
@@ -343,15 +343,15 @@
           return;
         }
         afterClef = false;
-        if (it.k === 'sign') { tempus = it.sign === 'O'; prol = !!it.dot; factor = it.stroke ? 0.5 : 1; return; }
+        if (it.k === 'sign') { tempus = it.sign === 'O'; prol = !!it.dot; factor = it.stroke ? 0.5 : 1; sign = it; return; }
         if (it.k === 'num') { const [a, b] = it.text.split('/').map(Number); factor = (b || 1) / (a || 1); return; }
         if (it.k === 'bar') { next = {}; return; }
         if (it.k === 'dot') { if (stream.length) stream[stream.length - 1].dot = true; return; }
         const add = (v, p, color, n, rest) => {
           const q = rest ? null : pitch(p, clef);
-          let midi = null;
-          if (q) { midi = 12 * (q.oct + 1) + SEMI[q.pname] + (next[p] !== undefined ? next[p] : sig[q.pname] || 0); delete next[p]; }
-          stream.push({ staff: st.id, i, n, v, midi, rest: !!rest, black: color === 'black', tempus, prol, factor });
+          let midi = null, alter = 0, key = 0;
+          if (q) { alter = next[p] !== undefined ? next[p] : sig[q.pname] || 0; key = sig[q.pname] || 0; midi = 12 * (q.oct + 1) + SEMI[q.pname] + alter; delete next[p]; }
+          stream.push({ staff: st.id, i, n, v, midi, q, alter, key, sig: Object.assign({}, sig), rest: !!rest, black: color === 'black', tempus, prol, factor, sign, lig: n !== null });
         };
         if (it.k === 'note') add(it.v, it.p, it.color, null, false);
         else if (it.k === 'rest') add(it.v, it.p, null, null, true);
@@ -385,7 +385,9 @@
       if (e.black) m *= 2 / 3;
       // (as the scoring-up tool reckons it, where it has: scored, by staff, item and ligature note)
       const k = `${e.staff}:${e.i}:${e.n === null ? '' : e.n}`, beats = scored && scored.has(k) ? scored.get(k) : m * e.factor;
-      const out = { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats, at: t };
+      const out = { staff: e.staff, i: e.i, n: e.n, midi: e.midi, beats, at: t,
+        // (for writing it out in modern notation: its pitch and accidental, the signature, its mensuration, how it was written)
+        q: e.q, alter: e.alter, key: e.key, sig: e.sig, rest: e.rest, black: e.black, tempus: e.tempus, prol: e.prol, factor: e.factor, sign: e.sign, lig: e.lig, v: e.v };
       t += out.beats;
       return out;
     });
@@ -461,6 +463,118 @@
     } catch (e) { return null; }
   }
 
+  // ---------------------------------------------------------------- MusicXML
+  // A document's mensural staves transcribed into modern notation, as MusicXML (Finale, Sibelius, MuseScore, Dorico;
+  // Serenissima Press sets it back in mensural notation): a part for each voice (as voices()), the values kept as
+  // the sources write them, a semibreve a whole note (the editions' usual 1:1, which Serenissima Press reads back
+  // as written), barred by the breve of the first voice's mensuration (C 2/1, C| 2/1 cut, O 3/1, C. 6/2, O. 9/2), a
+  // note across a barline tied; each note's length as the scoring-up tool reckons it (else perform's reading), so
+  // perfection, imperfection, alteration and dots are written out; black notes (coloration) as triplets; ligatures
+  // marked with brackets above the staff, as modern editions mark them. Pitches and accidentals as perform hears
+  // them (a flat after the clef a signature). The modern clef by each voice's range.
+  function musicxml(doc, opts = {}) {
+    const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const scored = opts.scored !== undefined ? opts.scored : scoredBeats(doc);
+    const groups = voices(doc).filter(v => v.staves.some(st => (st.mensural || []).length));
+    if (!groups.length) return null;
+    const PER_MINIM = 48;                                       // (divisions: 24 to the quarter note, a minim a half note)
+    const TYPES = [['maxima', 768], ['long', 384], ['breve', 192], ['whole', 96], ['half', 48], ['quarter', 24], ['eighth', 12], ['16th', 6], ['32nd', 3]];
+    // a length (in divisions) as written notes: [{ type, dots, tuplet, d }], tied when more than one
+    const spell = d => {
+      for (const [t, v] of TYPES) {
+        if (d === v) return [{ type: t, dots: 0, d }];
+        if (d === v * 1.5) return [{ type: t, dots: 1, d }];
+        if (d === v * 1.75) return [{ type: t, dots: 2, d }];
+        if (d === v * 2 / 3) return [{ type: t, dots: 0, tuplet: true, d }];
+      }
+      for (const [t, v] of TYPES) if (v <= d) return [{ type: t, dots: 0, d: v }, ...spell(d - v)];
+      for (const [t, v] of TYPES) if (v * 2 / 3 <= d && Number.isInteger(v * 2 / 3)) return [{ type: t, dots: 0, tuplet: true, d: v * 2 / 3 }, ...spell(d - v * 2 / 3)];
+      return d > 0 ? [{ type: '32nd', dots: 0, d }] : [];
+    };
+    const parts = groups.map((g, k) => {
+      const evs = perform(g.staves, scored).map(e => Object.assign(e, { d: Math.max(1, Math.round(e.beats / (e.factor || 1) * PER_MINIM)) }));
+      const name = g.voice || (groups.filter(x => !x.voice).length > 1 || groups.length > 1 ? `Voice ${k + 1}` : 'Voice');
+      return { name, evs };
+    });
+    const first = (parts.find(p => p.evs.length) || parts[0]).evs[0] || {};
+    const tempus = !!first.tempus, prol = !!first.prol, sign = first.sign;
+    const measure = (tempus ? 3 : 2) * (prol ? 3 : 2) * PER_MINIM;
+    const time = prol ? `<time><beats>${tempus ? 9 : 6}</beats><beat-type>2</beat-type></time>`
+      : `<time${sign && sign.stroke && !tempus ? ' symbol="cut"' : ''}><beats>${tempus ? 3 : 2}</beats><beat-type>1</beat-type></time>`;
+    const FLATS = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+    const out = parts.map((pt, pi) => {
+      const notes = pt.evs.filter(e => !e.rest && e.q);
+      const mean = notes.length ? notes.reduce((t, e) => t + e.midi, 0) / notes.length : 60;
+      const clef = mean >= 64 ? '<clef><sign>G</sign><line>2</line></clef>' : mean >= 53 ? '<clef><sign>G</sign><line>2</line><clef-octave-change>-1</clef-octave-change></clef>' : '<clef><sign>F</sign><line>4</line></clef>';
+      const sig = (pt.evs.find(e => e.sig) || {}).sig || {};
+      let fifths = 0;
+      while (fifths < 7 && sig[FLATS[fifths].toLowerCase()] === -1) fifths++;
+      const keyAlter = ln => FLATS.slice(0, fifths).includes(ln) ? -1 : 0;
+      const measures = [];
+      let cur = [], pos = 0, tupletOpen = false;
+      const close = () => { if (tupletOpen && cur.length) { cur[cur.length - 1] = cur[cur.length - 1].replace('<!--tup-->', '<tuplet type="stop"/>'); tupletOpen = false; } measures.push(cur); cur = []; pos = 0; };
+      pt.evs.forEach((e, k) => {
+        const ligStart = e.lig && e.n === 0, nx = pt.evs[k + 1], ligEnd = e.lig && !(nx && nx.lig && nx.staff === e.staff && nx.i === e.i);
+        if (ligStart) cur.push('<direction placement="above"><direction-type><bracket type="start" number="1" line-end="down" line-type="solid"/></direction-type></direction>');
+        let left = e.d, firstPiece = true;
+        while (left > 0) {
+          const take = Math.min(left, measure - pos);
+          const pieces = spell(take);
+          pieces.forEach((pc, j) => {
+            const last = left - take === 0 && j === pieces.length - 1, tieStart = !e.rest && !last, tieStop = !e.rest && !firstPiece;
+            let x = '<note>';
+            if (e.rest) x += take === measure && pieces.length === 1 ? '<rest measure="yes"/>' : '<rest/>';
+            else x += `<pitch><step>${e.q.pname.toUpperCase()}</step>${e.alter ? `<alter>${e.alter}</alter>` : ''}<octave>${e.q.oct}</octave></pitch>`;
+            x += `<duration>${pc.d}</duration>`;
+            if (tieStop) x += '<tie type="stop"/>';
+            if (tieStart) x += '<tie type="start"/>';
+            x += `<voice>1</voice><type>${pc.type}</type>${'<dot/>'.repeat(pc.dots)}`;
+            if (!e.rest && firstPiece && e.alter !== keyAlter(e.q.pname.toUpperCase())) x += `<accidental>${{ '-1': 'flat', '1': 'sharp', '0': 'natural' }[String(e.alter)]}</accidental>`;
+            if (pc.tuplet) x += '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>';
+            const nots = [];
+            if (tieStop) nots.push('<tied type="stop"/>');
+            if (tieStart) nots.push('<tied type="start"/>');
+            if (pc.tuplet && !tupletOpen) { nots.push('<tuplet type="start" bracket="yes"/>'); tupletOpen = true; }
+            if (pc.tuplet) nots.push('<!--tup-->');
+            if (!pc.tuplet && tupletOpen) { const at = cur.length - 1; cur[at] = cur[at].replace('<!--tup-->', '<tuplet type="stop"/>'); tupletOpen = false; }
+            x += (nots.length ? `<notations>${nots.join('')}</notations>` : '') + '</note>';
+            cur.push(x);
+            firstPiece = false;
+          });
+          left -= take; pos += take;
+          if (pos >= measure) close();
+        }
+        if (ligEnd) cur.push('<direction placement="above"><direction-type><bracket type="stop" number="1" line-end="down"/></direction-type></direction>');
+      });
+      if (cur.length) {
+        if (pos < measure && pos > 0) for (const pc of spell(measure - pos)) cur.push(`<note><rest/><duration>${pc.d}</duration><voice>1</voice><type>${pc.type}</type>${'<dot/>'.repeat(pc.dots)}</note>`);
+        close();
+      }
+      return { pt, measures, clef, fifths, id: `P${pi + 1}` };
+    });
+    const count = Math.max(1, ...out.map(o => o.measures.length));
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8" standalone="no"?>',
+      '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">',
+      '<score-partwise version="4.0">',
+      `<work><work-title>${esc(opts.title || (doc.source && doc.source.name) || 'Mensural music')}</work-title></work>`,
+      `<identification><encoding><software>ChantGPT (mensural notation read from the page, transcribed)</software></encoding></identification>`,
+      '<part-list>' + out.map(o => `<score-part id="${o.id}"><part-name>${esc(o.pt.name)}</part-name></score-part>`).join('') + '</part-list>',
+    ];
+    for (const o of out) {
+      xml.push(`<part id="${o.id}">`);
+      for (let m = 0; m < count; m++) {
+        const body = o.measures[m] ? o.measures[m].join('').replace(/<!--tup-->/g, '') : `<note><rest measure="yes"/><duration>${measure}</duration><voice>1</voice></note>`;
+        const attrs = m === 0 ? `<attributes><divisions>24</divisions><key><fifths>${-o.fifths}</fifths></key>${time}${o.clef}</attributes>` : '';
+        const end = m === count - 1 ? '<barline location="right"><bar-style>light-heavy</bar-style></barline>' : '';
+        xml.push(`<measure number="${m + 1}">${attrs}${body}${end}</measure>`);
+      }
+      xml.push('</part>');
+    }
+    xml.push('</score-partwise>');
+    return xml.join('\n');
+  }
+
   // ---------------------------------------------------------------- MEI
   // A document's mensural staves as MEI (mensural, white notation): a part for each voice (staves without one, a part
   // of their own), its staves one after another, a system break between them, each with its facsimile zone. Pitches
@@ -531,5 +645,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, ligOf, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
+  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);

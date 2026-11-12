@@ -452,6 +452,14 @@
     return true;
   }
   // the document's mensural staves as MEI
+  function mensuralMusicXml() {
+    const doc = ctx.state.doc;
+    if (!C.staves(doc).some(st => mensural(st) && (st.mensural || []).length)) { ctx.say('No mensural staff has anything on it yet.', true); return null; }
+    const base = (doc.source.name || 'mensural').replace(/\.[^.]+$/, '').replace(/ \(.*$/, '');
+    const unnamed = M.voices(doc).filter(v => !v.voice && v.staves.some(st => (st.mensural || []).length)).length;
+    if (unnamed && M.voices(doc).some(v => v.voice)) ctx.say('Some mensural staves have no voice named: they are written as a part of their own (right-click a staff to say which voice it is).');
+    return { name: `${base}.musicxml`, text: M.musicxml(doc, { title: base }) };
+  }
   function mensuralMei() {
     const doc = ctx.state.doc;
     if (!C.staves(doc).some(st => mensural(st) && (st.mensural || []).length)) { ctx.say('No mensural staff has anything on it yet.', true); return null; }
@@ -2113,6 +2121,9 @@
     set('readText', doc === 'chant' || chantStaves);
     set('acceptStaff', doc === 'chant' || chantStaves);
     set('beginsRow', !st || !mensural(st));
+    const anyMens = C.staves(ctx.state.doc).some(v => mensural(v)), anyChant = C.staves(ctx.state.doc).some(v => !mensural(v));
+    set('mensExport', doc === 'mensural' || anyMens); set('mensExportHint', doc === 'mensural' || anyMens);
+    set('chantExport', doc === 'chant' || anyChant);
   }
   // the side panel: how many staves, and the selected one's measurements
   function info() {
@@ -2269,7 +2280,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, key, setNotation, toggleNotation, putMensural, mensuralMei, mensuralMusicXml, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

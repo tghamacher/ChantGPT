@@ -371,6 +371,29 @@
   for (const id of ['sylText', 'sylDipl']) $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); } });
   // mensural: a staff typed in; the document's mensural staves as MEI
   $('putMens').addEventListener('click', () => E.putMensural($('mensText').value));
+  // the mensural staves in modern notation (MusicXML), and set by Serenissima Press: on the same site, the page there is
+  // given the file at a blob: address of this page's (one site can read another's blob: while this tab is open); from
+  // elsewhere (a copy run locally) the file is saved, to open there by hand
+  const SERENISSIMA = 'https://tghamacher.github.io/serenissima-press/';
+  $('downloadMusicXml').addEventListener('click', () => {
+    const r = E.mensuralMusicXml();
+    if (r) { download(new Blob([r.text], { type: 'application/vnd.recordare.musicxml+xml' }), r.name); say(`Saved as ${r.name}: open it in MuseScore, Finale, Sibelius or Dorico, or in Serenissima Press.`); }
+  });
+  $('openSerenissima').addEventListener('click', () => {
+    const r = E.mensuralMusicXml();
+    if (!r) return;
+    const blob = new Blob([r.text], { type: 'application/xml' });
+    if (location.origin === new URL(SERENISSIMA).origin) {
+      const url = URL.createObjectURL(blob);
+      setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+      window.open(`${SERENISSIMA}?score=${encodeURIComponent(url)}&format=choirbook&style=manuscript`, '_blank', 'noopener');
+      say('Opened in Serenissima Press (a new tab): a manuscript choirbook to start with; choose partbooks or a printed style there.');
+    } else {
+      download(blob, r.name);
+      window.open(SERENISSIMA, '_blank', 'noopener');
+      say(`Saved as ${r.name}: in Serenissima Press (a new tab), choose it with Add a piece.`);
+    }
+  });
   $('downloadMensMei').addEventListener('click', () => {
     const r = E.mensuralMei();
     if (r) { download(new Blob([r.text], { type: 'application/xml' }), r.name); say(`Saved as ${r.name}.`); }

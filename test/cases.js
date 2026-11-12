@@ -212,6 +212,33 @@
       bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
       return bad;
     } },
+    { name: 'mensural: MusicXML (modern notation, for notation programs and Serenissima Press)', unit: () => {
+      const M = global.CGMensural, C = global.CGChant, bad = [];
+      const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
+      const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000]] });
+      doc.notation = 'mensural';
+      doc.pages[0].staves = [
+        { id: 'a', lines, syllables: [], voice: 'Cantus', mensural: M.parse('c1 b6 O B4 Sb5 Sb6 [B5 L2] Sb3* Sb4* Sb5* |||') },
+        { id: 'b', lines, syllables: [], voice: 'Tenor', mensural: M.parse('c4 O L2 rB4 B3') }];
+      const x = M.musicxml(doc, { scored: null, title: 'm' });
+      const parts = x.split('<part id=').slice(1);
+      bad.push(...same('two parts', parts.length, 2), ...same('named', /<part-name>Cantus<\/part-name>.*<part-name>Tenor<\/part-name>/.test(x), true));
+      bad.push(...same('O: three semibreves (whole notes) a bar', /<time><beats>3<\/beats><beat-type>1<\/beat-type><\/time>/.test(x), true));
+      bad.push(...same('the flat after the clef a signature', /<fifths>-1<\/fifths>/.test(x), true));
+      // every bar of every part full: three semibreves, 288 divisions
+      for (const pt of parts) for (const m of pt.split('<measure').slice(1)) {
+        const d = [...m.matchAll(/<duration>(\d+)<\/duration>/g)].reduce((t, v) => t + +v[1], 0);
+        if (d !== 288) bad.push(`A bar of ${d} divisions, not 288: ${m.slice(0, 120)}`);
+      }
+      bad.push(...same('the same bars in each', parts.map(p => p.split('<measure').length), [parts[0].split('<measure').length, parts[0].split('<measure').length]));
+      // B (perfect, three semibreves), Sb, Sb altered (a breve's length): a dotted breve, a whole, a breve
+      const cantus = [...parts[0].matchAll(/<type>(\w+)<\/type>((?:<dot\/>)*)/g)].map(v => v[1] + (v[2] ? '.' : ''));
+      bad.push(...same('perfection and alteration', cantus.slice(0, 3), ['breve.', 'whole', 'breve']));
+      bad.push(...same('black semibreves as triplets', (parts[0].match(/<actual-notes>3<\/actual-notes>/g) || []).length, 3));
+      bad.push(...same('the ligature bracketed', /bracket type="start"[^>]*>[\s\S]*bracket type="stop"/.test(parts[0]), true));
+      bad.push(...same('the long across the bar tied', /<tie type="start"\/>/.test(parts[1]), true));
+      return bad;
+    } },
     { name: 'mensural: drawn along the staff, and MEI', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
