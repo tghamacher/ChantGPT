@@ -417,3 +417,70 @@ epoch 4 batch 1900: loss 0.160 (1277 s)
 epoch 4 batch 2000: loss 0.160 (1291 s)
 epoch 4 batch 2100: loss 0.159 (1306 s)
 epoch 4 batch 2200: loss 0.160 (1320 s)
+epoch 4: loss 0.160; synthetic test staves: token errors 1.20%, note errors 1.35%; real: token errors 21.68%, note errors 21.60% (1333 s)
+epoch 5 batch 0: loss 0.073 (1333 s)
+epoch 5 batch 100: loss 0.166 (1347 s)
+epoch 5 batch 200: loss 0.155 (1362 s)
+epoch 5 batch 300: loss 0.151 (1376 s)
+epoch 5 batch 400: loss 0.152 (1391 s)
+epoch 5 batch 500: loss 0.156 (1405 s)
+epoch 5 batch 600: loss 0.156 (1419 s)
+epoch 5 batch 700: loss 0.156 (1434 s)
+epoch 5 batch 800: loss 0.154 (1448 s)
+epoch 5 batch 900: loss 0.156 (1462 s)
+epoch 5 batch 1000: loss 0.157 (1476 s)
+epoch 5 batch 1100: loss 0.154 (1491 s)
+epoch 5 batch 1200: loss 0.155 (1504 s)
+epoch 5 batch 1300: loss 0.153 (1519 s)
+epoch 5 batch 1400: loss 0.154 (1533 s)
+epoch 5 batch 1500: loss 0.154 (1547 s)
+epoch 5 batch 1600: loss 0.153 (1561 s)
+epoch 5 batch 1700: loss 0.152 (1575 s)
+epoch 5 batch 1800: loss 0.153 (1589 s)
+epoch 5 batch 1900: loss 0.153 (1604 s)
+epoch 5 batch 2000: loss 0.153 (1618 s)
+epoch 5 batch 2100: loss 0.152 (1632 s)
+epoch 5 batch 2200: loss 0.152 (1646 s)
+epoch 5: loss 0.153; synthetic test staves: token errors 1.27%, note errors 1.42%; real: token errors 21.55%, note errors 21.45% (1659 s)
+epoch 6 batch 0: loss 0.030 (1659 s)
+epoch 6 batch 100: loss 0.137 (1674 s)
+epoch 6 batch 200: loss 0.145 (1688 s)
+epoch 6 batch 300: loss 0.140 (1703 s)
+epoch 6 batch 400: loss 0.142 (1716 s)
+epoch 6 batch 500: loss 0.139 (1730 s)
+epoch 6 batch 600: loss 0.140 (1744 s)
+epoch 6 batch 700: loss 0.144 (1758 s)
+epoch 6 batch 800: loss 0.144 (1772 s)
+epoch 6 batch 900: loss 0.146 (1786 s)
+epoch 6 batch 1000: loss 0.145 (1800 s)
+epoch 6 batch 1100: loss 0.145 (1814 s)
+epoch 6 batch 1200: loss 0.145 (1829 s)
+epoch 6 batch 1300: loss 0.147 (1843 s)
+epoch 6 batch 1400: loss 0.146 (1857 s)
+epoch 6 batch 1500: loss 0.145 (1871 s)
+epoch 6 batch 1600: loss 0.145 (1886 s)
+epoch 6 batch 1700: loss 0.146 (1900 s)
+epoch 6 batch 1800: loss 0.145 (1914 s)
+epoch 6 batch 1900: loss 0.146 (1928 s)
+epoch 6 batch 2000: loss 0.146 (1942 s)
+epoch 6 batch 2100: loss 0.146 (1957 s)
+epoch 6 batch 2200: loss 0.146 (1972 s)
+epoch 6: loss 0.147; synthetic test staves: token errors 1.24%, note errors 1.39%; real: token errors 21.62%, note errors 21.50% (1984 s)
+
+$ recognizer.py test --model training/data/m0080/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+134 staves: token errors 13.56%, note errors 13.56%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/occo --real-labels labels.jsonl --held 10
+133 staves: token errors 10.55%, note errors 10.55%
+
+$ recognizer.py test --model training/data/m0080/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+52 staves: token errors 20.10%, note errors 19.84%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+52 staves: token errors 19.67%, note errors 19.49%
+
+$ recognizer.py test --model training/data/m0080/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 77.15%, note errors 76.91%
+
+$ recognizer.py test --model training/data/m0076/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 78.03%, note errors 77.80%
