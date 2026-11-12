@@ -9,7 +9,8 @@
 //   { k: 'num', text }                                     a proportion's figures (3, 3/2)
 //   { k: 'note', v, p, color, stem }                       v: Mx L B Sb M Sm F Sf; p: the staff position; stem: 'up' | 'down'
 //   { k: 'rest', v, p }                                    (a longa rest: perfect, with perf: true)
-//   { k: 'lig', notes: [{ v, p, obl }], color }            a ligature; obl: this note and the next drawn as one oblique
+//   { k: 'lig', notes: [{ v, p, obl, color }], color }     a ligature; obl: this note and the next drawn as one oblique;
+//                                                          color on the ligature: all of it black; on a note: that one
 //   { k: 'dot', p }                                        a dot (of addition, or of division)
 //   { k: 'acc', a: 'b' | 'n' | '#', p }                    an accidental
 //   { k: 'custos', p }
@@ -24,6 +25,7 @@
 //   M5v L2^            a stem turned down, or up (minims and smaller go up, longae and maximae down, unless said)
 //   rB4 rL3 rLp3       rests (rLp: a perfect longa rest)
 //   [B5 L2]  [Sb6 Sb5 B7]  [L5 B3~B1]*   a ligature: its notes; ~ joins two into an oblique; * blackens it all
+//   [B5* B4* L2]       a ligature black in part: * after a note blackens that one (an oblique's two notes alike)
 //   .5  b6  n6  #6  +5  |  ||  |||       a dot, flat, natural, sharp, custos, bars
 // Used for tests, for typing a staff in, and for the recognizer's labels.
 (function (global) {
@@ -34,7 +36,7 @@
 
   // ---------------------------------------------------------------- the text form
   const VAL = '(Mx|Sb|Sm|Sf|L|B|M|F)';
-  const NOTE = new RegExp(`^${VAL}(-?\\d+)$`);
+  const NOTE = new RegExp(`^${VAL}(-?\\d+)(\\*?)$`);
   function parse(text) {
     const out = [], bad = [];
     const toks = String(text).replace(/\[/g, ' [ ').replace(/\](\*?)/g, ' ]$1 ').trim().split(/\s+/).filter(Boolean);
@@ -49,12 +51,12 @@
           parts.forEach((q, k) => {
             const n = NOTE.exec(q);
             if (!n) { bad.push(`"${q}" in a ligature is not a note (B5, L2, Sb6 …)`); return; }
-            notes.push(Object.assign({ v: n[1], p: +n[2] }, k < parts.length - 1 ? { obl: true } : {}));
+            notes.push(Object.assign({ v: n[1], p: +n[2] }, k < parts.length - 1 ? { obl: true } : {}, n[3] ? { color: 'black' } : {}));
           });
         }
         if (j >= toks.length) { bad.push('A ligature "[" is not closed by "]"'); break; }
         if (notes.length < 2) bad.push('A ligature has two notes or more');
-        out.push(Object.assign({ k: 'lig', notes }, toks[j] === ']*' ? { color: 'black' } : {}));
+        out.push(ligOf(notes, toks[j] === ']*'));
         i = j;
       }
       else if ((m = /^([cfg])([1-5])$/.exec(t))) out.push({ k: 'clef', shape: m[1].toUpperCase(), line: +m[2] });
@@ -71,6 +73,13 @@
     if (bad.length) throw new Error(bad.join('; ') + '.');
     return out;
   }
+  // a ligature's item, its colour said once: on the ligature when all of it is black, else on its black notes
+  function ligOf(notes, allBlack) {
+    const black = allBlack || (notes.length && notes.every(n => n.color === 'black'));
+    const ns = notes.map(n => { const c = Object.assign({}, n); if (black || c.color !== 'black') delete c.color; return c; });
+    return Object.assign({ k: 'lig', notes: ns }, black ? { color: 'black' } : {});
+  }
+  const blackIn = (it, i) => it.color === 'black' || it.notes[i].color === 'black';
   function text(items) {
     return items.map(it => {
       switch (it.k) {
@@ -79,7 +88,7 @@
         case 'num': return it.text;
         case 'note': return it.v + it.p + (it.stem ? (it.stem === 'down' ? 'v' : '^') : '') + (it.color === 'black' ? '*' : '');
         case 'rest': return 'r' + it.v + (it.perf ? 'p' : '') + it.p;
-        case 'lig': return '[' + it.notes.map((n, i) => n.v + n.p + (n.obl && i < it.notes.length - 1 ? '~' : ' ')).join('').trim() + ']' + (it.color === 'black' ? '*' : '');
+        case 'lig': return '[' + it.notes.map((n, i) => n.v + n.p + (it.color !== 'black' && n.color === 'black' ? '*' : '') + (n.obl && i < it.notes.length - 1 ? '~' : ' ')).join('').trim() + ']' + (it.color === 'black' ? '*' : '');
         case 'dot': return '.' + it.p;
         case 'acc': return it.a + it.p;
         case 'custos': return '+' + it.p;
@@ -160,6 +169,7 @@
           if (!Array.isArray(it.notes)) { bad.push(`${at}: a ligature has notes.`); break; }
           if (it.notes.some(n => !pos(n.p))) bad.push(`${at}: a ligature's notes have positions.`);
           bad.push(...ligRules(it.notes).bad.map(b => `${at}: ${b}`));
+          if (it.notes.some((n, j) => n.obl && j + 1 < it.notes.length && blackIn(it, j) !== blackIn(it, j + 1))) bad.push(`${at}: an oblique's two notes are both black or both white.`);
           break;
         case 'dot': case 'custos': if (!pos(it.p)) bad.push(`${at}: it needs a position.`); break;
         case 'acc': if (!['b', 'n', '#'].includes(it.a) || !pos(it.p)) bad.push(`${at}: an accidental is b, n or # at a position.`); break;
@@ -275,7 +285,7 @@
   // stroke from one pitch to the next; an oblique, one slanting block from one note to the next; its stems by the
   // rules (ligRules). White notes are outlined; black (coloured) ones filled.
   function ligature(it, x0, g, s, shape) {
-    const notes = it.notes, black = it.color === 'black', h = HIGH * s / 2, { stems } = ligRules(notes);
+    const notes = it.notes, black = i => blackIn(it, i), h = HIGH * s / 2, { stems } = ligRules(notes);
     const cells = [];                                          // each note's [left, right] along the staff
     let x = x0;
     for (let i = 0; i < notes.length; i++) {
@@ -288,10 +298,10 @@
       if (i > 0 && notes[i - 1].obl) continue;               // (drawn with the note before, as one)
       if (notes[i].obl && i + 1 < notes.length) {
         const a = cells[i][0], b = cells[i + 1][1];
-        shape(`M${f(a)} ${f(y(i, a) - h)}L${f(b)} ${f(y(i + 1, b) - h)}L${f(b)} ${f(y(i + 1, b) + h)}L${f(a)} ${f(y(i, a) + h)}Z`, black ? true : 'outline');
+        shape(`M${f(a)} ${f(y(i, a) - h)}L${f(b)} ${f(y(i + 1, b) - h)}L${f(b)} ${f(y(i + 1, b) + h)}L${f(a)} ${f(y(i, a) + h)}Z`, black(i) ? true : 'outline');
       } else {
         const [a, b] = cells[i];
-        shape(`M${f(a)} ${f(y(i, a) - h)}L${f(b)} ${f(y(i, b) - h)}L${f(b)} ${f(y(i, b) + h)}L${f(a)} ${f(y(i, a) + h)}Z`, black ? true : 'outline');
+        shape(`M${f(a)} ${f(y(i, a) - h)}L${f(b)} ${f(y(i, b) - h)}L${f(b)} ${f(y(i, b) + h)}L${f(a)} ${f(y(i, a) + h)}Z`, black(i) ? true : 'outline');
       }
     }
     // the strokes between square neighbours at different pitches, where one ends and the next begins
@@ -345,7 +355,7 @@
         };
         if (it.k === 'note') add(it.v, it.p, it.color, null, false);
         else if (it.k === 'rest') add(it.v, it.p, null, null, true);
-        else if (it.k === 'lig') it.notes.forEach((nt, k) => add(nt.v, nt.p, it.color, k, false));
+        else if (it.k === 'lig') it.notes.forEach((nt, k) => add(nt.v, nt.p, blackIn(it, k) ? 'black' : null, k, false));
       });
     }
     // each one's value in minims, as its mensuration makes it
@@ -492,7 +502,7 @@
             case 'rest': body.push(`<rest xml:id="${idOf(st, ix)}" dur="${MEI_DUR[it.v]}" loc="${it.p}"${it.v === 'L' && it.perf ? ' dur.quality="perfecta"' : ''}/>`); break;
             case 'lig': {
               const lid = id();
-              const notes = it.notes.map((nt, i) => `<note xml:id="${idOf(st, ix, i)}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${it.color === 'black' ? ' colored="true"' : ''}/>`);
+              const notes = it.notes.map((nt, i) => `<note xml:id="${idOf(st, ix, i)}" dur="${MEI_DUR[nt.v]}"${at(nt.p)}${nt.obl || (i > 0 && it.notes[i - 1].obl) ? ' lig="obliqua"' : ''}${blackIn(it, i) ? ' colored="true"' : ''}/>`);
               body.push(`<ligature xml:id="${lid}" form="${it.notes.every(nt => !nt.obl) ? 'recta' : 'obliqua'}">${notes.join('')}</ligature>`);
               break;
             }
@@ -521,5 +531,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
+  global.CGMensural = { VALUES, parse, text, ligOf, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);

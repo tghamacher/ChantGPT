@@ -203,10 +203,12 @@ def staves(items, rng):
             vals = [n.get('v') for n in ns]
             if good: good = all(v in ('Mx', 'L', 'B', 'Sb') for v in vals) and ('Sb' not in vals or (vals[0] == vals[1] == 'Sb' and 'Sb' not in vals[2:]))
             black = {bool(n.get('black')) for n in ns}
-            if good and len(black) == 1:
-                notes = [{'v': n['v'], 'p': n['dia'] + base} for n in ns]
+            if good:
+                notes = [dict({'v': n['v'], 'p': n['dia'] + base}, **({'color': 'black'} if n.get('black') and len(black) > 1 else {})) for n in ns]
                 if notes[-1]['v'] == 'B' and notes[-1]['p'] < notes[-2]['p'] and not (len(notes) == 2 and notes[0]['v'] == 'Sb'): notes[-2]['obl'] = True
                 if notes[-1]['v'] == 'B' and notes[-1]['p'] > notes[-2]['p'] and notes[0]['v'] == 'Sb' and len(notes) == 2: pass
+                if any(n.get('obl') and n.get('color') != m.get('color') for n, m in zip(notes, notes[1:])):
+                    music.append({'k': 'bad'}); continue           # (an oblique half black: not as CGMensural writes it)
                 lg = {'k': 'lig', 'notes': notes}
                 if black == {True}: lg['color'] = 'black'
                 music.append(lg)

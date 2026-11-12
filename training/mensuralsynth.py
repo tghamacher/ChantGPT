@@ -6,7 +6,7 @@ Rotem's EMS_Serenissima, from js/serenissima.js; ligatures as shapes, their stem
 straightened five-line staff as fivestaves.py cuts them: 64 rows, 8 to a space, the top line at row 14. Ruled red
 (a choirbook) or black (a print), in ink and on paper of many shades, blurred and specked, with words under it.
 
-The label is the staff in CGMensural's text form (js/mensural.js): c4 O B5 Sb6 [B5 L2] [B5~B3]* rB4 .5 b6 +5 |
+The label is the staff in CGMensural's text form (js/mensural.js): c4 O B5 Sb6 [B5 L2] [B5~B3]* [L5 B3*~B1*] rB4 .5 b6 +5 |
 
     python -I training/mensuralsynth.py --text breviarium.txt --count 20000 [--out training/data/mens] [--seed 1]
 
@@ -51,7 +51,8 @@ def text(items):
         if k == 'rest': return 'r' + it['v'] + ('p' if it.get('perf') else '') + str(it['p'])
         if k == 'lig':
             ns = it['notes']
-            return '[' + ''.join(n['v'] + str(n['p']) + ('~' if n.get('obl') and i < len(ns) - 1 else ' ') for i, n in enumerate(ns)).strip() + ']' + ('*' if it.get('color') == 'black' else '')
+            whole = it.get('color') == 'black'
+            return '[' + ''.join(n['v'] + str(n['p']) + ('*' if not whole and n.get('color') == 'black' else '') + ('~' if n.get('obl') and i < len(ns) - 1 else ' ') for i, n in enumerate(ns)).strip() + ']' + ('*' if whole else '')
         if k == 'dot': return '.' + str(it['p'])
         if k == 'acc': return it['a'] + str(it['p'])
         if k == 'custos': return '+' + str(it['p'])
@@ -138,7 +139,14 @@ def compose(rng, length):
             continue
         if r < 0.14:
             lig = make_lig(rng, p, lo + 1, hi - 1)
-            if rng.random() < 0.08: lig['color'] = 'black'
+            r2 = rng.random()
+            if r2 < 0.08: lig['color'] = 'black'
+            elif r2 < 0.13:                                  # (black in part: a run of its notes, an oblique's two alike)
+                ns = lig['notes']; a = rng.randrange(len(ns)); b = rng.randrange(a, len(ns))
+                while a > 0 and ns[a - 1].get('obl'): a -= 1
+                while b < len(ns) - 1 and ns[b].get('obl'): b += 1
+                if b - a + 1 < len(ns):
+                    for n in ns[a:b + 1]: n['color'] = 'black'
             items.append(lig); p = lig['notes'][-1]['p']
             continue
         if r < 0.17:
@@ -265,21 +273,22 @@ def draw_staff(items, rng, sg, words, style):
 
 def ligature(it, x0, y, sp, d, lw):
     """As js/mensural.js draws one: blocks at their pitches, joined; an oblique one slanting block; stems by the rules."""
-    notes, black, h = it['notes'], it.get('color') == 'black', HIGH * sp / 2
+    notes, h = it['notes'], HIGH * sp / 2
+    black_at = lambda i: it.get('color') == 'black' or notes[i].get('color') == 'black'
     cells, x = [], x0
     for i, n in enumerate(notes):
         if i > 0 and notes[i - 1].get('obl'):
             cells.append((cells[i - 1][0] + (OBL - BLOCK) * sp, cells[i - 1][0] + OBL * sp)); x = cells[i][1]; continue
         w = (2 * BLOCK if n['v'] == 'Mx' else BLOCK) * sp
         cells.append((x, x + w)); x += w
-    def quad(a, ya, b, yb):
+    def quad(a, ya, b, yb, black):
         pts = [(a, ya - h), (b, yb - h), (b, yb + h), (a, ya + h)]
         if black: d.polygon(pts, fill=255)
         else: d.line(pts + [pts[0]], fill=255, width=max(1, int(lw * 1.4)))
     for i, n in enumerate(notes):
         if i > 0 and notes[i - 1].get('obl'): continue
-        if n.get('obl') and i + 1 < len(notes): quad(cells[i][0], y(n['p']), cells[i + 1][1], y(notes[i + 1]['p']))
-        else: quad(cells[i][0], y(n['p']), cells[i][1], y(n['p']))
+        if n.get('obl') and i + 1 < len(notes): quad(cells[i][0], y(n['p']), cells[i + 1][1], y(notes[i + 1]['p']), black_at(i))
+        else: quad(cells[i][0], y(n['p']), cells[i][1], y(n['p']), black_at(i))
     for i in range(len(notes) - 1):
         if notes[i].get('obl') or notes[i]['p'] == notes[i + 1]['p']: continue
         xj = cells[i][1]; d.line([(xj, y(notes[i]['p'])), (xj, y(notes[i + 1]['p']))], fill=255, width=max(1, int(lw)))

@@ -115,12 +115,19 @@ def readings(events, version):
         if music is not None: yield from readings(list(music), version)
 
 
+def lig_text(notes):
+    """A ligature in the text form from its notes ('B5*~' …): black all through said once, after it."""
+    if all(n.rstrip('~').endswith('*') for n in notes):
+        return '[' + ' '.join(n.replace('*', '') for n in notes).replace('~ ', '~').rstrip('~') + ']*'
+    return '[' + ' '.join(notes).replace('~ ', '~').rstrip('~') + ']'
+
+
 def voice_staves(events, version):
     """One voice's events in the Occo Codex's reading, cut where its staves end: [(page, [tokens] or None)], page
     counting the openings from the voice's first."""
     out, cur, page, bad = [], [], 0, False
     clef = None                                              # (position p of the clef's pitch, its step)
-    ligature, lig_black = None, False
+    ligature = None
 
     def pos(e):
         if clef is None: raise Staff('a note before any clef')
@@ -134,7 +141,7 @@ def voice_staves(events, version):
         if page_end: page += 1
 
     def add(e):
-        nonlocal clef, ligature, lig_black, bad
+        nonlocal clef, ligature, bad
         t = T(e)
         if kid(e, 'Editorial') is not None: return            # (the editor's, not the manuscript's)
         if t == 'LineEnd':
@@ -156,24 +163,26 @@ def voice_staves(events, version):
                 # (a note no ligature holds after one begun: where a variant reading took the ligature's last note
                 # away, its first is left marked; what was begun ends here)
                 if len(ligature) == 1:
-                    cur.append(ligature[0].rstrip('~') + ('*' if lig_black else ''))
+                    cur.append(ligature[0].rstrip('~'))
                 else:
-                    cur.append('[' + ' '.join(ligature).replace('~ ', '~').rstrip('~') + (']*' if lig_black else ']'))
+                    cur.append(lig_text(ligature))
                 ligature = None
             if ligature is not None or lig:
-                if ligature is None: ligature, lig_black = [], black
-                if v not in ('Mx', 'L', 'B', 'Sb') or black != lig_black:
+                if ligature is None: ligature = []
+                if v not in ('Mx', 'L', 'B', 'Sb'):
                     ligature = None
-                    raise Staff('a ligature of what CGMensural can\'t say (partly black, or of small notes)')
-                ligature.append(f'{v}{p}' + ('~' if lig == 'Obliqua' else ''))
+                    raise Staff('a ligature of what CGMensural can\'t say (small notes)')
+                ligature.append(f'{v}{p}' + ('*' if black else '') + ('~' if lig == 'Obliqua' else ''))
                 if not lig:                                  # (its last note)
                     # (a last breve below the note before it is written oblique: one drawn square there is a longa,
                     # by the rules of ligatures (CGMensural checks them); an edition that says breve there is left out)
                     if len(ligature) > 1 and v == 'B' and not ligature[-2].endswith('~') and int(re.match(r'[A-Za-z]+(-?\d+)', ligature[-2]).group(1)) > p:
                         ligature = None
                         raise Staff('a square descending last breve')
-                    body = ' '.join(ligature).replace('~ ', '~')
-                    cur.append('[' + body + (']*' if lig_black else ']')); ligature = None
+                    if any(a.endswith('~') and a.rstrip('~').endswith('*') != b.rstrip('~').endswith('*') for a, b in zip(ligature, ligature[1:])):
+                        ligature = None
+                        raise Staff('an oblique half black')
+                    cur.append(lig_text(ligature)); ligature = None
                 return
             stem = txt(kid(e, 'Stem'), 'Dir') if kid(e, 'Stem') is not None else None
             mark = ''

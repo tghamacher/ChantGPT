@@ -195,6 +195,23 @@
       bad.push(...same('a right staff', M.check(M.parse('c4 O [B5 L2] [L5 B3~B1] [Sb3 Sb5] B4 .4 |')), []));
       return bad;
     } },
+    { name: 'mensural: a ligature black in part', unit: () => {
+      const M = global.CGMensural, bad = [];
+      const it = M.parse('[B5* B4* L2]')[0];
+      bad.push(...same('its notes', it.notes.map(n => n.color || ''), ['black', 'black', '']), ...same('not all of it', it.color, undefined));
+      bad.push(...same('written back', M.text([it]), '[B5* B4* L2]'));
+      bad.push(...same('all black: said once', M.text(M.parse('[B5* B4* L2*]')), '[B5 B4 L2]*'));
+      bad.push(...same('black all through: no note marked', M.text(M.parse('[B5* B3~B1]*')), '[B5 B3~B1]*'));
+      bad.push(...same('right', M.check(M.parse('c4 [L5 B7* B9*] [B5* B3*~B1*]')), []));
+      if (!M.check(M.parse('[L5 B3*~B1]')).some(e => /oblique's two notes/.test(e))) bad.push('No complaint of an oblique half black.');
+      const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
+      const L = M.layout({ lines, mensural: M.parse('c4 [B5* B4 L2]') });
+      bad.push(...same('one block filled, two outlined', L.shapes.filter(sh => sh.fill === true).length, 1));
+      const doc = { notation: 'mensural', pages: [{ staves: [{ id: 's1', lines, mensural: M.parse('c4 C [B5* B4 L2]') }] }] };
+      const mei = M.mei(doc);
+      bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
+      return bad;
+    } },
     { name: 'mensural: drawn along the staff, and MEI', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);

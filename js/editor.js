@@ -179,8 +179,26 @@
     });
   }
   function mNudge(dx) { mChange(it => { it.x = Math.round(((Number.isFinite(it.x) ? it.x : 0) + dx) * 10) / 10; }); }
-  function mBlack() {
-    mChange(it => { if (it.k !== 'note' && it.k !== 'lig') return 'Only notes and ligatures are blackened.'; if (it.color === 'black') delete it.color; else it.color = 'black'; });
+  // a ligature's notes, each with its own colour (the ligature's, if all of it is black)
+  const ligNotes = it => it.notes.map(n => Object.assign({}, n, it.color === 'black' ? { color: 'black' } : {}));
+  // black (coloured), or white again: a note; in a ligature, the selected note (with the note it makes an oblique
+  // with: the two are one shape), or with whole, all of it
+  function mBlack(whole) {
+    mChange(it => {
+      if (it.k !== 'note' && it.k !== 'lig') return 'Only notes and ligatures are blackened.';
+      if (it.k === 'note' || whole || mitem.n === null) {
+        if (it.color === 'black') delete it.color; else it.color = 'black';
+        if (it.k === 'lig') it.notes.forEach(n => { delete n.color; });
+        return;
+      }
+      const ns = ligNotes(it), k = mitem.n, on = ns[k].color !== 'black';
+      let a = k, b = k;
+      while (a > 0 && ns[a - 1].obl) a--;
+      while (b < ns.length - 1 && ns[b].obl) b++;
+      for (let j = a; j <= b; j++) { if (on) ns[j].color = 'black'; else delete ns[j].color; }
+      const lig = M.ligOf(ns, false);
+      it.notes = lig.notes; if (lig.color) it.color = 'black'; else delete it.color;
+    });
   }
   function mStem() {
     mChange(it => {
@@ -208,11 +226,11 @@
   function mJoin() {
     mChange((it, st) => {
       const nx = st.mensural[mitem.i + 1];
-      const notes = x => x && (x.k === 'lig' ? x.notes.map(n => Object.assign({}, n)) : x.k === 'note' ? [{ v: x.v, p: x.p }] : null);
+      const notes = x => x && (x.k === 'lig' ? ligNotes(x) : x.k === 'note' ? [Object.assign({ v: x.v, p: x.p }, x.color === 'black' ? { color: 'black' } : {})] : null);
       const a = notes(it), b = notes(nx);
       if (!a || !b) return 'Only notes (or ligatures) next to each other join into a ligature.';
       if (a.concat(b).some(n => !['Mx', 'L', 'B', 'Sb'].includes(n.v))) return 'Only maximae, longae, breves and semibreves go into a ligature.';
-      const lig = Object.assign({ k: 'lig', notes: a.concat(b), x: it.x }, it.color === 'black' ? { color: 'black' } : {});
+      const lig = Object.assign(M.ligOf(a.concat(b), false), { x: it.x });
       st.mensural.splice(mitem.i, 2, lig);
       mitem = { i: mitem.i, n: a.length - 1 };
     });
@@ -231,9 +249,9 @@
       if (it.k !== 'lig' || mitem.n === null || mitem.n >= it.notes.length - 1) return 'Select a ligature\'s note (not its last) to cut the ligature after it.';
       const cells = (M.layout(st).cells || {})[mitem.i] || [];
       const part = ns => ns.length === 1
-        ? Object.assign({ k: 'note', v: ns[0].v, p: ns[0].p }, it.color === 'black' ? { color: 'black' } : {})
-        : Object.assign({ k: 'lig', notes: ns }, it.color === 'black' ? { color: 'black' } : {});
-      const a = part(it.notes.slice(0, mitem.n + 1).map(n => Object.assign({}, n))), b = part(it.notes.slice(mitem.n + 1).map(n => Object.assign({}, n)));
+        ? Object.assign({ k: 'note', v: ns[0].v, p: ns[0].p }, ns[0].color === 'black' ? { color: 'black' } : {})
+        : M.ligOf(ns, false);
+      const all = ligNotes(it), a = part(all.slice(0, mitem.n + 1)), b = part(all.slice(mitem.n + 1));
       if (a.k === 'lig') delete a.notes[a.notes.length - 1].obl;
       a.x = it.x;
       b.x = cells[mitem.n + 1] ? Math.round((cells[mitem.n + 1][0] + 0.6 * M.geometry(st.lines).s) * 10) / 10 : it.x + 2 * M.geometry(st.lines).s;
@@ -398,8 +416,8 @@
       case 'rest': return `${VALUE_NAMES[it.v] || it.v} rest${it.perf ? ' (perfect)' : ''}.`;
       case 'lig': {
         const n = mitem.n !== null ? it.notes[mitem.n] : null;
-        return `Ligature of ${it.notes.length}${black}: ${it.notes.map(v => VALUE_NAMES[v.v] || v.v).join(', ')}.` +
-          (n ? ` This note: ${(VALUE_NAMES[n.v] || n.v).toLowerCase()} on ${name(n.p)}${n.obl ? ', oblique with the next' : ''}.` : '');
+        return `Ligature of ${it.notes.length}${black}: ${it.notes.map(v => (VALUE_NAMES[v.v] || v.v) + (v.color === 'black' ? ' (black)' : '')).join(', ')}.` +
+          (n ? ` This note: ${(VALUE_NAMES[n.v] || n.v).toLowerCase()}${n.color === 'black' && !black ? ' (black)' : ''} on ${name(n.p)}${n.obl ? ', oblique with the next' : ''}.` : '');
       }
       case 'clef': return `${it.shape} clef on line ${it.line} (from the bottom).`;
       case 'sign': return `Mensuration sign: ${it.sign === 'R' ? 'C turned round' : it.sign}${it.dot ? ', with a dot' : ''}${it.stroke ? ', struck through' : ''}.`;
@@ -1394,7 +1412,9 @@
       ctx.menu([
         { title: mDescribe(st, it) },
         valued ? { shapes: values } : null,
-        it.k === 'note' || inLig ? { label: it.color === 'black' ? 'Black (coloured) ✓' : 'Black (coloured)', key: 'K', run: mBlack } : null,
+        it.k === 'note' ? { label: it.color === 'black' ? 'Black (coloured) ✓' : 'Black (coloured)', key: 'K', run: () => mBlack() } : null,
+        inLig && mitem.n !== null ? { label: it.color === 'black' || it.notes[mitem.n].color === 'black' ? 'This note black (coloured) ✓' : 'This note black (coloured)', key: 'K', run: () => mBlack() } : null,
+        inLig ? { label: it.color === 'black' ? 'All of it black ✓' : 'All of it black', run: () => mBlack(true) } : null,
         it.k === 'note' && !/^(B|Sb)$/.test(it.v) ? { label: 'Turn its stem', key: 'S', run: mStem } : null,
         it.k === 'note' ? { label: 'Make it a rest', key: 'R', run: mRest } : it.k === 'rest' ? { label: 'Make it a note', key: 'R', run: mRest } : null,
         it.k === 'rest' && it.v === 'L' ? { label: it.perf ? 'Perfect (three spaces) ✓' : 'Perfect (three spaces)', run: () => mChange(r => { if (r.perf) delete r.perf; else r.perf = true; }) } : null,
