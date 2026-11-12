@@ -1,0 +1,12 @@
+job 0078-mensural-jrp: The mensural reader with real music drawn: 30,000 staves of the Josquin Research Project's scores (jrp.py, CC BY-NC 4.0) beside the 30,000 made up and 10,000 more (mens5: ligatures black in part among them), with Capitan and SEILS (x3); from 0075 (nothing of CMME's), so it can go in the app; tested on the real staves kept out against 0075, and on Occo's (a test only)
+code: 043c166
+
+$ recognizer.py train --data training/data/mens,training/data/mensjrp,training/data/mens5 --real training/data/capitan,training/data/seils --real-labels labels.jsonl --resume training/data/m0075/best.pt --grow-vocab --width 192 --epochs 8 --lr 1e-3 --batch 32 --out training/data/m0078
+69673 staves to learn from (599 real, each 3 times), 2124 synthetic and 72 real to test on; 0 left out for tokens the model hasn't; 412 tokens; 1,457,733 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.204 (1 s)
+epoch 1 batch 100: loss 0.175 (18 s)
+epoch 1 batch 200: loss 0.179 (33 s)
+epoch 1 batch 300: loss 0.170 (48 s)
+epoch 1 batch 400: loss 0.170 (63 s)
