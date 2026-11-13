@@ -212,6 +212,18 @@
       bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
       return bad;
     } },
+    { name: 'mensural: a sign read is put on its ink (the reader says it a little late)', unit: () => {
+      const R = global.CGRecognizer, m = { height: 64, space: 8, top5: 14 }, W = 120, data = new Float32Array(64 * W);
+      // (a staff's lines, and a note's head and stem centred on column 40, between the second and third lines)
+      for (let k = 0; k < 5; k++) for (let x = 0; x < W; x++) data[(14 + 8 * k) * W + x] = 1;
+      for (let v = 22; v < 30; v++) for (let x = 37; x <= 43; x++) data[v * W + x] = 1;
+      for (let v = 0; v < 26; v++) data[v * W + 43] = 1;
+      const st = { data, W }, note = { k: 'note', v: 'M', p: 5 };
+      const at = R.onInk(st, m, 46, note);
+      return [].concat(same('read at 46, put at the ink\'s middle', Math.abs(at - 41) < 1.5, true),
+        same('a ligature left where it was read', R.onInk(st, m, 46, { k: 'lig', notes: [] }), null),
+        same('no ink near: left too', R.onInk(st, m, 100, note), null));
+    } },
     { name: 'mensural: a voice keeps its clef; one going on in a second area is read after its first; the signum', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const five = y => [0, 1, 2, 3, 4].map(k => [100, y + 10 * k, 900, y + 10 * k]);

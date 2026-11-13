@@ -201,13 +201,40 @@
     const out = await s.run({ staff: new global.ort.Tensor('float32', data, [1, 1, m.height, W]) });
     const sc = out.scores, T = sc.dims[2], T0 = Math.floor(st.W / m.stride);
     const xOf = t => (st.x0 + (t * m.stride + m.stride / 2) * st.step) / px.scale, half = 0.5 * m.stride * st.step / px.scale;
+    const g = st.step * m.space / px.scale;                     // (a staff space, in page units)
     return mensuralItems(decode(sc.data, T, m.vocab).filter(r => r.from < T0)).map(v => {
       const x0 = xOf(v.from) - half, x1 = xOf(v.to) + half;
-      return { item: Object.assign(v.item, { x: Math.round(x0 * 10) / 10 }), x0, x1, conf: Math.round(v.conf * 100) / 100 };
+      // (where it is drawn: on its ink, near where the reader saw it; its left edge where its middle comes so)
+      const mid = onInk(st, m, (v.from + v.to + 1) / 2 * m.stride, v.item);
+      const x = mid === null ? x0 : (st.x0 + mid * st.step) / px.scale - global.CGMensural.itemWidth(v.item) * g / 2;
+      return { item: Object.assign(v.item, { x: Math.round(x * 10) / 10 }), x0, x1, conf: Math.round(v.conf * 100) / 100 };
     });
   }
+  // Where a sign the reader read is, along its straightened staff (st: straighten()'s, in its columns): the reader says
+  // when it read the sign, which comes a little after the sign (by about a third of a space) and wanders; so the ink
+  // nearest that, within a space and a quarter (the staff's lines left out): the middle of the strongest run of inked
+  // columns there. null for a ligature (several notes: drawn from where the reader began it) or with no ink near.
+  function onInk(st, m, u, item) {
+    if (!item || item.k === 'lig') return null;
+    if (!st.ink) {
+      const H = m.height, sp = m.space, top = m.top5 || 14, lineRow = new Uint8Array(H);
+      for (let k = 0; k < 5; k++) for (let d = -1; d <= 1; d++) { const r = Math.round(top + k * sp) + d; if (r >= 0 && r < H) lineRow[r] = 1; }
+      const col = new Float32Array(st.W);
+      for (let v = 0; v < H; v++) if (!lineRow[v]) for (let x = 0; x < st.W; x++) if (st.data[v * st.W + x] > 0.5) col[x]++;
+      st.ink = col.map((c, x) => (col[Math.max(0, x - 1)] + c + col[Math.min(st.W - 1, x + 1)]) / 3);
+    }
+    const r = Math.round(1.25 * m.space), a = Math.max(0, Math.round(u - r)), b = Math.min(st.W - 1, Math.round(u + r));
+    let k = -1;
+    for (let x = a; x <= b; x++) if (k < 0 || st.ink[x] > st.ink[k]) k = x;
+    if (k < 0 || st.ink[k] < 2) return null;
+    let lo = k, hi = k, t = 0, wsum = 0;
+    while (lo > a && st.ink[lo - 1] > 0.3 * st.ink[k]) lo--;
+    while (hi < b && st.ink[hi + 1] > 0.3 * st.ink[k]) hi++;
+    for (let x = lo; x <= hi; x++) { t += x * st.ink[x]; wsum += st.ink[x]; }
+    return t / wsum + 0.5;
+  }
 
-  const api = { straighten, textBand, TEXT, decode, groups, read, readText, readMensural, mensuralItems, load, get meta() { return meta; } };
+  const api = { straighten, textBand, TEXT, decode, groups, read, readText, readMensural, mensuralItems, onInk, load, get meta() { return meta; } };
   global.CGRecognizer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
