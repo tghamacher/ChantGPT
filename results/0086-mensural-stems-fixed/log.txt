@@ -12,3 +12,7 @@ $ idemstyle.py staves --count 20000
 16000
 18000
 20000
+20000 staves in the pages' look -> D:\ChantGPT\changpt-repo\training\data\mensidem
+
+$ recognizer.py train --data training/data/mens,training/data/mensjrp,training/data/mens5,training/data/mensidem --real training/data/capitan,training/data/seils2 --real-labels labels.jsonl --resume training/data/m0082/best.pt --grow-vocab --width 192 --epochs 8 --lr 5e-4 --batch 32 --out training/data/m0086
+91157 staves to learn from (1296 real, each 3 times), 2731 synthetic and 147 real to test on; 0 left out for tokens the model hasn't; 423 tokens; 1,459,856 weights; on privateuseone:0
