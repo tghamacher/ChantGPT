@@ -244,6 +244,7 @@
       E.setFacing({ svg: $('facingOverlay'), page: j });
     } else E.setFacing(null);
     E.draw();
+    voicesBox();
     const name = src.names ? ` · ${src.names[i]}` : '';
     $('pageInfo').textContent = `${Math.round(w)} × ${Math.round(h)} ${src.type === 'pdf' ? 'points' : 'pixels'}${name}`;
     const n = ++showing;
@@ -332,7 +333,7 @@
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
   // chant or mensural: the document's (a staff of the other kind is marked on the staff, from its menu)
   for (const b of document.querySelectorAll('#modeGroup [data-notation]')) b.addEventListener('click', () => { if (state.doc) E.setNotation(b.dataset.notation); });
-  E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; } });
+  E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; voicesBox(); } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
@@ -348,9 +349,40 @@
   const P = window.CGPlay;
   // hearing it: ▶ plays (from the selection), again pauses; ■ stops; the tempo kept for next time
   const playState = () => { $('play').textContent = P.playing ? '❚❚' : '▶'; $('play').title = P.playing ? 'Pause (Space)' : 'Hear it: from the selected neume or staff, else the page\'s start (Space)'; $('stopPlay').disabled = !P.playing && !P.paused; };
+  // the voices heard: a box each in the Voices pop-up (mensural, with voices named), silenced or heard again at once,
+  // while playing too; each voice where the stereo field puts it, left to right in the book's order
+  function voicesBox() {
+    const names = state.doc && window.CGMensural ? window.CGMensural.voices(state.doc).map(v => v.voice).filter(Boolean) : [];
+    $('voicesToggle').hidden = !names.length;
+    if (!names.length) { $('voicesPop').hidden = true; return; }
+    const pop = $('voicesPop');
+    pop.replaceChildren();
+    for (const v of names) {
+      const l = document.createElement('label'), c = document.createElement('input');
+      c.type = 'checkbox'; c.checked = !P.isMuted(v);
+      c.addEventListener('change', () => { P.mute(v, !c.checked); say(c.checked ? `The ${v} is heard.` : `The ${v} is silenced.`); });
+      l.className = 'cg-check'; l.append(c, ' ' + v); pop.appendChild(l);
+    }
+    const all = document.createElement('div'); all.className = 'cg-row';
+    for (const [label, on] of [['All', true], ['None', false]]) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.addEventListener('click', () => { for (const v of names) P.mute(v, !on); voicesBox(); });
+      all.appendChild(b);
+    }
+    pop.appendChild(all);
+  }
+  $('voicesToggle').addEventListener('click', () => {
+    voicesBox();
+    const pop = $('voicesPop'), r = $('voicesToggle').getBoundingClientRect();
+    pop.hidden = !pop.hidden;
+    $('voicesToggle').setAttribute('aria-expanded', String(!pop.hidden));
+    if (!pop.hidden) { pop.style.left = `${r.left}px`; pop.style.top = `${r.bottom + 4}px`; }
+  });
+  document.addEventListener('click', e => { if (!$('voicesPop').hidden && !e.target.closest('#voicesPop, #voicesToggle')) { $('voicesPop').hidden = true; $('voicesToggle').setAttribute('aria-expanded', 'false'); } });
   function playEvents(events) {
     P.play(events, +$('tempo').value, e => E.mark(e), () => { E.mark(null); playState(); });
     playState();
+    voicesBox();
   }
   function togglePlay() {
     if (P.playing) P.pause(); else if (P.paused) P.resume(); else E.listen(E.playFrom());

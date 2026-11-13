@@ -742,6 +742,31 @@
       bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
       return bad;
     } },
+    { name: 'app: mensural voices heard or silenced, one by one (the Voices box), on Serenissima Press\'s tone', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-print.png');
+      const E = w.CGEditor, M = w.CGMensural, P = w.CGPlay, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      for (const [i, v, t] of [[0, 'Cantus', 'c1 C Sb2 Sb3 B2'], [2, 'Tenor', 'c4 C B4 Sb5']]) doc.pages[0].staves.push(Object.assign({ id: `p1s${i + 1}`, syllables: [], voice: v, mensural: M.parse(t) }, await printedStaff(i)));
+      w.CGApp.show(0);
+      await new Promise(r => setTimeout(r, 200));
+      const tog = w.document.getElementById('voicesToggle');
+      bad.push(...same('the Voices box offered', tog.hidden, false));
+      tog.click();
+      const boxes = [...w.document.querySelectorAll('#voicesPop input[type=checkbox]')];
+      bad.push(...same('a box each, both heard', boxes.map(b => b.parentNode.textContent.trim() + ':' + b.checked), ['Cantus:true', 'Tenor:true']));
+      boxes[1].click();
+      bad.push(...same('the Tenor silenced', [P.isMuted('Tenor'), P.isMuted('Cantus')], [true, false]));
+      // (played: the silenced voice's notes not marked as they sound)
+      const marked = [];
+      const real = E.mark;
+      try {
+        E.mark = e => { if (e) marked.push(e.voice); };
+        P.play([{ midi: 60, beats: 0.1, at: 0, voice: 'Cantus' }, { midi: 48, beats: 0.1, at: 0, voice: 'Tenor' }], 600, e => E.mark(e), () => {});
+        await new Promise(r => setTimeout(r, 400));
+      } finally { E.mark = real; P.stop(); P.mute('Tenor', false); }
+      bad.push(...same('only the heard voice marked', [...new Set(marked)], ['Cantus']));
+      return bad;
+    } },
     { name: 'app: mensural rhythm reckoned by the scoring-up tool (JS_ScUp), where perform alone falls short', browser: true, unit: async app => {
       const { w } = await app();
       const M = w.CGMensural, C = w.CGChant, bad = [];

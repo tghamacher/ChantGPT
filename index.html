@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.29.13">
+<link rel="stylesheet" href="css/site.css?v=0.29.14">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.13">0.29.13</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.14">0.29.14</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -37,7 +37,9 @@
         <button type="button" class="cg-tb icon" id="play" aria-label="Play" title="Hear it: from the selected neume or staff, else the page's start (Space)">▶</button>
         <button type="button" class="cg-tb icon" id="stopPlay" aria-label="Stop" title="Stop" disabled>■</button>
         <input type="range" id="tempo" min="60" max="300" step="10" value="150" aria-label="Tempo" title="Tempo: notes a minute">
+        <button type="button" class="cg-tb" id="voicesToggle" aria-expanded="false" title="Which voices are heard (each can be silenced while it plays)" hidden>Voices ▾</button>
       </span>
+      <div class="cg-pop cg-voices" id="voicesPop" role="group" aria-label="Voices heard" hidden></div>
     </span>
   </div>
   <nav>
@@ -217,6 +219,7 @@
     <li>Export (mensural): <strong>MusicXML</strong> is the music in modern notation, a part for each voice, for MuseScore, Finale, Sibelius or Dorico (the original values, a semibreve a whole note, barred by the breve; notes across a barline tied, black notes as triplets, ligatures bracketed; the rhythm as the scoring-up tool reads it, so check it as you would any transcription). <strong>Serenissima Press</strong> opens it in a new tab and sets it again as a mensural choirbook or partbooks, ready to print. <strong>MEI</strong> keeps the notation itself, tied to the page, for scholars' tools.</li>
     <li><strong>Voice areas</strong> (mensural; the tools on the left): <em>Voice area</em> and drag a box round where one voice is on the page (all its staves), or <em>Freeform</em> and draw round it (a voice that runs on at the foot of the facing page, say); then say which voice. Its staves are found and named for it; drag a box round any it missed, and they are named too. Right-click an area (or its name) to rename it, find its staves again, delete it, or copy the page's areas to the pages after it (every page, or every other: the same side of each opening). Then <em>All pages</em> finds the staves everywhere, each named for the area it is in. Esc when done marking. A voice that goes on elsewhere (at the foot of the facing page, after a sign): mark a second area for it, after the first; its staves are read (played, exported) after the first area's, wherever they stand. Each area's name shows its voice's clef once three of its staves are read: a voice keeps its clef, so a staff that begins with another is listed under Checks (right-click it to use the voice's), and a staff without a voice offers the one whose clef it has.</li>
     <li>A signum congruentiae (𝄋, where the voices meet, or where a voice goes on elsewhere): right-click the staff, Add here, Signum; typed in, S and its place (S10).</li>
+    <li><strong>Voices ▾</strong> (beside the tempo, in a mensural book with voices named): a box for each voice; untick one to silence it, while it plays too (All, None). The voices sound on Serenissima Press's soft organ tone, each a little apart from left to right.</li>
     <li>Voices: right-click a mensural staff to say which voice it is (Cantus, Altus, Tenor, Bassus, or another name). With voices named, ▶ plays every voice together, each going through its staves in the book's order, from the selected note's moment; it says how long each voice is, and which runs short (a likely misreading). Right-click for a voice alone.</li>
     <li>▶ plays a mensural staff too, from the selected item: its rhythm read as white notation reads it (the sign's tempus and prolation, a stroke halving, proportions; perfection, imperfection, alteration, dots, coloration), a beat to the minim. A first reading: listen for a voice running a beat ahead.</li>
     <li>Typing mensural music in (as the Measuring Polyphony editor takes it): select a mensural staff (or a note on it) and type pitch letters, a to g: each note goes after the one before, at the nearest such pitch (a capital: the other way, the larger interval). Digits give the value, of the selected note and those typed after: 1 semibreve, 2 minim, 4 semiminim, 8 fusa, 6 semifusa, 0 breve, 9 longa, 7 maxima. r adds a rest, . a dot; - # n put a flat, sharp or natural before the selected note (N takes it off); [ at a ligature's first note and ] at its last join them. Backspace deletes and steps back.</li>
@@ -247,19 +250,19 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.29.13"></script>
-<script src="js/staves.js?v=0.29.13"></script>
-<script src="vendor/scoring-up/scoring-up.js?v=0.29.13"></script>
-<script src="js/serenissima.js?v=0.29.13"></script>
-<script src="js/mensural.js?v=0.29.13"></script>
-<script src="js/greciliae.js?v=0.29.13"></script>
-<script src="js/neumes.js?v=0.29.13"></script>
-<script src="js/checks.js?v=0.29.13"></script>
-<script src="js/export.js?v=0.29.13"></script>
-<script src="js/viewer.js?v=0.29.13"></script>
-<script src="js/recognizer.js?v=0.29.13"></script>
-<script src="js/playback.js?v=0.29.13"></script>
-<script src="js/editor.js?v=0.29.13"></script>
-<script src="js/app.js?v=0.29.13"></script>
+<script src="js/chant.js?v=0.29.14"></script>
+<script src="js/staves.js?v=0.29.14"></script>
+<script src="vendor/scoring-up/scoring-up.js?v=0.29.14"></script>
+<script src="js/serenissima.js?v=0.29.14"></script>
+<script src="js/mensural.js?v=0.29.14"></script>
+<script src="js/greciliae.js?v=0.29.14"></script>
+<script src="js/neumes.js?v=0.29.14"></script>
+<script src="js/checks.js?v=0.29.14"></script>
+<script src="js/export.js?v=0.29.14"></script>
+<script src="js/viewer.js?v=0.29.14"></script>
+<script src="js/recognizer.js?v=0.29.14"></script>
+<script src="js/playback.js?v=0.29.14"></script>
+<script src="js/editor.js?v=0.29.14"></script>
+<script src="js/app.js?v=0.29.14"></script>
 </body>
 </html>
