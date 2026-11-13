@@ -1,0 +1,9 @@
+job 0086-mensural-stems-fixed: The mensural reader again on synthetic staves drawn with the semiminima's down stem at its pitch (its sign was a step low, so 0082's reader read such notes a step high): mens, mensjrp, mens5 drawn again (training-data), the Occo look drawn again here (idemstyle.py staves, the measures kept); from 0082 (the app's), with Capitan and seils2. Tested against 0082 (and 0085, the Occo look with the old sign) on Occo (a test only), Capitan, seils2. Exported if better.
+code: d5779af
+
+$ idemstyle.py staves --count 20000
+2000
+4000
+6000
+8000
+10000
