@@ -20,12 +20,14 @@ measure, staves, which draw synthetic staves in the look of pages saved here),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
 the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
 app's zips from (--downloads), which it only reads; and its --manifest, an https address it only matches.
-Before each job the repository is brought up to date with main. The results go to results/<id>/ on the jobs
+Before each job the repository is brought up to date with main, and if that changed this worker, it starts again as
+it now is (no need to restart it by hand after an update). The results go to results/<id>/ on the jobs
 branch: log.txt (pushed every few minutes while it runs), the kept files, and done.json.
 """
 import argparse, glob, json, os, platform, re, shutil, subprocess, sys, time, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SELF = open(os.path.abspath(__file__), encoding='utf-8').read()   # (this worker as it was started: see renew())
 REPO = os.path.dirname(HERE)
 ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'},
            'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}}
@@ -193,6 +195,21 @@ def lean(data, origin):
     git(data, 'checkout', '--quiet', 'training-data')
 
 
+def renew():
+    """The repository brought up to date with main; if that changed this worker itself (a script newly allowed, say),
+    it starts again as it now is, so a job is never refused by the worker of yesterday: a new process, this one
+    waiting for it and ending with it."""
+    try:
+        git(REPO, 'fetch', '--quiet', 'origin', 'main')
+        git(REPO, 'checkout', '--quiet', 'main')
+        git(REPO, 'merge', '--quiet', '--ff-only', 'origin/main')
+    except RuntimeError as e:
+        say(f'(could not bring the code up to date: {e})'); return
+    if open(os.path.abspath(__file__), encoding='utf-8').read() != SELF:
+        say('worker.py has changed: starting again as it now is')
+        sys.exit(subprocess.call([sys.executable] + (['-I'] if sys.flags.isolated else []) + sys.argv))
+
+
 def main():
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('--jobs', default=os.path.join(os.path.dirname(REPO), 'chantgpt-jobs'))
@@ -218,6 +235,7 @@ def main():
                 continue
             job['id'] = re.sub(r'[^\w.-]', '_', str(job.get('id') or os.path.basename(path)[:-5]))
             if os.path.exists(os.path.join(o.jobs, 'results', job['id'], 'done.json')): continue
+            renew()
             run(job, o.jobs, o.data)
             break                                                   # (then look again: the queue may have changed)
         else:
