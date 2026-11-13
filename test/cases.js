@@ -212,6 +212,16 @@
       bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
       return bad;
     } },
+    { name: 'mensural: a note\'s head on its place, its stem up or down (a stem turned is no step lower)', unit: () => {
+      // (each sign's head: the leftmost points of its outline near its origin, a diamond's left corner, at y 0)
+      const T = global.CGSerenissima, bad = [];
+      for (const k of ['Sb', 'M.up', 'M.down', 'Sm.up', 'Sm.down', 'F.up', 'F.down', 'Sf.up', 'Sf.down']) {
+        const pts = [...T[k].d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map(m => [+m[1], +m[2]]).filter(p => Math.abs(p[1]) < 1.2);
+        const mx = Math.min(...pts.map(p => p[0])), ys = pts.filter(p => p[0] < mx + 0.05).map(p => p[1]), y = ys.reduce((a, c) => a + c, 0) / ys.length;
+        if (Math.abs(y) > 0.15) bad.push(`${k}: its head ${y.toFixed(2)} of a space from its place.`);
+      }
+      return bad;
+    } },
     { name: 'mensural: a sign read is put on its ink (the reader says it a little late)', unit: () => {
       const R = global.CGRecognizer, m = { height: 64, space: 8, top5: 14 }, W = 120, data = new Float32Array(64 * W);
       // (a staff's lines, and a note's head and stem centred on column 40, between the second and third lines)

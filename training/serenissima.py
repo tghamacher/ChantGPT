@@ -29,7 +29,7 @@ SIGNS = {
     'clefC': (0x10A10, 4), 'clefF': (0x10A13, 4), 'clefG': (0x10A14, 2),
     'Mx.up': (0x10A1F, 0), 'Mx.down': (0x10A27, 8), 'L.up': (0x10A31, 0), 'L.down': (0x10A39, 8),
     'B': (0x10A48, 1), 'Sb': (0x10A57, 2),
-    'M.up': (0x10A63, 0), 'M.down': (0x10A6B, 8), 'Sm.up': (0x10A71, 0), 'Sm.down': (0x10A78, 8),
+    'M.up': (0x10A63, 0), 'M.down': (0x10A6B, 8), 'Sm.up': (0x10A71, 0), 'Sm.down': (0x10A79, 8),
     'F.up': (0x10A7F, 0), 'F.down': (0x10A87, 8), 'Sf.up': (0x10A8D, 0), 'Sf.down': (0x10A95, 8),
     'kL.up': (0x10B9F, 0), 'kL.down': (0x10BA7, 8), 'kB': (0x10BAF, 1), 'kSb': (0x10BBF, 2),
     'rL': (0x10B6C, 2), 'rLp': (0x10B66, 3), 'rB': (0x10AAC, 3), 'rSb': (0x10AB9, 4), 'rM': (0x10AC7, 4),
