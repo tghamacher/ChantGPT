@@ -170,7 +170,7 @@ def compose(rng, length):
 BLOCK, OBL, HIGH, STEM, PEN = 1.07, 2.1, 0.9, 3.0, 0.13
 
 
-def draw_staff(items, rng, sg, words, style, color=False, paper=None, empty=False, width=None):
+def draw_staff(items, rng, sg, words, style, color=False, paper=None, empty=False, width=None, line_col=None, ink_col=None, line_w=None):
     sp = SPACE * S                                          # (a space, drawn)
     y = lambda p: (TOP5 + 4 * SPACE) * S - p * sp / 2       # (a staff position's row, drawn)
     gap = lambda: rng.uniform(0.35, 1.3) * sp
@@ -242,7 +242,7 @@ def draw_staff(items, rng, sg, words, style, color=False, paper=None, empty=Fals
     # the staff's lines (red, brown or black), with ledger lines where notes stand beyond them; and words
     choir = style == 'choirbook'
     lines = Image.new('L', (W2, HEIGHT * S), 0); ld = ImageDraw.Draw(lines)
-    lwid = max(1, int(S * (rng.uniform(.9, 1.6) if choir else rng.uniform(.4, .8))))
+    lwid = max(1, int(S * (line_w if line_w is not None else rng.uniform(.9, 1.6) if choir else rng.uniform(.4, .8))))   # (line_w: in a space's eighths)
     for k in range(5):
         yy = (TOP5 + k * SPACE + rng.uniform(-.3, .3)) * S
         ld.line([(0, yy), (W2, yy + rng.uniform(-.6, .6) * S)], fill=255, width=lwid)
@@ -258,8 +258,8 @@ def draw_staff(items, rng, sg, words, style, color=False, paper=None, empty=Fals
     # colour: paper, then lines, then ink
     paper = np.array(paper, float) if paper is not None else np.array([rng.uniform(200, 240), rng.uniform(185, 225), rng.uniform(150, 205)])
     if style == 'print' and paper is None: paper = np.array([rng.uniform(215, 245)] * 3) - np.array([0, rng.uniform(0, 8), rng.uniform(5, 25)])
-    line_col = np.array([rng.uniform(150, 215), rng.uniform(40, 95), rng.uniform(35, 85)]) if choir else np.array([rng.uniform(20, 90)] * 3)
-    ink_col = np.array([rng.uniform(5, 50)] * 3) + np.array([rng.uniform(0, 25), rng.uniform(0, 12), 0])
+    line_col = np.array(line_col, float) if line_col is not None else np.array([rng.uniform(150, 215), rng.uniform(40, 95), rng.uniform(35, 85)]) if choir else np.array([rng.uniform(20, 90)] * 3)
+    ink_col = np.array(ink_col, float) if ink_col is not None else np.array([rng.uniform(5, 50)] * 3) + np.array([rng.uniform(0, 25), rng.uniform(0, 12), 0])
     a = np.ones((HEIGHT * S, W2, 3)) * paper
     for layer, col, alpha in ((np.asarray(lines), line_col, 0.95), (np.asarray(text), ink_col, 0.9), (notes, ink_col, 1.0)):
         m = (layer.astype(np.float32) / 255)[..., None] * alpha

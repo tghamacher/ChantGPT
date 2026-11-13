@@ -273,6 +273,19 @@ printed lines, whichever finds more. `seils.py` also cuts the edition's symbols 
 next staff's clef), where there is no custos. (Also fixed, in `fivestaves.assemble` and `byFiveLines`: one staff
 found twice in a strip, a row apart, began a second chain and split the staff in two.)
 
+## 8b. Synthetic staves in a book's own look (IDEM's choirbooks)
+
+```
+python -I training/idemstyle.py measure --pages training/data/scans/occo
+python -I training/idemstyle.py staves --count 20000 --out training/data/mensidem
+```
+
+For a hand the reader has no labels for, or few: the pages' look measured (their ink's colour, their lines' colour and
+weight, a space's size; pieces of bare parchment cut from them, scaled so a space is 8 pixels) and staves of music (the
+labels of mensjrp and mens5) drawn in that ink, with lines of that weight, on that parchment. Only bare parchment and
+a few numbers are kept of the pages. The Occo Codex's pages (IDEM; the Royal Library of Belgium's images, digitised by
+Alamire Digital Lab) are the first; any book's pages saved by the app can be measured so.
+
 ## 9. Mensural notation: the Occo Codex (CMME's edition, IDEM's pages), private for now
 
 ```
