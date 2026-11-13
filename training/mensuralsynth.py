@@ -27,6 +27,10 @@ S = 3                                                       # (drawn at three ti
 VALUES = ['Mx', 'L', 'B', 'Sb', 'M', 'Sm', 'F', 'Sf']
 HAS_STEM = {'Mx': 'down', 'L': 'down', 'M': 'up', 'Sm': 'up', 'F': 'up', 'Sf': 'up'}
 ROMAN = [p for p in glob.glob('/usr/share/fonts/truetype/*/*.ttf') if any(k in p for k in ('LiberationSerif-Regular', 'LiberationSerif-Italic', 'FreeSerif.ttf', 'DejaVuSerif.ttf'))]
+# (gothic text hands, as the manuscripts' scribes and the earliest music printers wrote the words: Rotunda Pommerania,
+# Grenze Gotisch, Unifraktur Maguntia and Cook; all SIL OFL, in training/fonts)
+GOTHIC = sorted(glob.glob(os.path.join(HERE, 'fonts', '*.ttf')))
+GOTHIC = [p for p in GOTHIC if 'Pirata' not in p] or GOTHIC
 
 
 def signs():
@@ -248,7 +252,9 @@ def draw_staff(items, rng, sg, words, style, color=False, paper=None, empty=Fals
         ld.line([(0, yy), (W2, yy + rng.uniform(-.6, .6) * S)], fill=255, width=lwid)
     text = Image.new('L', (W2, HEIGHT * S), 0); td = ImageDraw.Draw(text)
     if words and rng.random() < 0.8:
-        G = ImageFont.truetype(rng.choice(ROMAN), int(rng.uniform(1.3, 1.8) * sp))
+        # (a manuscript's words mostly in a gothic hand; a print's mostly in roman type, now and then in gothic)
+        gothic = GOTHIC and rng.random() < (0.75 if choir else 0.15)
+        G = ImageFont.truetype(rng.choice(GOTHIC if gothic else ROMAN), int(rng.uniform(1.3, 1.8) * sp))
         wx = rng.uniform(0, 30) * S
         while wx < W2:
             w = rng.choice(words)
