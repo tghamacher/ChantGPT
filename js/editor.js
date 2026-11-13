@@ -1393,9 +1393,12 @@
   }
 
   // a bend added where a staff is double-clicked; a bend's bar double-clicked takes it away
+  // a double click: on a note (a mensural item, a neume), played from there, as Serenissima Press plays from a note
+  // clicked; on a staff's line, a bend added there (or taken off, on a bend's knot)
   function dbl(e) {
     const t = e.target.closest('[data-act]');
     if (!t || !t.dataset.staff) return;
+    if (t.dataset.act === 'mitem' || t.dataset.act === 'neume') { const f = playFrom(); if (f) listen(f); return; }
     const st = staffOf(t.dataset.staff);
     if (!st) return;
     const before = snapshot();
@@ -2024,6 +2027,8 @@
       addStaff(rect);
       return;
     }
+    // (a note clicked while playing or paused: played from there, as Serenissima Press does)
+    if (!d.moved && (d.act === 'mitem' || d.act === 'neume') && ctx.playing && ctx.playing()) { draw(); const f = playFrom(); if (f) listen(f); return; }
     if (!d.moved) { draw(); return; }
     if (d.act === 'syl') {
       const syl = sylOf();

@@ -744,6 +744,50 @@
       bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
       return bad;
     } },
+    { name: 'app: a mensural note double-clicked plays from there; clicked while playing, plays from there', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-print.png');
+      const E = w.CGEditor, M = w.CGMensural, P = w.CGPlay, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      doc.pages[0].staves.push(Object.assign({ id: 'p1s1', syllables: [], mensural: M.parse('c4 C Sb5 M6 B4 Sb3 L2') }, await printedStaff(0)));
+      E.draw();
+      const real = P.play, realPlaying = Object.getOwnPropertyDescriptor(P, 'playing');
+      let got = null, on = false;
+      try {
+        P.play = (events) => { got = events; };
+        Object.defineProperty(P, 'playing', { get: () => on, configurable: true });
+        const box = i => w.document.querySelector(`#overlay .mitem[data-i="${i}"]`);
+        const fire = (el, type, extra = {}) => { const r = el.getBoundingClientRect(); el.dispatchEvent(new w.MouseEvent(type, Object.assign({ clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, bubbles: true, cancelable: true }, extra))); };
+        const click = el => { const r = el.getBoundingClientRect(), o = { clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, button: 0, buttons: 1, pointerId: 1, isPrimary: true, bubbles: true, cancelable: true }; el.dispatchEvent(new w.PointerEvent('pointerdown', o)); w.document.getElementById('overlay').dispatchEvent(new w.PointerEvent('pointerup', Object.assign({}, o, { buttons: 0 }))); };
+        click(box(4)); fire(box(4), 'dblclick');
+        bad.push(...same('double-clicked: played from the breve (B4), its notes from there', got && got.map(e => e.midi !== null), [true, true, true]));
+        got = null; on = true;
+        click(box(2));
+        bad.push(...same('clicked while playing: from the semibreve (Sb5)', got ? got.length : 0, 5));
+        on = false; got = null;
+        click(box(5));
+        bad.push(...same('clicked, not playing: only selected', got, null));
+      } finally { P.play = real; if (realPlaying) Object.defineProperty(P, 'playing', realPlaying); else delete P.playing; }
+      return bad;
+    } },
+    { name: 'app: a neume double-clicked plays the chant from there (a chant page)', browser: true, unit: async app => {
+      const { w } = await app('test/pages/engraved.jpg');
+      const E = w.CGEditor, P = w.CGPlay;
+      await E.addStaff([70, 430, 1060, 90]);
+      E.selected = w.CGApp.state.doc.pages[0].staves[0].id;
+      await E.placeChant('(f3) Al(f)le(gh)lú(hj)ia.(h.) (::)');
+      const real = P.play;
+      let got = null;
+      try {
+        P.play = events => { got = events; };
+        const el = w.document.querySelector('#overlay .neume[data-s="2"][data-i="0"]'), r = el.getBoundingClientRect();
+        const o = { clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, button: 0, buttons: 1, pointerId: 1, isPrimary: true, bubbles: true, cancelable: true };
+        el.dispatchEvent(new w.PointerEvent('pointerdown', o)); w.document.getElementById('overlay').dispatchEvent(new w.PointerEvent('pointerup', Object.assign({}, o, { buttons: 0 })));
+        // (the page drawn again on the press: the neume's box is a new element)
+        w.document.querySelector('#overlay .neume[data-s="2"][data-i="0"]').dispatchEvent(new w.MouseEvent('dblclick', o));
+      } finally { P.play = real; }
+      // (syllable 2 is le, the clef being 0: from its gh, then lú's hj and ia's h: five notes)
+      return same('played from the neume double-clicked', got ? got.filter(e => e.midi !== null).length : 'nothing played: ' + w.document.getElementById('status').textContent, 5);
+    } },
     { name: 'app: mensural voices heard or silenced, one by one (the Voices box), on Serenissima Press\'s tone', browser: true, unit: async app => {
       const { w } = await app('test/pages/mensural-print.png');
       const E = w.CGEditor, M = w.CGMensural, P = w.CGPlay, doc = w.CGApp.state.doc, bad = [];

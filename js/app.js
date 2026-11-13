@@ -333,7 +333,7 @@
   $('readModel').addEventListener('change', () => { try { localStorage.setItem('cg-model', $('readModel').value); } catch (e) { } });
   // chant or mensural: the document's (a staff of the other kind is marked on the staff, from its menu)
   for (const b of document.querySelectorAll('#modeGroup [data-notation]')) b.addEventListener('click', () => { if (state.doc) E.setNotation(b.dataset.notation); });
-  E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), model: () => $('readModel').value, changed: () => { state.dirty = true; voicesBox(); } });
+  E.init({ state, svg: $('overlay'), say, pixels, show, menu, play: events => playEvents(events), playing: () => window.CGPlay.playing || window.CGPlay.paused, model: () => $('readModel').value, changed: () => { state.dirty = true; voicesBox(); } });
   $('savePages').addEventListener('click', () => savePages(+$('saveFrom').value, +$('saveTo').value));
   $('stopSaving').addEventListener('click', () => { if (saving) saving.stop = true; });
   $('iiifForm').addEventListener('submit', e => { e.preventDefault(); openIiif($('iiifUrl').value); });
