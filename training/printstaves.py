@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import fivestaves as F
 
-STRIP = 60
+STRIP = 30                                                      # (narrow: a curved staff's lines stay crisp in it)
 EMPTY = 0.5                                                     # (a staff with less ink than this share of the page's usual: empty)
 BLACK = 0.7                                                     # (ink, of the threshold: darker than what shows through)
 
@@ -84,8 +84,8 @@ def extend(lines, mask, g, gap=None):
     the strips saw more than five lines and so missed it): a gap of up to two spaces bridged."""
     H, W = mask.shape
     gap = gap or int(2 * g)
-    (xa, xb) = lines[0][0], lines[0][2]
-    at = lambda k, x: lines[k][1] + (lines[k][3] - lines[k][1]) * (x - xa) / max(1e-6, xb - xa)
+    (xa, xb) = lines[0][0], lines[0][-2]
+    at = lambda k, x: F.y_at(lines[k], x)
     def there(x):
         n = between = 0
         for k in range(5):
@@ -101,7 +101,8 @@ def extend(lines, mask, g, gap=None):
             x += step
         ends.append(last)
     a, b = float(ends[0]), float(ends[1])
-    return [[round(a, 1), round(at(k, a), 1), round(b, 1), round(at(k, b), 1)] for k in range(5)]
+    # (its ends moved out to where its lines were followed; its bends kept)
+    return [[round(a, 1), round(at(k, a), 1)] + [v for i in range(2, len(lines[k]) - 2, 2) if a < lines[k][i] < b for v in (lines[k][i], lines[k][i + 1])] + [round(b, 1), round(at(k, b), 1)] for k in range(5)]
 
 
 def find(gray, keep_empty=False):
@@ -134,8 +135,8 @@ def find(gray, keep_empty=False):
     # usual: a short last staff, half empty, still has more)
     ink = []
     for lines, gg in st:
-        xa, xb = int(lines[0][0]), int(lines[0][2])
-        ya = int(min(lines[0][1], lines[0][3]) - 0.5 * gg); yb = int(max(lines[4][1], lines[4][3]) + 0.5 * gg)   # (the heads, not the words below)
+        xa, xb = int(lines[0][0]), int(lines[0][-2])
+        ya = int(min(lines[0][1::2]) - 0.5 * gg); yb = int(max(lines[4][1::2]) + 0.5 * gg)   # (the heads, not the words below)
         band = black[max(0, ya):min(H, yb), max(0, xa):min(W, xb)] & ~mask[max(0, ya):min(H, yb), max(0, xa):min(W, xb)]
         # (the inkiest stretch, eight spaces long: a short last staff, a few notes then the ruled lines bare, has some)
         w = max(1, int(8 * gg))

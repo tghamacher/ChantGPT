@@ -9,6 +9,7 @@ on a page as the books set them, with what the page's staves are written down be
 
     python -I training/mensuralpage.py --style print --out test/pages/mensural-print.png
     python -I training/mensuralpage.py --style choirbook --out test/pages/mensural-choirbook.png
+    python -I training/mensuralpage.py --style print --bend 3.5 --out test/pages/mensural-curved.png   # (curved staves)
 
 Writes the page (PNG) and, beside it, <name>.json: {style, size, spacing, staves: [{voice, top, bottom, left, right,
 empty, text}]} (the staves' outer lines' rows and ends, in the page's pixels; text: the staff in CGMensural's text
@@ -56,13 +57,33 @@ def page(style, seed=1, width=1100, height=1500, space=10):
     return im, {'style': style, 'size': [width, height], 'spacing': space, 'staves': out}
 
 
+def bend(im, info, depth=2.2):
+    """The page as a book's page photographed open: its lines curving down toward the gutter (the right edge here), by
+    depth spaces at the edge (a parabola, nothing at the left): each column moved down; the staves' bend written down
+    (info['bend']: rows moved at x = depth * spacing * ((x - x0) / (x1 - x0)) ** 2, from x0 the staves' left)."""
+    a = np.asarray(im).astype(np.float32)
+    H, W, _ = a.shape
+    x0, x1 = info['staves'][0]['left'], W
+    d = depth * info['spacing']
+    out = np.empty_like(a)
+    for x in range(W):
+        dy = d * max(0.0, (x - x0) / (x1 - x0)) ** 2
+        ys = np.clip(np.arange(H) - dy, 0, H - 1)
+        lo = np.floor(ys).astype(int); hi = np.minimum(H - 1, lo + 1); f = (ys - lo)[:, None]
+        out[:, x] = a[lo, x] * (1 - f) + a[hi, x] * f
+    info = dict(info, bend={'x0': x0, 'x1': x1, 'depth': depth})
+    return Image.fromarray(out.clip(0, 255).astype(np.uint8)), info
+
+
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('--style', choices=['print', 'choirbook'], required=True)
     a.add_argument('--out', required=True)
     a.add_argument('--seed', type=int, default=1)
+    a.add_argument('--bend', type=float, help='its staves bent toward the right edge by this many spaces, as near a book\'s gutter')
     o = a.parse_args()
     im, info = page(o.style, o.seed)
+    if o.bend: im, info = bend(im, info, o.bend)
     im.save(o.out)
     json.dump(info, open(os.path.splitext(o.out)[0] + '.json', 'w'), indent=1)
     print(len(info['staves']), 'staves ->', o.out)

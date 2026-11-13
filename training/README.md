@@ -273,6 +273,11 @@ printed lines, whichever finds more. `seils.py` also cuts the edition's symbols 
 next staff's clef), where there is no custos. (Also fixed, in `fivestaves.assemble` and `byFiveLines`: one staff
 found twice in a strip, a row apart, began a second chain and split the staff in two.)
 
+Staves that curve (a book photographed open, its lines bending toward the gutter) are followed as they run, strip by
+strip, each carried on as its last strips lean, and drawn with a point at each bend that matters (`fivestaves.follow`,
+`chain_lines`; the app's `CGStaves.chainLines`); the strips are straightened along the curve. `mensuralpage.py --bend`
+makes a test page of them.
+
 ## 8b. Synthetic staves in a book's own look (IDEM's choirbooks)
 
 ```

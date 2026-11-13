@@ -93,44 +93,98 @@ def page(path, spacing=None):
     return gray, assemble(found, x0, x1)
 
 
-def assemble(found, x0, x1, strip=None):
-    """Staves from the fives found strip by strip ([(strip centre, [rows], g)]): followed across the page, fitted
-    straight, overlaps left out (the longer kept), top to bottom: [(lines, g)]."""
-    STRIP_ = strip or STRIP
-    # staves followed across the page: strips' fives whose top lines agree within half a space
-    staves = []
+def follow(found, strip):
+    """The fives found strip by strip ([(strip centre, [rows], g)]) followed across the page into staves: each joined to
+    the staff whose top line, carried on as its last strips lean (a staff that curves goes on curving), comes within
+    half a space of its own; strips at most four apart; one staff found twice in a strip, a row apart, once."""
+    chains = []
+    def ahead(ch, c):
+        l = ch[-1]
+        if len(ch) < 2: return l[1][0]
+        q = ch[max(0, len(ch) - 3)]
+        return l[1][0] + (l[1][0] - q[1][0]) / ((l[0] - q[0]) or 1) * (c - l[0])
     for c, rows, g in sorted(found, key=lambda f: f[0]):
-        best = None
-        for s in staves:
-            lc, lrows, lg = s[-1]
-            if c - lc <= 4 * STRIP_ and abs(rows[0] - lrows[0]) < 0.5 * g and (best is None or abs(rows[0] - lrows[0]) < abs(rows[0] - best[-1][1][0])): best = s
+        best, bd = None, None
+        for ch in chains:
+            d = abs(rows[0] - ahead(ch, c))
+            if ch[-1][0] <= c and c - ch[-1][0] <= 4 * strip and d < 0.5 * g and (bd is None or d < bd): best, bd = ch, d
         if best is not None:
             if best[-1][0] < c: best.append((c, rows, g))
-            # (the same staff found twice in one strip, a row apart: once is enough, not a second staff begun)
-        else: staves.append([(c, rows, g)])
-    out = []
-    for s in staves:
-        if len(s) < 3: continue
-        cs = np.array([p[0] for p in s]); R = np.array([p[1] for p in s], float); g = float(np.median([p[2] for p in s]))
-        # (a ruled staff is straight and near level: its slope the median of the strips' pairwise slopes, its height the
-        # median about that; strips far from it, which took another five rows, left out, and the rest fitted again)
-        tops = R.mean(1)
-        sl = [(tops[j] - tops[i]) / (cs[j] - cs[i]) for i in range(len(cs)) for j in range(i + 1, len(cs)) if cs[j] > cs[i]]
-        slope = float(np.median(sl)) if sl else 0.0
-        icpt = np.median(R - slope * cs[:, None], axis=0)
-        keep = np.abs((R - slope * cs[:, None] - icpt).mean(1)) < 0.35 * g
-        if keep.sum() < 3 or cs[keep][-1] - cs[keep][0] < 0.2 * (x1 - x0): continue
-        cs, R = cs[keep], R[keep]
-        icpt = np.median(R - slope * cs[:, None], axis=0)
-        xa, xb = float(cs[0] - STRIP_ / 2), float(cs[-1] + STRIP_ / 2)
-        lines = [[round(xa, 1), round(slope * xa + icpt[k], 1), round(xb, 1), round(slope * xb + icpt[k], 1)] for k in range(N)]
-        out.append((lines, g))
-    # (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer, as
-    # js/staves.js byFiveLines keeps it)
+        else: chains.append([(c, rows, g)])
+    return chains
+
+
+def y_at(l, x):
+    """A line's height at x (l: [x0, y0, x1, y1, …]), carried on beyond its ends as its end segments lean."""
+    xs, ys = l[0::2], l[1::2]
+    if len(xs) < 2: return ys[0]
+    k = 0 if x <= xs[0] else len(xs) - 2 if x >= xs[-1] else max(i for i in range(len(xs) - 1) if xs[i] <= x)
+    return ys[k] + (ys[k + 1] - ys[k]) * (x - xs[k]) / ((xs[k + 1] - xs[k]) or 1)
+
+
+def simplify(lines, tol):
+    """The bends that make no difference (no further than tol from where the staff's middle would run without them)
+    taken away, the same points kept on every line (Douglas-Peucker, as js/staves.js simplify)."""
+    mid = [(lines[0][i] + lines[-1][i]) / 2 for i in range(len(lines[0]))]
+    n = len(mid) // 2
+    keep = [False] * n; keep[0] = keep[-1] = True
+    def split(a, b):
+        worst, at = 0, -1
+        for k in range(a + 1, b):
+            y = y_at([mid[2 * a], mid[2 * a + 1], mid[2 * b], mid[2 * b + 1]], mid[2 * k])
+            if abs(mid[2 * k + 1] - y) > worst: worst, at = abs(mid[2 * k + 1] - y), k
+        if at >= 0 and worst > tol: keep[at] = True; split(a, at); split(at, b)
+    split(0, n - 1)
+    return [[v for i, v in enumerate(l) if keep[i // 2]] for l in lines]
+
+
+def chain_lines(ch, g, xa, xb, min_span=0):
+    """A staff's lines from its strips (as js/staves.js chainLines): a strip off the line through those about it left
+    out; each line through the strips' rows (each the median of its strip and the two beside it), run on to xa and xb
+    as the end strips lean; the bends that make no difference (a fifth of a space) taken away. None if too few."""
+    mean = lambda f: float(np.mean(f[1]))
     kept = []
-    for lines, g in sorted(out, key=lambda t: -(t[0][0][2] - t[0][0][0])):
-        if not any(lines[0][1] < k[-1][1] and lines[-1][1] > k[0][1] and lines[0][0] < k[0][2] and lines[0][2] > k[0][0] for k, _ in kept):
-            kept.append((lines, g))
+    for j, f in enumerate(ch):
+        near = [o for o in ch[max(0, j - 2):j + 3] if o is not f]
+        if len(near) >= 2:
+            cs = np.array([o[0] for o in near], float); ms = np.array([mean(o) for o in near])
+            sl = np.polyfit(cs, ms, 1) if np.ptp(cs) > 0 else (0.0, ms.mean())
+            if abs(mean(f) - (sl[0] * f[0] + sl[1])) >= 0.35 * g: continue
+        kept.append(f)
+    if len(kept) < 3 or kept[-1][0] - kept[0][0] < min_span: return None
+    cs = [f[0] for f in kept]
+    lines = []
+    for k in range(len(kept[0][1])):
+        ys = [float(np.median([o[1][k] for o in kept[max(0, j - 1):j + 2]])) for j in range(len(kept))]
+        lean = lambda i, j: (ys[j] - ys[i]) / ((cs[j] - cs[i]) or 1)
+        y0 = ys[0] + lean(0, min(2, len(ys) - 1)) * (xa - cs[0]); y1 = ys[-1] + lean(max(0, len(ys) - 3), len(ys) - 1) * (xb - cs[-1])
+        l = [xa, y0]
+        for c, y in zip(cs, ys):
+            if xa < c < xb: l += [c, y]
+        lines.append(l + [xb, y1])
+    return [[round(v, 1) for v in l] for l in simplify(lines, 0.2 * g)]
+
+
+def assemble(found, x0, x1, strip=None):
+    """Staves from the fives found strip by strip ([(strip centre, [rows], g)]): followed across the page, straight or
+    curving (follow, chain_lines), overlaps left out (the longer kept), top to bottom: [(lines, g)]."""
+    STRIP_ = strip or STRIP
+    out = []
+    for ch in follow(found, STRIP_):
+        if len(ch) < 3: continue
+        g = float(np.median([p[2] for p in ch]))
+        lines = chain_lines(ch, g, float(ch[0][0] - STRIP_ / 2), float(ch[-1][0] + STRIP_ / 2), 0.2 * (x1 - x0))
+        if lines: out.append((lines, g))
+    # (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer, as
+    # js/staves.js keeps it)
+    def overlaps(a, b):
+        ax0, ax1, bx0, bx1 = a[0][0], a[0][-2], b[0][0], b[0][-2]
+        if ax0 >= bx1 or ax1 <= bx0: return False
+        x = (max(ax0, bx0) + min(ax1, bx1)) / 2
+        return y_at(a[0], x) < y_at(b[-1], x) and y_at(a[-1], x) > y_at(b[0], x)
+    kept = []
+    for lines, g in sorted(out, key=lambda t: -(t[0][0][-2] - t[0][0][0])):
+        if not any(overlaps(lines, k) for k, _ in kept): kept.append((lines, g))
     kept.sort(key=lambda t: t[0][0][1])
     return kept
 

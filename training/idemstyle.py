@@ -37,17 +37,17 @@ def measure_page(path, rng, pieces, want):
     # the ink: the darkest pixels within the staves' bands, not the lines (their notes)
     inks, lines_rgb, weights = [], [], []
     for lines, gg in staves:
-        xa, xb = int(lines[0][0]), int(lines[0][2])
+        xa, xb = int(lines[0][0]), int(lines[0][-2])
         for k, l in enumerate(lines):
             for x in np.linspace(xa + 0.1 * (xb - xa), xb - 0.1 * (xb - xa), 12).astype(int):
-                y = int(round(l[1] + (l[3] - l[1]) * (x - l[0]) / max(1, l[2] - l[0])))
+                y = int(round(F.y_at(l, x)))
                 col = lum[max(0, y - int(gg / 3)):min(H, y + int(gg / 3) + 1), x]
                 if not len(col): continue
                 dark = col < (paper + col.min()) / 2
                 if dark.sum() and dark.sum() < gg / 2:      # (a line here, not a note on it)
                     weights.append(dark.sum() / gg * 8)
                     lines_rgb.append(rgb[max(0, y - int(gg / 3)) + int(np.argmin(col)), x])
-        ya, yb = int(lines[0][1] - gg), int(lines[4][1] + gg)
+        ya, yb = int(min(lines[0][1::2]) - gg), int(max(lines[4][1::2]) + gg)
         band = lum[max(0, ya):min(H, yb), max(0, xa):min(W, xb)]
         if band.size:
             cut = np.percentile(band, 3)

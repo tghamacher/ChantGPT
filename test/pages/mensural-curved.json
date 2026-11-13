@@ -1,0 +1,105 @@
+{
+ "style": "print",
+ "size": [
+  1100,
+  1500
+ ],
+ "spacing": 10,
+ "staves": [
+  {
+   "voice": "Tenor",
+   "top": 154.5,
+   "bottom": 194.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f5 [Sb1 Sb3 L2] Mx0 L0 Sb1 Sb2 .3 B4 M2 Sm4 rLp4 B5 Sm6 b7 M7 Sb6 rL2 Sb5 M7v Sm4 B6* Sb7* Sb9 Sb10 Sb9 .9 +9"
+  },
+  {
+   "voice": "Tenor",
+   "top": 240.5,
+   "bottom": 280.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f3 b7 B4 Sb5 rSb6 rM4 M3 M2 Sm3 M2v B2 Sb1 .1 Sm-1 Sm0 Sm-2 M0 .1 Sm-1 Sb-1 .-1 [B0 B1] rM2 Sb-2 M-1 Sb0 B0 b-1 Sb-1 M-2 [L-2 B-1 B2] M1 Sb3 +5"
+  },
+  {
+   "voice": "Tenor",
+   "top": 326.5,
+   "bottom": 366.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c4 M5 L8 M6 M3 [L1 B2] Sb2 rL2 B6 Sb2 Sb3 rM4 b6 M6 B7 B6 B5 Sb6 B4 M1 [Sb2~Sb0 L1] M1 L2 M1 Sb1 [B3 L5] Sm4 Sm3 Sb-2 [L0 B1 B3* L4*] Sb3 Sm2 +3"
+  },
+  {
+   "voice": "Tenor",
+   "top": 412.5,
+   "bottom": 452.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f4 C Sb5 Sb3 B-1 rM4 Sb0 .1 Sm-2 M1 [B0 B3 B5~B3] Sm1 M-2 B-2 [Sb0 Sb2] Sm4 Sb5 B6 Sb7 M8v B10 Sb8 Sb6 B5 #4 B4 +2"
+  },
+  {
+   "voice": "Tenor",
+   "top": 498.5,
+   "bottom": 538.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f5 O| B9 Sb8 Sm7 M3 B1 B4 [Sb5 Sb6* L5] M8v B7 B6 .7 M6 [B5 B3 L0] rSb4 M3 Sb7 [L6 L7] #8 Sb8 Sb6 [B8~B5 B2 L4] M5 ||"
+  },
+  {
+   "voice": "Tenor",
+   "top": 584.5,
+   "bottom": 624.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c2 b1 Sb2 Sm4 rSb4 Sb2 M0 M0 Sb2 Sm0 M1 B0 Sm1 M1 M5v* rB3 Sb2* M3* L3 M2 M-2 Sb0 M3 Sb0 Sb2 M2 .3 Sm0 B2 B-2 M1 .1 M3 +3"
+  },
+  {
+   "voice": "Tenor",
+   "top": 670.5,
+   "bottom": 710.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "c4 Sb2 rSb4 B4 Sb5 B5 rSb6 Sb6 Sm6 Sb7 Sb6 .7 M3 Sm4 M5* .5 Sm7v M8* rB5 M6 Sb6 F7v Sm4v Sb4 Sb3 [Sb2~Sb1 B3 B6] [B6 B9 B9] rM4 M7v Sb8"
+  },
+  {
+   "voice": "Tenor",
+   "top": 756.5,
+   "bottom": 796.5,
+   "left": 88,
+   "right": 1012,
+   "empty": false,
+   "text": "f4 Sm7 Sb7 .7 rM4 M4 Sm2 Sb0 M1 M0 b0 B0 M3 Sb2 Sb3 rM4 Sb3 .3 Sm0 Sb0 Sm-1 Sb-2 Sb-2 M0 rL2 b0 Sb0 [B-1 L1] M0 +-1"
+  },
+  {
+   "voice": "",
+   "top": 857.5,
+   "bottom": 897.5,
+   "left": 88,
+   "right": 1012,
+   "empty": true,
+   "text": null
+  },
+  {
+   "voice": "",
+   "top": 943.5,
+   "bottom": 983.5,
+   "left": 88,
+   "right": 1012,
+   "empty": true,
+   "text": null
+  }
+ ],
+ "bend": {
+  "x0": 88,
+  "x1": 1100,
+  "depth": 3.5
+ }
+}

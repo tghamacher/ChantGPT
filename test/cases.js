@@ -731,6 +731,21 @@
       bad.push(...same('from its clef to its end', found.every((st, i) => st.lines[0][0] < want[i].left * k + 4 * truth.spacing * k && st.lines[0][2] > want[i].right * k - 6 * truth.spacing * k), true));
       return bad;
     } },
+    { name: 'app: curved staves (a page photographed open, bending toward the gutter): each line followed, bends where it needs them', browser: true, unit: async app => {
+      // (the made-up printed page, its staves bent 3.5 spaces down at the right edge: training/mensuralpage.py --bend)
+      const { w } = await app('test/pages/mensural-curved.png');
+      const E = w.CGEditor, S = w.CGStaves, doc = w.CGApp.state.doc, bad = [];
+      E.setNotation('mensural');
+      await E.findHere();
+      const truth = await (await fetch('pages/mensural-curved.json')).json(), k = doc.pages[0].size[0] / truth.size[0], sp = truth.spacing * k, b = truth.bend;
+      const dy = x => b.depth * sp * Math.max(0, (x / k - b.x0) / (b.x1 - b.x0)) ** 2, want = truth.staves.filter(v => !v.empty), found = doc.pages[0].staves;
+      bad.push(...same('its eight staves', found.length, 8));
+      bad.push(...same('bent: more than two points on most', found.filter(st => S.count(st.lines[0]) > 2).length >= 6, true));
+      let worst = 0;
+      found.forEach((st, i) => { for (let x = st.lines[0][0]; x <= st.lines[0][st.lines[0].length - 2]; x += 10 * k) worst = Math.max(worst, Math.abs(S.yAt(st.lines[0], x) - (want[i].top * k + dy(x))) / sp, Math.abs(S.yAt(st.lines[4], x) - (want[i].bottom * k + dy(x))) / sp); });
+      bad.push(...same('every line within a quarter of a space of the page\'s', worst < 0.25 ? 'yes' : worst.toFixed(2), 'yes'));
+      return bad;
+    } },
     { name: 'app: a mensural choirbook page ruled in red: its five-line staves found by their ruling', browser: true, unit: async app => {
       const { w } = await app('test/pages/mensural-choirbook.png');
       const E = w.CGEditor, doc = w.CGApp.state.doc;

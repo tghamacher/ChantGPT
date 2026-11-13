@@ -427,6 +427,71 @@
     return found.flat();
   }
 
+  // do two staves (their lines) overlap, along the page and down it (where both run, top line above the other's bottom)
+  function overlaps(a, b) {
+    const ax0 = a[0][0], ax1 = a[0][a[0].length - 2], bx0 = b[0][0], bx1 = b[0][b[0].length - 2];
+    if (ax0 >= bx1 || ax1 <= bx0) return false;
+    const x = (Math.max(ax0, bx0) + Math.min(ax1, bx1)) / 2, n = a.length - 1, m = b.length - 1;
+    return yAt(a[0], x) < yAt(b[m], x) && yAt(a[n], x) > yAt(b[0], x);
+  }
+
+  // The fives found strip by strip ([{ c, rows, g }]) followed across the page into staves: each joined to the staff
+  // whose top line, carried on as its last strips lean (a staff that curves goes on curving), comes within half a space
+  // of its own; strips at most four apart. The same staff found twice in one strip, a row apart: once is enough.
+  function follow(found, STRIP) {
+    const chains = [];
+    const ahead = (ch, c) => {
+      const l = ch[ch.length - 1];
+      if (ch.length < 2) return l.rows[0];
+      const q = ch[Math.max(0, ch.length - 3)];
+      return l.rows[0] + (l.rows[0] - q.rows[0]) / ((l.c - q.c) || 1) * (c - l.c);
+    };
+    for (const f of found.slice().sort((a, b) => a.c - b.c)) {
+      let best = null, bestD = Infinity;
+      for (const ch of chains) {
+        const l = ch[ch.length - 1], d = Math.abs(f.rows[0] - ahead(ch, f.c));
+        if (l.c <= f.c && f.c - l.c <= 4 * STRIP && d < 0.5 * f.g && d < bestD) { best = ch; bestD = d; }
+      }
+      if (best) { if (best[best.length - 1].c < f.c) best.push(f); } else chains.push([f]);
+    }
+    return chains;
+  }
+
+  // A staff of five lines from the strips its lines were found in ([{ c (the strip's middle), rows: five, g }], along the
+  // page): followed as it runs, straight or not (a page's curve to the gutter, a hand's wandering ruling): a strip off
+  // the run of those about it (more than a third of a space from their median: another five rows taken) left out; each
+  // line through the strips' rows, each row the median of its strip and the two beside it; run on from the first and
+  // last strips to xa and xb as the end strips lean; the bends that make no difference (a fifth of a space) taken
+  // away, so a straight staff has its two ends only. null if too few strips are left (fewer than three, or spanning less
+  // than minSpan).
+  function chainLines(ch, g, xa, xb, minSpan = 0) {
+    const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1], mean = f => f.rows.reduce((a, b) => a + b) / f.rows.length;
+    const kept = ch.filter((f, j) => {
+      // (where the strips about it would put it: a line through them, least squares)
+      const near = ch.slice(Math.max(0, j - 2), j + 3).filter(o => o !== f);
+      if (near.length < 2) return true;
+      const n = near.length, mx = near.reduce((t, o) => t + o.c, 0) / n, my = near.reduce((t, o) => t + mean(o), 0) / n;
+      let sxy = 0, sxx = 0;
+      for (const o of near) { sxy += (o.c - mx) * (mean(o) - my); sxx += (o.c - mx) ** 2; }
+      const at = my + (sxx ? sxy / sxx : 0) * (f.c - mx);
+      return Math.abs(mean(f) - at) < 0.35 * g;
+    });
+    if (kept.length < 3 || kept[kept.length - 1].c - kept[0].c < minSpan) return null;
+    const n = kept[0].rows.length, sm = k => kept.map((f, j) => median(kept.slice(Math.max(0, j - 1), j + 2).map(o => o.rows[k])));
+    const lines = [];
+    for (let k = 0; k < n; k++) {
+      const ys = sm(k), cs = kept.map(f => f.c);
+      // (run on at each end as the end strips lean: a curve continues as it goes)
+      const lean = (i, j) => (ys[j] - ys[i]) / ((cs[j] - cs[i]) || 1);
+      const y0 = ys[0] + lean(0, Math.min(2, ys.length - 1)) * (xa - cs[0]), y1 = ys[ys.length - 1] + lean(Math.max(0, ys.length - 3), ys.length - 1) * (xb - cs[cs.length - 1]);
+      const l = [xa, y0];
+      cs.forEach((c, i) => { if (c > xa && c < xb) l.push(c, ys[i]); });
+      l.push(xb, y1);
+      lines.push(l);
+    }
+    return simplify(lines, 0.2 * g).map(l => l.map(v => Math.round(v * 10) / 10));
+  }
+
   // Staves of five lines ruled in red (the great choirbooks of Spain, Italy and the Americas, 16th-18th centuries): in
   // each strip across the page, the rows redder than those about them, five at a time where five stand evenly spaced;
   // followed from strip to strip, and each staff a straight line through its strips (a ruled staff is straight), the
@@ -480,42 +545,26 @@
       }
     }
     // followed across the page: strips whose top lines agree within half a space
-    const chains = [];
-    for (const f of found.sort((a, b) => a.c - b.c)) {
-      let best = null;
-      for (const ch of chains) {
-        const l = ch[ch.length - 1];
-        if (l.c <= f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!best || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - best[best.length - 1].rows[0]))) best = ch;
-      }
-      // (the same staff found twice in one strip, a row apart: once is enough, not a second staff begun)
-      if (best) { if (best[best.length - 1].c < f.c) best.push(f); } else chains.push([f]);
-    }
+    const chains = follow(found, STRIP);
     const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
     const out = [];
-    for (let ch of chains) {
+    for (const ch of chains) {
       if (ch.length < 3) continue;
-      const g = median(ch.map(f => f.g)), mean = f => f.rows.reduce((a, b) => a + b) / 5;
-      const sl = [];
-      for (let i = 0; i < ch.length; i++) for (let j = i + 1; j < ch.length; j++) sl.push((mean(ch[j]) - mean(ch[i])) / (ch[j].c - ch[i].c));
-      const slope = sl.length ? median(sl) : 0;
-      const icpt = k => median(ch.map(f => f.rows[k] - slope * f.c));
-      let ic = [0, 1, 2, 3, 4].map(icpt);
-      ch = ch.filter(f => Math.abs(f.rows.reduce((t, y, k) => t + y - slope * f.c - ic[k], 0) / 5) < 0.35 * g);
-      if (ch.length < 3 || ch[ch.length - 1].c - ch[0].c < 0.2 * (x1 - x0)) continue;
-      ic = [0, 1, 2, 3, 4].map(icpt);
-      const xa = ch[0].c - STRIP / 2, xb = ch[ch.length - 1].c + STRIP / 2;
-      const lines5 = ic.map(b => [xa, b + slope * xa, xb, b + slope * xb]);
-      const midY = (lines5[0][1] + lines5[4][1]) / 2, midX = (xa + xb) / 2;
+      const g = median(ch.map(f => f.g));
+      const lines5 = chainLines(ch, g, ch[0].c - STRIP / 2, ch[ch.length - 1].c + STRIP / 2, 0.2 * (x1 - x0));
+      if (!lines5) continue;
+      const xa = lines5[0][0], xb = lines5[0][lines5[0].length - 2];
+      const midY = (yAt(lines5[0], (xa + xb) / 2) + yAt(lines5[4], (xa + xb) / 2)) / 2, midX = (xa + xb) / 2;
       if (skip.some(b => midY > b[1] && midY < b[1] + b[3] && midX > b[0] && midX < b[0] + b[2])) continue;
       out.push({ lines: lines5, spacing: g });
     }
     // (one staff found twice, in pieces, or five rows taken across two staves: of staves that overlap, the longer)
-    const len = st => st.lines[0][2] - st.lines[0][0], kept = [];
+    const len = st => st.lines[0][st.lines[0].length - 2] - st.lines[0][0], kept = [];
     for (const st of out.sort((a, b) => len(b) - len(a))) {
-      const clash = kept.some(k => st.lines[0][1] < k.lines[4][1] && st.lines[4][1] > k.lines[0][1] && st.lines[0][0] < k.lines[0][2] && st.lines[0][2] > k.lines[0][0]);
+      const clash = kept.some(k => overlaps(st.lines, k.lines));
       if (!clash) kept.push(st);
     }
-    return kept.sort((a, b) => a.lines[0][1] - b.lines[0][1]);
+    return kept.sort((a, b) => yAt(a.lines[0], a.lines[0][0]) - yAt(b.lines[0], b.lines[0][0]));
   }
 
   // Staves of a printed book of polyphony (partbooks and choirbooks set from movable type: Gardano, Scotto, Baldini),
@@ -556,7 +605,7 @@
       }
     }
     // the page's spacing: the commonest gap between neighbouring thin rows crowded with lines, strip by strip
-    const STRIP = Math.max(20, Math.round(60 * u)), counts = new Map(), thin = Math.max(4, Math.round(4 * u));
+    const STRIP = Math.max(20, Math.round(30 * u)), counts = new Map(), thin = Math.max(4, Math.round(4 * u));
     const profOf = x => { const xe = Math.min(w, x + STRIP), p = new Float64Array(h); for (let y = 0; y < h; y++) { let c = 0; for (let i = y * w + x, e = y * w + xe; i < e; i++) c += mask[i]; p[y] = c / (xe - x); } return p; };
     const profs = [];
     for (let x = 0; x < w - STRIP / 2; x += STRIP) {
@@ -608,43 +657,38 @@
     }
     if (!found.length) return [];
     const x0 = Math.min(...found.map(f => f.c)) - STRIP / 2, x1 = Math.max(...found.map(f => f.c)) + STRIP / 2;
-    const chains = [];
-    for (const f of found.sort((a, b) => a.c - b.c)) {
-      let b = null;
-      for (const ch of chains) { const l = ch[ch.length - 1]; if (l.c <= f.c && f.c - l.c <= 4 * STRIP && Math.abs(f.rows[0] - l.rows[0]) < 0.5 * f.g && (!b || Math.abs(f.rows[0] - l.rows[0]) < Math.abs(f.rows[0] - b[b.length - 1].rows[0]))) b = ch; }
-      if (b) { if (b[b.length - 1].c < f.c) b.push(f); } else chains.push([f]);
-    }
+    const chains = follow(found, STRIP);
     const median = a => a.slice().sort((x, y) => x - y)[a.length >> 1];
     const out = [];
-    for (let ch of chains) {
+    for (const ch of chains) {
       if (ch.length < 3) continue;
-      const g = median(ch.map(f => f.g)), mean = f => f.rows.reduce((a, c) => a + c) / 5, sl = [];
-      for (let i = 0; i < ch.length; i++) for (let j = i + 1; j < ch.length; j++) sl.push((mean(ch[j]) - mean(ch[i])) / (ch[j].c - ch[i].c));
-      const slope = sl.length ? median(sl) : 0, icpt = k => median(ch.map(f => f.rows[k] - slope * f.c));
-      let ic = [0, 1, 2, 3, 4].map(icpt);
-      ch = ch.filter(f => Math.abs(f.rows.reduce((t, y, k) => t + y - slope * f.c - ic[k], 0) / 5) < 0.35 * g);
-      if (ch.length < 3 || ch[ch.length - 1].c - ch[0].c < 0.2 * (x1 - x0)) continue;
-      ic = [0, 1, 2, 3, 4].map(icpt);
-      // its ends followed out along its lines, a gap of up to two spaces bridged; not into a scan's black edge
-      const yAt = (k, x) => ic[k] + slope * x;
+      const g = median(ch.map(f => f.g));
+      const curve = chainLines(ch, g, ch[0].c - STRIP / 2, ch[ch.length - 1].c + STRIP / 2, 0.2 * (x1 - x0));
+      if (!curve) continue;
+      // its ends followed out along its lines (beyond them, as the end segment leans), a gap of up to two spaces
+      // bridged; not into a scan's black edge
+      const along = (l, x) => { const c = count(l); const k = x < l[0] ? 0 : x > l[2 * c - 2] ? c - 2 : -1; if (k < 0) return yAt(l, x); const xa0 = l[2 * k], ya0 = l[2 * k + 1], xb0 = l[2 * k + 2], yb0 = l[2 * k + 3]; return ya0 + (yb0 - ya0) * (x - xa0) / ((xb0 - xa0) || 1); };
+      const yAtK = (k, x) => along(curve[k], x);
       const there = x => {
         if (x < 0 || x >= w) return false;
         let n = 0, between = 0;
         for (let k = 0; k < 5; k++) {
-          const y = Math.round(yAt(k, x));
+          const y = Math.round(yAtK(k, x));
           if ([-1, 0, 1].some(d => y + d >= 0 && y + d < h && mask[(y + d) * w + x])) n++;
-          if (k < 4) { const ym = Math.round((yAt(k, x) + yAt(k + 1, x)) / 2); if (ym >= 0 && ym < h && mask[ym * w + x]) between++; }
+          if (k < 4) { const ym = Math.round((yAtK(k, x) + yAtK(k + 1, x)) / 2); if (ym >= 0 && ym < h && mask[ym * w + x]) between++; }
         }
         return n >= 4 && between <= 1;
       };
       const reach = (from, step) => { let x = from, last = from; while (x >= 0 && x < w && Math.abs(x - last) <= 2 * g) { if (there(x)) last = x; x += step; } return last; };
-      const xa = reach(Math.round(ch[0].c - STRIP / 2), -1), xb = reach(Math.round(ch[ch.length - 1].c + STRIP / 2), 1);
-      const lines5 = ic.map(b0 => [xa, b0 + slope * xa, xb, b0 + slope * xb]);
-      const midY = (lines5[0][1] + lines5[4][1]) / 2, midX = (xa + xb) / 2;
+      const xa = reach(Math.round(curve[0][0]), -1), xb = reach(Math.round(curve[0][curve[0].length - 2]), 1);
+      // (its ends moved out to where its lines were followed to; its bends kept)
+      const lines5 = curve.map(l => { const inner = []; for (let i = 2; i < l.length - 2; i += 2) if (l[i] > xa && l[i] < xb) inner.push(l[i], l[i + 1]); return [xa, Math.round(along(l, xa) * 10) / 10, ...inner, xb, Math.round(along(l, xb) * 10) / 10]; });
+      const midX = (xa + xb) / 2, midY = (yAt(lines5[0], midX) + yAt(lines5[4], midX)) / 2;
       if (skip.some(b0 => midY > b0[1] && midY < b0[1] + b0[3] && midX > b0[0] && midX < b0[0] + b0[2])) continue;
       // its ink: in its inkiest stretch (eight spaces long, past its start), the black pixels between and about its
       // lines that aren't its lines
-      const ya = Math.max(0, Math.round(Math.min(lines5[0][1], lines5[0][3]) - 0.5 * g)), yb = Math.min(h, Math.round(Math.max(lines5[4][1], lines5[4][3]) + 0.5 * g));
+      const ys0 = lines5[0].filter((v, i) => i & 1), ys4 = lines5[4].filter((v, i) => i & 1);
+      const ya = Math.max(0, Math.round(Math.min(...ys0) - 0.5 * g)), yb = Math.min(h, Math.round(Math.max(...ys4) + 0.5 * g));
       const from = Math.max(0, Math.round(xa + 3 * g)), to = Math.min(w, Math.round(xb)), col = [];
       for (let x = from; x < to; x++) { let c = 0; for (let y = ya; y < yb; y++) { const i = y * w + x; if (black[i] && !mask[i]) c++; } col.push(c / Math.max(1, yb - ya)); }
       const win = Math.max(1, Math.round(8 * g));
@@ -653,9 +697,9 @@
       if (col.length < win) ink = col.reduce((a, c) => a + c, 0) / Math.max(1, col.length);
       out.push({ lines: lines5, spacing: g, ink });
     }
-    const len = st => st.lines[0][2] - st.lines[0][0], kept = [];
+    const len = st => st.lines[0][st.lines[0].length - 2] - st.lines[0][0], kept = [];
     for (const st of out.sort((a, b) => len(b) - len(a))) {
-      if (!kept.some(k => st.lines[0][1] < k.lines[4][1] && st.lines[4][1] > k.lines[0][1] && st.lines[0][0] < k.lines[0][2] && st.lines[0][2] > k.lines[0][0])) kept.push(st);
+      if (!kept.some(k => overlaps(st.lines, k.lines))) kept.push(st);
     }
     const usual = kept.length ? median(kept.map(st => st.ink)) : 0;
     return kept.filter(st => st.ink > Math.max(0.012, 0.5 * usual)).map(st => ({ lines: st.lines, spacing: st.spacing })).sort((a, b) => a.lines[0][1] - b.lines[0][1]);

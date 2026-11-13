@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.29.21">
+<link rel="stylesheet" href="css/site.css?v=0.29.22">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.21">0.29.21</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.22">0.29.22</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -220,6 +220,7 @@
     <li><strong>Voice areas</strong> (mensural; the tools on the left): <em>Voice area</em> and drag a box round where one voice is on the page (all its staves), or <em>Freeform</em> and draw round it (a voice that runs on at the foot of the facing page, say); then say which voice (the tool lets go after each area: press it again for the next). Its staves are found and named for it; drag a box round any it missed, and they are named too. Right-click an area (or its name) to rename it, find its staves again, delete it, or copy the page's areas to the pages after it (every page, or every other: the same side of each opening). Then <em>All pages</em> finds the staves everywhere, each named for the area it is in. Esc when done marking. A voice that goes on elsewhere (at the foot of the facing page, after a sign): mark a second area for it, after the first; its staves are read (played, exported) after the first area's, wherever they stand. Each area's name shows its voice's clef once three of its staves are read: a voice keeps its clef, so a staff that begins with another is listed under Checks (right-click it to use the voice's), and a staff without a voice offers the one whose clef it has.</li>
     <li>A signum congruentiae (𝄋, where the voices meet, or where a voice goes on elsewhere): right-click the staff, Add here, Signum; typed in, S and its place (S10).</li>
     <li>Play from a note: double-click it (a neume, or a mensural note); while playing, or paused, a click on a note plays from there.</li>
+    <li>Staves that aren't straight (a book photographed open, its lines curving toward the gutter; a hand's wandering ruling): five-line staves are found as they run, with a point at each bend they need (drag a point to fix one; double-click a line to add a bend there, its point to take it away). The notes are read along the curve.</li>
     <li>Rests keep to their places as their values have them: a semibreve rest hangs from a line, a minim rest (and those smaller) stands on one, a longa rest fills two spaces from line to line; a breve rest fills one space, a perfect longa rest three. Dragged or moved with ↑↓, a rest goes to the next line (or space) its value allows; its value changed, it stays where it was seen (a semibreve rest hanging from a line becomes a breve rest in the space below). A rest the reader reads is put on its line or space too, from where its ink is. One off its place is pointed out.</li>
     <li>Checking mensural notes: as with chant, doubtful signs are orange; select one (click, or Tab for the next doubtful) and Enter accepts it (green) and goes on to the next doubtful; Shift+Enter (or Accept) accepts the staff once none is left doubtful. A sign you change is taken as checked.</li>
     <li>Checks (mensural, voices named): on each opening (the facing pages, as Two pages pairs them) every voice should last as long and end together, as a choirbook's page is turned where all have reached the same place: a voice a semibreve short or over there, or ending before or after the others, is listed, marked at its last staff on the opening. Each voice's staves should begin with its clef too.</li>
@@ -254,19 +255,19 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.29.21"></script>
-<script src="js/staves.js?v=0.29.21"></script>
-<script src="vendor/scoring-up/scoring-up.js?v=0.29.21"></script>
-<script src="js/serenissima.js?v=0.29.21"></script>
-<script src="js/mensural.js?v=0.29.21"></script>
-<script src="js/greciliae.js?v=0.29.21"></script>
-<script src="js/neumes.js?v=0.29.21"></script>
-<script src="js/checks.js?v=0.29.21"></script>
-<script src="js/export.js?v=0.29.21"></script>
-<script src="js/viewer.js?v=0.29.21"></script>
-<script src="js/recognizer.js?v=0.29.21"></script>
-<script src="js/playback.js?v=0.29.21"></script>
-<script src="js/editor.js?v=0.29.21"></script>
-<script src="js/app.js?v=0.29.21"></script>
+<script src="js/chant.js?v=0.29.22"></script>
+<script src="js/staves.js?v=0.29.22"></script>
+<script src="vendor/scoring-up/scoring-up.js?v=0.29.22"></script>
+<script src="js/serenissima.js?v=0.29.22"></script>
+<script src="js/mensural.js?v=0.29.22"></script>
+<script src="js/greciliae.js?v=0.29.22"></script>
+<script src="js/neumes.js?v=0.29.22"></script>
+<script src="js/checks.js?v=0.29.22"></script>
+<script src="js/export.js?v=0.29.22"></script>
+<script src="js/viewer.js?v=0.29.22"></script>
+<script src="js/recognizer.js?v=0.29.22"></script>
+<script src="js/playback.js?v=0.29.22"></script>
+<script src="js/editor.js?v=0.29.22"></script>
+<script src="js/app.js?v=0.29.22"></script>
 </body>
 </html>
