@@ -212,6 +212,20 @@
       bad.push(...same('MEI: the black note coloured', (mei.match(/colored="true"/g) || []).length, 1));
       return bad;
     } },
+    { name: 'mensural: a rest the reader puts off its line or space put on it, from its ink', unit: () => {
+      const R = global.CGRecognizer, m = { height: 64, space: 8, top5: 14 }, W = 60, bad = [];
+      // (a strip: its five lines at rows 14 … 46; position p at row 46 - 4p)
+      const strip = fill => { const data = new Float32Array(64 * W); for (let k = 0; k < 5; k++) for (let x = 0; x < W; x++) data[(14 + 8 * k) * W + x] = 1; fill(data); return { data, W }; };
+      const box = (r0, r1) => d => { for (let v = r0; v <= r1; v++) for (let x = 28; x <= 32; x++) d[v * W + x] = 1; };
+      // a semibreve rest hanging from the middle line (row 30, p 4): ink rows 31-34
+      bad.push(...same('a semibreve rest read at 5: hangs from the line above its ink, 4', R.restOnInk(strip(box(31, 34)), m, 30, { k: 'rest', v: 'Sb', p: 5 }), 4));
+      // a minim rest standing on the middle line: ink rows 26-29
+      bad.push(...same('a minim rest read at 3: stands on the line under its ink, 4', R.restOnInk(strip(box(26, 29)), m, 30, { k: 'rest', v: 'M', p: 3 }), 4));
+      // a breve rest filling the space above the middle line (rows 23-29, p 5)
+      bad.push(...same('a breve rest read at 4: the space its ink fills, 5', R.restOnInk(strip(box(23, 29)), m, 30, { k: 'rest', v: 'B', p: 4 }), 5));
+      bad.push(...same('one read in its place kept', R.restOnInk(strip(box(31, 34)), m, 30, { k: 'rest', v: 'Sb', p: 6 }), 6));
+      return bad;
+    } },
     { name: 'mensural: a note\'s head on its place, its stem up or down (a stem turned is no step lower)', unit: () => {
       // (each sign's head: the leftmost points of its outline near its origin, a diamond's left corner, at y 0)
       const T = global.CGSerenissima, bad = [];

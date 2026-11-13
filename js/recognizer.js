@@ -206,9 +206,28 @@
       const x0 = xOf(v.from) - half, x1 = xOf(v.to) + half;
       // (where it is drawn: on its ink, near where the reader saw it; its left edge where its middle comes so)
       const mid = onInk(st, m, (v.from + v.to + 1) / 2 * m.stride, v.item);
+      // (a rest on the line or space its value has it: from its ink, where the reader put it otherwise)
+      if (v.item.k === 'rest') v.item.p = restOnInk(st, m, mid === null ? (v.from + v.to + 1) / 2 * m.stride : mid, v.item);
       const x = mid === null ? x0 : (st.x0 + mid * st.step) / px.scale - global.CGMensural.itemWidth(v.item) * g / 2;
       return { item: Object.assign(v.item, { x: Math.round(x * 10) / 10 }), x0, x1, conf: Math.round(v.conf * 100) / 100 };
     });
+  }
+  // A rest's place (p) as its value has it (CGMensural.restPlace: a line or a space): kept, if the reader put it on
+  // one it may have; else from its ink, in the columns about u: the middle of its ink, less the half space a semibreve
+  // rest hangs below its line, more the half a minim rest (or smaller) stands above its line, the middle for a breve or
+  // longa rest; the nearest place it may have to that.
+  function restOnInk(st, m, u, item) {
+    const M = global.CGMensural, p = item.p;
+    if (M.restPlace(item, p) === p) return p;
+    const H = m.height, sp = m.space, top = m.top5 || 14, a = Math.max(0, Math.round(u - 0.6 * sp)), b = Math.min(st.W - 1, Math.round(u + 0.6 * sp));
+    const line = r => [0, 1, 2, 3, 4].some(k => Math.abs(r - (top + k * sp)) <= 1);
+    let t = 0, n = 0;
+    for (let v = 0; v < H; v++) if (!line(v)) for (let x = a; x <= b; x++) if (st.data[v * st.W + x] > 0.5) { t += v; n++; }
+    if (n < 3) return M.restPlace(item, p, 1);
+    const ink = (top + 4 * sp - (t / n + 0.5)) / (sp / 2);                 // (its ink's middle as a staff position)
+    const want = ink + (item.v === 'Sb' ? 1 : ['M', 'Sm', 'F', 'Sf'].includes(item.v) ? -1 : 0);
+    const lo = M.restPlace(item, Math.floor(want), -1), hi = M.restPlace(item, Math.ceil(want), 1);
+    return Math.abs(lo - want) <= Math.abs(hi - want) ? lo : hi;
   }
   // Where a sign the reader read is, along its straightened staff (st: straighten()'s, in its columns): the reader says
   // when it read the sign, which comes a little after the sign (by about a third of a space) and wanders; so the ink
@@ -234,7 +253,7 @@
     return t / wsum + 0.5;
   }
 
-  const api = { straighten, textBand, TEXT, decode, groups, read, readText, readMensural, mensuralItems, onInk, load, get meta() { return meta; } };
+  const api = { straighten, textBand, TEXT, decode, groups, read, readText, readMensural, mensuralItems, onInk, restOnInk, load, get meta() { return meta; } };
   global.CGRecognizer = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
