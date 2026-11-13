@@ -1803,12 +1803,15 @@
     const r = areaAt(pg, ...middleOf(st));
     if (r && r.voice) st.voice = r.voice;
   }
-  function setAreaTool(kind) {
+  // (the tool marks one area, then lets go: a drag afterwards moves notes and staves again, as before it; the pointer a
+  // crosshair while it is on)
+  function setAreaTool(kind, quiet) {
     areaTool = areaTool === kind ? null : kind;
     for (const [id, k] of [['voiceArea', 'box'], ['voiceFree', 'free']]) { const b = document.getElementById(id); if (b) b.setAttribute('aria-pressed', String(areaTool === k)); }
-    ctx.say(!areaTool ? 'Done marking voice areas.' : areaTool === 'box'
-      ? 'Drag a box round where one voice is on the page (all its staves), then say which voice it is. Esc when done.'
-      : 'Draw round where one voice is on the page (all its staves), then say which voice it is. Esc when done.');
+    if (ctx.svg) ctx.svg.classList.toggle('marking', !!areaTool);
+    if (!quiet) ctx.say(!areaTool ? 'Done marking voice areas.' : areaTool === 'box'
+      ? 'Drag a box round where one voice is on the page (all its staves), then say which voice it is. (Esc: no area.)'
+      : 'Draw round where one voice is on the page (all its staves), then say which voice it is. (Esc: no area.)');
     draw();
   }
   // a new area: kept at once (unnamed), its voice asked for where it was drawn
@@ -2008,6 +2011,7 @@
       const pts = d.kind === 'box' ? [[Math.min(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.max(a[1], b[1])], [Math.min(a[0], b[0]), Math.max(a[1], b[1])]] : d.pts.concat([d.to]);
       const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
       if (pts.length < 3 || Math.max(...xs) - Math.min(...xs) < 20 * unit() || Math.max(...ys) - Math.min(...ys) < 10 * unit()) { ctx.say(d.kind === 'box' ? 'Drag a larger box, round all of one voice\'s staves.' : 'Draw right round all of one voice\'s staves.'); return; }
+      setAreaTool(areaTool, true);                         // (one area a time: the tool let go)
       newArea(pts, e.clientX, e.clientY);
       return;
     }

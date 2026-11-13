@@ -605,6 +605,8 @@
       bad.push(...same('the area named', doc.pages[0].regions[0].voice, 'Tenor'));
       const voiceOf = st => st.voice || '';
       bad.push(...same('the Tenor\'s staves named, the Cantus\'s not', doc.pages[0].staves.map(voiceOf).slice(0, 6), ['', '', '', 'Tenor', 'Tenor', 'Tenor']));
+      bad.push(...same('the tool let go after one area (a drag moves notes again)', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'false'));
+      E.setAreaTool('box');
       E.key(new w.KeyboardEvent('keydown', { key: 'Escape' }));
       bad.push(...same('Esc ends the tool', w.document.getElementById('voiceArea').getAttribute('aria-pressed'), 'false'));
       E.undo();
