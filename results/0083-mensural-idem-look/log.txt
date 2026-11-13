@@ -1,0 +1,5 @@
+job 0083-mensural-idem-look: The mensural reader used to an Alamire hand's look: the Occo Codex's pages (IDEM; saved on this computer) measured (parchment, ink, lines, staff size; idemstyle.py measure: only bare parchment and a few numbers kept) and 20,000 staves of music (mensjrp, mens5) drawn in that look; from 0082 (the app's), with the synthetic staves, Capitan and seils2. Tested against 0082 on Capitan, seils2 and, as a test only (CMME's labels, private), Occo's held-out staves. Exported if better and nothing worse (nothing of CMME's in it).
+code: 0af8377
+removed training/data/m0079
+removed training/data/m0080
+(the job could not run: not allowed: idemstyle.py measure)
