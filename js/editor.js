@@ -165,9 +165,16 @@
     if (bad.length) ctx.say(bad.join(' '), true);
   }
   // the item's (or the ligature note's) value
+  // a rest given another value, kept where it was seen: a semibreve rest hanging from a line becomes a breve rest in
+  // the space below it, a minim rest standing on one a breve rest in the space above, and back again
+  function restAgain(it, old) {
+    const space = it.v === 'B' || (it.v === 'L' && !!it.perf);
+    it.p = M.restPlace(it, it.p, space ? (old.v === 'Sb' ? -1 : 1) : (it.v === 'Sb' ? 1 : -1));
+  }
   function mValue(v) {
     mChange(it => {
-      if (it.k === 'note' || it.k === 'rest') { it.v = v; return; }
+      if (it.k === 'rest') { const old = Object.assign({}, it); it.v = v; if (v !== 'L') delete it.perf; restAgain(it, old); return; }
+      if (it.k === 'note') { it.v = v; return; }
       if (it.k === 'lig' && mitem.n !== null) {
         if (!['Mx', 'L', 'B', 'Sb'].includes(v)) return `A ${VALUE_NAMES[v].toLowerCase()} can't be in a ligature.`;
         it.notes[mitem.n].v = v; return;
@@ -180,6 +187,7 @@
     mChange(it => {
       if (it.k === 'clef') { const l = it.line + Math.sign(d); if (l < 1 || l > 5) return 'A clef stays on the staff\'s lines.'; it.line = l; return; }
       if (it.k === 'lig') { (all || mitem.n === null ? it.notes : [it.notes[mitem.n]]).forEach(n => { n.p += d; }); return; }
+      if (it.k === 'rest') { it.p = M.restPlace(it, it.p + d, d); return; }   // (to the next line, or space, as its value has it)
       if ('p' in it) { it.p += d; return; }
       return 'That stays where it is on the staff.';
     });
@@ -215,7 +223,7 @@
   }
   function mRest() {
     mChange(it => {
-      if (it.k === 'note') { it.k = 'rest'; delete it.color; delete it.stem; return; }
+      if (it.k === 'note') { it.k = 'rest'; delete it.color; delete it.stem; it.p = M.restPlace(it, it.p, 1); return; }
       if (it.k === 'rest') { it.k = 'note'; delete it.perf; return; }
       return 'Only a note becomes a rest, or a rest a note.';
     });
@@ -1491,7 +1499,7 @@
         inLig ? { label: it.color === 'black' ? 'All of it black ✓' : 'All of it black', run: () => mBlack(true) } : null,
         it.k === 'note' && !/^(B|Sb)$/.test(it.v) ? { label: 'Turn its stem', key: 'S', run: mStem } : null,
         it.k === 'note' ? { label: 'Make it a rest', key: 'R', run: mRest } : it.k === 'rest' ? { label: 'Make it a note', key: 'R', run: mRest } : null,
-        it.k === 'rest' && it.v === 'L' ? { label: it.perf ? 'Perfect (three spaces) ✓' : 'Perfect (three spaces)', run: () => mChange(r => { if (r.perf) delete r.perf; else r.perf = true; }) } : null,
+        it.k === 'rest' && it.v === 'L' ? { label: it.perf ? 'Perfect (three spaces) ✓' : 'Perfect (three spaces)', run: () => mChange(r => { const old = Object.assign({}, r); if (r.perf) delete r.perf; else r.perf = true; restAgain(r, old); }) } : null,
         it.k === 'sign' ? { shapes: [['O', 'O'], ['C', 'C'], ['R', 'Ɔ']].map(([w, lab]) => ({ label: lab, on: it.sign === w, run: () => mChange(r => { r.sign = w; }) })) } : null,
         it.k === 'sign' ? { label: it.dot ? 'With a dot ✓' : 'With a dot', run: () => mChange(r => { if (r.dot) delete r.dot; else r.dot = true; }) } : null,
         it.k === 'sign' ? { label: it.stroke ? 'Struck through ✓' : 'Struck through', run: () => mChange(r => { if (r.stroke) delete r.stroke; else r.stroke = true; }) } : null,
@@ -2035,6 +2043,7 @@
       if (Number.isFinite(was.x)) it.x = Math.round((was.x + dx) * 10) / 10;
       if (it.k === 'lig') it.notes = was.notes.map((n, j) => Object.assign({}, n, drag.all || j === mitem.n ? { p: n.p + k } : {}));
       else if (it.k === 'clef') it.line = Math.max(1, Math.min(5, was.line + Math.round(k / 2)));
+      else if (was.k === 'rest') it.p = M.restPlace(was, was.p + k, k);   // (from line to line, or space to space: see restPlace)
       else if ('p' in was) it.p = was.p + k;
       draw(true);
       return;

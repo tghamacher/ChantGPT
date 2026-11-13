@@ -227,6 +227,14 @@
       }
       return bad;
     } },
+    { name: 'mensural: a rest on a line or a space as its value has it (a semibreve rest hangs from a line, a minim rest stands on one, a breve rest fills a space)', unit: () => {
+      const M = global.CGMensural, bad = [], r = (v, perf) => Object.assign({ k: 'rest', v }, perf ? { perf: true } : {});
+      bad.push(...same('lines: Sb, M, Sm, F, L, Mx', ['Sb', 'M', 'Sm', 'F', 'L', 'Mx'].map(v => [M.restPlace(r(v), 4), M.restPlace(r(v), 5, 1), M.restPlace(r(v), 5, -1)]), Array(6).fill([4, 6, 4])));
+      bad.push(...same('spaces: B, perfect L', [r('B'), r('L', true)].map(x => [M.restPlace(x, 5), M.restPlace(x, 4, 1), M.restPlace(x, 4, -1)]), [[5, 5, 3], [5, 5, 3]]));
+      const errs = M.check(M.parse('rSb5 rM3 rB4 rSb4 rM2 rB3'));
+      bad.push(...same('those off their line or space complained of', errs.map(e => +/Item (\d+)/.exec(e)[1]), [1, 2, 3]));
+      return bad;
+    } },
     { name: 'mensural: each voice on an opening as long as the others, ending together', unit: () => {
       const M = global.CGMensural, C = global.CGChant, bad = [];
       const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
@@ -788,6 +796,33 @@
       bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
       return bad;
     } },
+    { name: 'app: a rest dragged or moved goes from line to line (a semibreve or minim rest), space to space (a breve rest); its value changed keeps it in place', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-print.png');
+      const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      doc.pages[0].staves.push(Object.assign({ id: 'p1s1', syllables: [], mensural: M.parse('c4 C rSb4 rM4 rB5 Sb5') }, await printedStaff(0)));
+      // (zoomed in, as for fine work: a step more than the few pixels a press may wander before it is a drag)
+      for (let i = 0; i < 4; i++) { w.document.getElementById('zoomIn').click(); await new Promise(r => setTimeout(r, 120)); }
+      const st = doc.pages[0].staves[0], key = k => E.key({ key: k, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false });
+      const stage = w.document.getElementById('stage'), sm = w.document.getElementById('overlay').getScreenCTM(), sr = stage.getBoundingClientRect();
+      stage.scrollTop += sm.d * st.lines[0][1] + sm.f - sr.top - 100; stage.scrollLeft += sm.a * st.lines[0][0] + sm.e - sr.left - 50;
+      await new Promise(r => setTimeout(r, 80));
+      E.draw();
+      const step = M.geometry(st.lines).s / 2;
+      // (dragged up a step and a little: the semibreve rest to the next line up, not the space)
+      const box = i => { const b = M.layout(st).boxes[i]; return [b[0] + b[2] / 2, b[1] + b[3] / 2]; };
+      for (const [i, dy, want] of [[2, -1.2, 6], [3, -1.4, 6], [4, 1.1, 3]]) {
+        const [x, y] = box(i);
+        await drag(w, [x, y], [x + 1, y + dy * step]);    // (dy: in steps, up the page negative)
+        bad.push(...same(`item ${i} dragged ${dy > 0 ? 'down' : 'up'} a step`, st.mensural[i].p, want));
+      }
+      E.selectMensural('p1s1', 2); key('ArrowDown');
+      bad.push(...same('the semibreve rest down by the arrow: the next line down', st.mensural[2].p, 4));
+      key('1'); key('0');
+      bad.push(...same('made a breve rest: in the space below the line it hung from', [st.mensural[2].v, st.mensural[2].p], ['B', 3]));
+      bad.push(...same('none off its line or space', M.check(st.mensural), []));
+      return bad;
+    } },
     { name: 'app: mensural signs accepted one by one (Enter, the next doubtful), the staff (Shift+Enter); a voice short on an opening checked', browser: true, unit: async app => {
       const { w } = await app('test/pages/mensural-print.png', 'test/pages/mensural-print.png');
       const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
@@ -914,14 +949,15 @@
       key('Backspace'); key('a'); bad.push(...same('Backspace, and the nearest a', txt(), 'c4 Sb7 Sb8 Sb9 Sb11'));
       key('2'); key('g'); key('f');
       bad.push(...same('2: that one a minim, and those after', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9'));
-      key('r'); key('0'); bad.push(...same('a rest typed, made a breve rest', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4'));
-      key('c'); key('-'); bad.push(...same('a flat before the note', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 b6 B6'));
-      key('N'); bad.push(...same('and taken off again', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 B6'));
+      // (a minim rest standing on the middle line, made a breve rest: in the space above it, a breve rest filling a space)
+      key('r'); key('0'); bad.push(...same('a rest typed, made a breve rest', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB5'));
+      key('c'); key('-'); bad.push(...same('a flat before the note', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB5 b6 B6'));
+      key('N'); bad.push(...same('and taken off again', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB5 B6'));
       key('['); key('9'); key('a'); key(']');
-      bad.push(...same('a ligature from [ to ] (9: the first made a longa, and the next)', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 [L6 L4]'));
+      bad.push(...same('a ligature from [ to ] (9: the first made a longa, and the next)', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB5 [L6 L4]'));
       const ms = doc.pages[0].staves[0].mensural;
       bad.push(...same('each placed after the one before', ms.every((v, i) => !i || v.x > ms[i - 1].x), true));
-      E.undo(); bad.push(...same('one undo takes the ligature apart', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB4 L6 L4'));
+      E.undo(); bad.push(...same('one undo takes the ligature apart', txt(), 'c4 Sb7 Sb8 Sb9 M11 M10 M9 rB5 L6 L4'));
       return bad;
     } },
     { name: 'app: the overlay is drawn in page units, at any zoom', browser: true, unit: async app => {

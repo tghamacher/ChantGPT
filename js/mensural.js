@@ -152,6 +152,20 @@
     return { stems, bad };
   }
 
+  // ---------------------------------------------------------------- where a rest can be
+  // A rest stands on the staff by its value, its place (p) the line or space that says how: a semibreve rest hangs
+  // from a line, a minim rest and those smaller stand on one, a longa rest fills two spaces from line to line (its
+  // middle on a line), a maxima rest is two of them: all on a line (p even). A breve rest fills one space (its middle a
+  // space), a perfect longa rest three: on a space (p odd). A semibreve rest moved onto a space would hang from no
+  // line, and look a minim rest standing on one, or the other way about: so a rest moved goes from line to line (or
+  // space to space).
+  const onSpace = it => it.v === 'B' || (it.v === 'L' && !!it.perf);
+  // the rest's place nearest p it may have (dir: which way to go from a place it may not: up 1, down -1)
+  function restPlace(it, p, dir = 1) {
+    const odd = ((p % 2) + 2) % 2 === 1;
+    return odd === onSpace(it) ? p : p + (dir < 0 ? -1 : 1);
+  }
+
   // ---------------------------------------------------------------- what's wrong
   // The problems of a staff's items, in plain sentences (empty when it is right).
   function check(items) {
@@ -168,6 +182,7 @@
         case 'note': case 'rest':
           if (!VALUES.includes(it.v)) bad.push(`${at}: its value is one of ${VALUES.join(', ')}.`);
           if (!pos(it.p)) bad.push(`${at}: its position is a whole number of steps from the bottom line.`);
+          else if (it.k === 'rest' && restPlace(it, it.p) !== it.p) bad.push(`${at}: ${onSpace(it) ? `a ${it.v === 'B' ? 'breve' : 'perfect longa'} rest fills ${it.v === 'B' ? 'a space' : 'three spaces'} from line to line: its place a space` : `a ${{ Sb: 'semibreve rest hangs from', L: 'longa rest fills two spaces from', Mx: 'maxima rest fills two spaces from' }[it.v] || 'minim rest (or smaller) stands on'} a line: its place a line`}.`);
           break;
         case 'lig':
           if (!Array.isArray(it.notes)) { bad.push(`${at}: a ligature has notes.`); break; }
@@ -726,5 +741,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, openings, itemWidth: it => widthOf(it), clefsOf, inArea, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
+  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, openings, restPlace, itemWidth: it => widthOf(it), clefsOf, inArea, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);
