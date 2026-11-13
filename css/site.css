@@ -239,3 +239,11 @@ body[data-mode] .cg-top { box-shadow: inset 0 -3px 0 var(--accent); }
 .cg-overlay .varea.drawing { fill: var(--sel-fill); stroke: var(--sel); }
 .cg-overlay .varea-name { fill: hsl(var(--hue, 35) 60% 36%); font-family: var(--ui); font-weight: 700; paint-order: stroke; stroke: rgba(255, 253, 248, .85); stroke-width: 3px; vector-effect: non-scaling-stroke; cursor: context-menu; }
 .cg-rail button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+/* two pages side by side: the one worked on and the one facing it (clicked, it becomes the one worked on) */
+.cg-spread.two { display: flex; gap: 16px; justify-content: center; align-items: flex-start; width: max-content; min-width: 100%; }
+.cg-spread.two .cg-page { margin: 0; flex: none; }
+.cg-facing { cursor: pointer; }
+.cg-facing .cg-overlay { pointer-events: none; }
+.cg-facing:hover { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cg-spread.two #page { outline: 2px solid var(--accent); outline-offset: 2px; }

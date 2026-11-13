@@ -9,8 +9,9 @@
   // zoom: 'width' or 'page' (fitted to the window) or a number (page units to CSS pixels);
   // dirty: changed since it was last saved
   // book: a book's index from GregoBase (made by training/gregobase.py book), if one is open
-  const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false, book: null };
-  window.CGApp = { state, open, openIiif, savePages, show, save };
+  const state = { src: null, doc: null, page: 0, zoom: 'width', dirty: false, book: null, spread: false, firstAlone: true };
+  try { state.spread = localStorage.getItem('cg-spread') === '1'; state.firstAlone = localStorage.getItem('cg-first-alone') !== '0'; } catch (e) { }
+  window.CGApp = { state, open, openIiif, savePages, show, save, setSpread, partner };
 
   // ---------------------------------------------------------------- status
   function say(msg, err) {
@@ -199,6 +200,21 @@
     return c.promise;
   }
 
+  // ---------------------------------------------------------------- two pages side by side
+  // The page facing page i as the book opens: with the first page alone (a book's first page is a right-hand one),
+  // pages 2-3, 4-5 … face each other; else 1-2, 3-4 …; null if it has none (the first, alone; the last, odd one out).
+  function partner(i) {
+    const n = state.src ? state.src.count : 0, k = state.firstAlone ? (i === 0 ? null : i % 2 ? i + 1 : i - 1) : (i % 2 ? i - 1 : i + 1);
+    return k === null || k < 0 || k >= n ? null : k;
+  }
+  function setSpread(on, firstAlone) {
+    state.spread = !!on;
+    if (firstAlone !== undefined) state.firstAlone = !!firstAlone;
+    try { localStorage.setItem('cg-spread', state.spread ? '1' : '0'); localStorage.setItem('cg-first-alone', state.firstAlone ? '1' : '0'); } catch (e) { }
+    $('spreadToggle').setAttribute('aria-pressed', String(state.spread));
+    if (state.src) show(state.page);
+  }
+
   // ---------------------------------------------------------------- showing a page
   let showing = 0;
   async function show(i) {
@@ -211,11 +227,22 @@
     $('prev').disabled = i === 0;
     $('next').disabled = i === src.count - 1;
     const [w, h] = src.sizes[i];
-    const scale = scaleFor(w, h), ratio = window.devicePixelRatio || 1;
+    // (two pages: the facing one beside it, the lower-numbered on the left, both at one scale fitted to the pair)
+    const j = state.spread ? partner(i) : null, fw = j !== null ? src.sizes[j] : null;
+    const scale = fw ? scaleFor(w + fw[0], Math.max(h, fw[1]), SPREAD_GAP) : scaleFor(w, h), ratio = window.devicePixelRatio || 1;
     const draw = Math.min(scale * ratio, Math.sqrt(MAX_PIXELS / (w * h)));
     const box = $('page');
     box.style.width = `${w * scale}px`;
     box.style.height = `${h * scale}px`;
+    const facing = $('facing');
+    facing.hidden = j === null;
+    $('spread').classList.toggle('two', j !== null);
+    if (j !== null) {
+      facing.style.width = `${fw[0] * scale}px`; facing.style.height = `${fw[1] * scale}px`;
+      facing.style.order = j < i ? '-1' : '1';
+      facing.dataset.page = j;
+      E.setFacing({ svg: $('facingOverlay'), page: j });
+    } else E.setFacing(null);
     E.draw();
     const name = src.names ? ` · ${src.names[i]}` : '';
     $('pageInfo').textContent = `${Math.round(w)} × ${Math.round(h)} ${src.type === 'pdf' ? 'points' : 'pixels'}${name}`;
@@ -223,13 +250,17 @@
     try {
       const done = await src.render(i, $('canvas'), draw);
       if (done && n === showing) document.dispatchEvent(new CustomEvent('cg-shown', { detail: { page: i } }));
+      // (the facing page after it: a PDF draws one page at a time)
+      if (done && n === showing && j !== null) await src.render(j, $('facingCanvas'), Math.min(scale * ratio, Math.sqrt(MAX_PIXELS / (fw[0] * fw[1]))));
     } catch (e) { say(`Couldn't draw page ${i + 1}: ${e.message || e}`, true); }
   }
 
-  function scaleFor(w, h) {
+  const SPREAD_GAP = 16;                                     // (CSS pixels between two pages side by side)
+  // (gap: CSS pixels taken from the width first, as between two pages)
+  function scaleFor(w, h, gap = 0) {
     if (typeof state.zoom === 'number') return state.zoom;
     const stage = $('stage'), cs = getComputedStyle(stage);
-    const aw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const aw = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - gap;
     const ah = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     const fitW = Math.max(0.05, aw / w);
     return state.zoom === 'page' ? Math.max(0.05, Math.min(fitW, ah / h)) : fitW;
@@ -414,7 +445,7 @@
   try { if (localStorage.getItem('cg-gabc-words') === 'no') $('gabcWords').checked = false; } catch (e) { }
   $('gabcWords').addEventListener('change', e => { try { localStorage.setItem('cg-gabc-words', e.target.checked ? 'yes' : 'no'); } catch (x) { } });
   // how see-through the notation is (kept for next time)
-  const opacity = v => { $('overlay').style.setProperty('--notation', v); try { localStorage.setItem('cg-notation', v); } catch (e) { } };
+  const opacity = v => { $('overlay').style.setProperty('--notation', v); $('facingOverlay').style.setProperty('--notation', v); try { localStorage.setItem('cg-notation', v); } catch (e) { } };
   try { const v = localStorage.getItem('cg-notation'); if (v) $('opacity').value = v; } catch (e) { }
   opacity($('opacity').value);
   $('opacity').addEventListener('input', e => opacity(e.target.value));
@@ -436,6 +467,10 @@
   $('next').addEventListener('click', () => show(state.page + 1));
   $('pageNo').addEventListener('change', e => show((parseInt(e.target.value, 10) || 1) - 1));
   for (const b of document.querySelectorAll('[data-zoom]')) b.addEventListener('click', () => zoom(b.dataset.zoom));
+  $('spreadToggle').addEventListener('click', () => setSpread(!state.spread));
+  $('spreadToggle').setAttribute('aria-pressed', String(state.spread));
+  // (the facing page clicked: it becomes the one worked on, the other now facing it)
+  $('facing').addEventListener('click', () => { if (state.src && $('facing').dataset.page !== undefined) show(+$('facing').dataset.page); });
   $('zoomIn').addEventListener('click', () => zoom('in'));
   $('zoomOut').addEventListener('click', () => zoom('out'));
   document.addEventListener('keydown', e => {
@@ -453,12 +488,13 @@
     else if (k === 'Home') show(0);
     else if (k === 'End') show(state.src.count - 1);
     else if (k === '+' || k === '=') zoom('in');
+    else if (k === 'd' || k === 'D') setSpread(!state.spread);
     else if (k === '-') zoom('out');
     else return;
     e.preventDefault();
   });
   // holding H hides the layer, to see the page under it
-  const peek = on => $('overlay').classList.toggle('peek', on);
+  const peek = on => { $('overlay').classList.toggle('peek', on); $('facingOverlay').classList.toggle('peek', on); };
   document.addEventListener('keyup', e => { if (e.key === 'h' || e.key === 'H') peek(false); });
   window.addEventListener('blur', () => peek(false));
 

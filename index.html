@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ChantGPT</title>
 <meta name="description" content="Read scans of Gregorian chant into GABC, in your browser.">
-<link rel="stylesheet" href="css/site.css?v=0.29.12">
+<link rel="stylesheet" href="css/site.css?v=0.29.13">
 <script>/* the theme, before anything is drawn: light, dark, or the system's */ try { const t = localStorage.getItem("cg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }</script>
 </head>
 <body>
 <!-- the toolbar: the source, the pages, zoom, undo, save, help -->
 <header class="cg-top">
-  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.12">0.29.12</span>
+  <h1>ChantGPT</h1><span class="ver" id="version" data-version="0.29.13">0.29.13</span>
   <a class="cg-repo" href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener" title="The source code, and where to report a problem or suggest something">GitHub ↗</a>
   <div class="cg-tools">
     <label class="cg-tb" id="drop" tabindex="0" title="Open a PDF or page images (or drop them anywhere); add a saved document to carry on"><span aria-hidden="true">📂</span> Open<input type="file" id="file" accept=".pdf,application/pdf,image/*,.json,application/json" multiple hidden></label>
@@ -26,6 +26,7 @@
         <button type="button" data-zoom="width" aria-pressed="true" title="Fit the page's width">Width</button>
         <button type="button" data-zoom="page" aria-pressed="false" title="The whole page">Page</button>
       </span>
+      <button type="button" class="cg-tb" id="spreadToggle" aria-pressed="false" title="Two pages side by side, as the book opens (D): you work on one; click the other to work on it. Right-click the page to pair them from the first page or the second"><span aria-hidden="true">▯▯</span> Two pages</button>
       <button type="button" class="cg-tb icon" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
       <button type="button" class="cg-tb icon" id="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
       <span class="cg-sep"></span>
@@ -79,9 +80,15 @@
       <p>A PDF of a chant book, photographs of its pages, or a manuscript online.</p>
       <p class="cg-hint">Drop files anywhere, or use <strong>Open</strong> above. Everything stays in your browser.</p>
     </div>
-    <div class="cg-page" id="page" hidden>
-      <canvas id="canvas"></canvas>
-      <svg id="overlay" class="cg-overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+    <div class="cg-spread" id="spread">
+      <div class="cg-page" id="page" hidden>
+        <canvas id="canvas"></canvas>
+        <svg id="overlay" class="cg-overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      </div>
+      <div class="cg-page cg-facing" id="facing" hidden title="The facing page: click it to work on it">
+        <canvas id="facingCanvas"></canvas>
+        <svg id="facingOverlay" class="cg-overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+      </div>
     </div>
   </section>
 
@@ -220,6 +227,7 @@
     <dt>← → · PgUp PgDn</dt><dd>turn the page</dd>
     <dt>+ −</dt><dd>zoom</dd>
     <dt>H (hold)</dt><dd>hide the notation and see the page</dd>
+    <dt>D</dt><dd>two pages side by side, as the book opens (Two pages in the toolbar): you work on one, drawn outlined; click the other to work on it. Right-click the page to pair 1-2, 3-4 … or, as a book, 2-3, 4-5 … with the first alone</dd>
     <dt>Tab · Shift+Tab</dt><dd>next or previous staff, neume or syllable</dd>
     <dt>↑ ↓ ← →</dt><dd>move what's selected (Shift: further)</dd>
     <dt>Enter</dt><dd>accept the neume or syllable and go on</dd>
@@ -239,19 +247,19 @@
   <p class="cg-hint">Something wrong, or an idea? <a href="https://github.com/tghamacher/ChantGPT/issues/new" target="_blank" rel="noopener">Report it on GitHub</a> (say which book or manuscript, and which page). The source code is at <a href="https://github.com/tghamacher/ChantGPT" target="_blank" rel="noopener">github.com/tghamacher/ChantGPT</a>.</p>
 </dialog>
 
-<script src="js/chant.js?v=0.29.12"></script>
-<script src="js/staves.js?v=0.29.12"></script>
-<script src="vendor/scoring-up/scoring-up.js?v=0.29.12"></script>
-<script src="js/serenissima.js?v=0.29.12"></script>
-<script src="js/mensural.js?v=0.29.12"></script>
-<script src="js/greciliae.js?v=0.29.12"></script>
-<script src="js/neumes.js?v=0.29.12"></script>
-<script src="js/checks.js?v=0.29.12"></script>
-<script src="js/export.js?v=0.29.12"></script>
-<script src="js/viewer.js?v=0.29.12"></script>
-<script src="js/recognizer.js?v=0.29.12"></script>
-<script src="js/playback.js?v=0.29.12"></script>
-<script src="js/editor.js?v=0.29.12"></script>
-<script src="js/app.js?v=0.29.12"></script>
+<script src="js/chant.js?v=0.29.13"></script>
+<script src="js/staves.js?v=0.29.13"></script>
+<script src="vendor/scoring-up/scoring-up.js?v=0.29.13"></script>
+<script src="js/serenissima.js?v=0.29.13"></script>
+<script src="js/mensural.js?v=0.29.13"></script>
+<script src="js/greciliae.js?v=0.29.13"></script>
+<script src="js/neumes.js?v=0.29.13"></script>
+<script src="js/checks.js?v=0.29.13"></script>
+<script src="js/export.js?v=0.29.13"></script>
+<script src="js/viewer.js?v=0.29.13"></script>
+<script src="js/recognizer.js?v=0.29.13"></script>
+<script src="js/playback.js?v=0.29.13"></script>
+<script src="js/editor.js?v=0.29.13"></script>
+<script src="js/app.js?v=0.29.13"></script>
 </body>
 </html>

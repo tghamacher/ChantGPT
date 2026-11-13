@@ -1581,6 +1581,9 @@
       chantDoc || list.some(v => !mensural(v)) ? { label: 'Read the words on the page', disabled: busy || !list.some(v => v.syllables.length), run: () => readWords(true) } : null,
       { label: 'Play the page', disabled: !list.some(v => v.syllables.length || (mensural(v) && (v.mensural || []).length)), run: () => listen(null) },
       { label: 'Read the whole page', disabled: !list.length || busy, run: () => readNotes(true) },
+      // (two pages side by side: which face each other)
+      global.CGApp ? { label: `${global.CGApp.state.spread ? '✓ ' : ''}Two pages side by side`, key: 'D', run: () => global.CGApp.setSpread(!global.CGApp.state.spread) } : null,
+      global.CGApp && global.CGApp.state.spread ? { label: global.CGApp.state.firstAlone ? 'Pair pages 1-2, 3-4 … (the first not alone)' : 'Pair pages 2-3, 4-5 … (the first alone, as a book)', title: 'Which pages face each other: a book\'s first page is a right-hand one, alone', run: () => global.CGApp.setSpread(true, !global.CGApp.state.firstAlone) } : null,
       { label: 'Add a staff: drag a box around it', disabled: true, run: () => {} },
       '-',
       { label: 'Undo', key: 'Ctrl+Z', disabled: !history.undo.length, run: undo },
@@ -2154,8 +2157,11 @@
     const k = Object.keys(known).find(w => n.startsWith(w));
     return k ? known[k] : [...n].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
   }
-  function draw(fast) {
-    const svg = ctx.svg, pg = page();
+  // (target: { svg, page }, another page drawn as it stands, to look at: the facing page of a two-page view; nothing
+  // on it selected or dragged, its checks' marks its own)
+  function draw(fast, target) {
+    const svg = target ? target.svg : ctx.svg, pg = target ? ctx.state.doc.pages[target.page] : page();
+    if (!pg) return;
     svg.setAttribute('viewBox', `0 0 ${pg.size[0]} ${pg.size[1]}`);
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.replaceChildren();
@@ -2171,7 +2177,7 @@
       const same = (pg.regions || []).filter(v => v.voice && v.voice === r.voice), clef = r.voice && areaClefs.get(r.voice);
       t.textContent = r.voice ? `${r.voice}${same.length > 1 ? ` (${same.indexOf(r) + 1})` : ''}${clef ? ` · ${clef.toUpperCase()}` : ''}` : 'Which voice? (right-click)';
     });
-    if (drag && drag.act === 'area' && drag.moved) {
+    if (!target && drag && drag.act === 'area' && drag.moved) {
       const [a, b] = [drag.from, drag.to];
       if (drag.kind === 'box') el('rect', { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), width: Math.abs(b[0] - a[0]), height: Math.abs(b[1] - a[1]), class: 'varea drawing' });
       else el('polyline', { points: drag.pts.concat([drag.to]).map(q => q.join(',')).join(' '), class: 'varea drawing' });
@@ -2255,9 +2261,9 @@
       }
     }
     // the checks' findings on this page: a mark over each place (a whole staff's at its start), to click
-    if (!fast) alerts = K.check(ctx.state.doc).concat(clefAlerts());
+    if (!fast && !target) alerts = K.check(ctx.state.doc).concat(clefAlerts());
     for (const [k, a] of alerts.entries()) {
-      if (a.page !== ctx.state.page) continue;
+      if (a.page !== (target ? target.page : ctx.state.page)) continue;
       const st = pg.staves.find(v => v.id === a.staff), it = st && a.i !== null && st.syllables[a.s] && st.syllables[a.s].items[a.i];
       if (!st) continue;
       const x = it && it.box ? it.box[0] + it.box[2] / 2 : S.xsOf(st.lines[0])[0], top = S.yAt(st.lines[0], x) - 2.2 * S.spacing(st.lines);
@@ -2267,12 +2273,17 @@
       t.textContent = '!';
       el('title', {}, m).textContent = a.text;
     }
-    if (drag && drag.act === 'new' && drag.moved) {
+    if (!target && drag && drag.act === 'new' && drag.moved) {
       const [a, b] = [drag.from, drag.to];
       el('rect', { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), width: Math.abs(b[0] - a[0]), height: Math.abs(b[1] - a[1]), class: 'band' });
     }
+    if (target) return;
     if (!fast) info();
+    // (the facing page too, in a two-page view: a voice named here, a clef changed, shows on it)
+    if (!fast && ctx.facing && ctx.facing.page !== ctx.state.page) draw(true, ctx.facing);
   }
+  // the facing page of a two-page view drawn into its own layer (svg), or none (null)
+  function setFacing(f) { ctx.facing = f; if (f) draw(true, f); }
 
   // The notation the tools work in, shown (the toolbar's switch, the rail's chip, the accent's colour) and only its
   // tools offered: the chant card, words and chant starts for chant; the mensural card for mensural. A staff marked as
@@ -2462,7 +2473,7 @@
   }
 
   global.CGEditor = {
-    init, reset, draw, key, setNotation, setAreaTool, toggleNotation, putMensural, mensuralMei, mensuralMusicXml, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
+    init, reset, draw, setFacing, key, setNotation, setAreaTool, toggleNotation, putMensural, mensuralMei, mensuralMusicXml, setVoice, undo, redo, refit, evenly, remove, addStaff, placeChant, beginsAt, clearChant, gabc, findHere, findEverywhere, stop, findBeginnings, toggleBegins,
     setText, setDipl, setWordStart, splitHere, joinPrev, splitNeume, joinNext, gabcFiles, setItem, textHere, joinBack, performance, mark, listen, playFrom, readWords, wordsInto, acceptStaff, acceptWord, volpiano, mei, moveLine, placePage, placeOne, bookPage, readBreaks, readNotes,
     get alerts() { return alerts.slice(); },
     get selected() { return selected; }, set selected(id) { selected = id; letGo(); draw(); },

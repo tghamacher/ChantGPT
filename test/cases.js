@@ -620,6 +620,35 @@
       bad.push(...same('copied', (doc.pages[1].regions || []).map(r => r.voice), ['Tenor']));
       return bad;
     } },
+    { name: 'app: two pages side by side (mensural pages): the facing one drawn, clicked to work on; pairs as a book or not', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-choirbook.png', 'test/pages/mensural-print.png');
+      const A = w.CGApp, E = w.CGEditor, doc = A.state.doc, bad = [], f = w.document.getElementById('facing');
+      E.setNotation('mensural');
+      try {
+        A.setSpread(true, true);
+        await new Promise(r => setTimeout(r, 300));
+        bad.push(...same('a book: the first page alone', [A.partner(0), f.hidden], [null, true]));
+        A.setSpread(true, false);
+        await new Promise(r => setTimeout(r, 300));
+        bad.push(...same('pages 1-2 facing', [A.partner(0), A.partner(1), f.hidden, f.dataset.page], [1, 0, false, '1']));
+        doc.pages[1].staves.push(Object.assign({ id: 'p2s1', syllables: [] }, await printedStaff(0)));
+        E.draw();
+        bad.push(...same('the facing page\'s staff drawn on it', w.document.querySelectorAll('#facingOverlay .staff').length, 1));
+        f.click();
+        await new Promise(r => setTimeout(r, 300));
+        bad.push(...same('clicked: it is the page worked on, the other facing it', [A.state.page, f.dataset.page, f.style.order], [1, '0', '-1']));
+      } finally { A.setSpread(false); }
+      return bad;
+    } },
+    { name: 'app: two pages side by side (chant pages)', browser: true, unit: async app => {
+      const { w } = await app('test/pages/page10.png', 'test/pages/page2.png');
+      const A = w.CGApp, f = w.document.getElementById('facing');
+      try {
+        A.setSpread(true, false);
+        await new Promise(r => setTimeout(r, 300));
+        return same('both shown, one scale', [f.hidden, Math.abs(parseFloat(f.style.width) / A.state.src.sizes[1][0] - parseFloat(w.document.getElementById('page').style.width) / A.state.src.sizes[0][0]) < 0.01], [false, true]);
+      } finally { A.setSpread(false); }
+    } },
     { name: 'app: a printed mensural page: its five-line staves found by their black lines, the empty ones left out', browser: true, unit: async app => {
       // (a made-up partbook page: eight staves of music, two empty under them; training/mensuralpage.py)
       const { w } = await app('test/pages/mensural-print.png');
