@@ -26,7 +26,8 @@ HEIGHT, SPACE, TOP5 = 64, 8, 14
 S = 3                                                       # (drawn at three times the size, then shrunk)
 VALUES = ['Mx', 'L', 'B', 'Sb', 'M', 'Sm', 'F', 'Sf']
 HAS_STEM = {'Mx': 'down', 'L': 'down', 'M': 'up', 'Sm': 'up', 'F': 'up', 'Sf': 'up'}
-ROMAN = [p for p in glob.glob('/usr/share/fonts/truetype/*/*.ttf') if any(k in p for k in ('LiberationSerif-Regular', 'LiberationSerif-Italic', 'FreeSerif.ttf', 'DejaVuSerif.ttf'))]
+# (roman type: EB Garamond, OFL, kept here so it is there on any computer; and the system's serif faces where it has them)
+ROMAN = sorted(glob.glob(os.path.join(HERE, 'fonts', 'roman', '*.ttf'))) + [p for p in glob.glob('/usr/share/fonts/truetype/*/*.ttf') if any(k in p for k in ('LiberationSerif-Regular', 'LiberationSerif-Italic', 'FreeSerif.ttf', 'DejaVuSerif.ttf'))]
 # (gothic text hands, as the manuscripts' scribes and the earliest music printers wrote the words: Rotunda Pommerania,
 # Grenze Gotisch, Unifraktur Maguntia and Cook; all SIL OFL, in training/fonts)
 GOTHIC = sorted(glob.glob(os.path.join(HERE, 'fonts', '*.ttf')))

@@ -131,7 +131,7 @@ def items_of(text):
 
 def staves(o):
     rng = random.Random(o.seed)
-    style = json.load(open(os.path.join(o.style, 'style.json')))['pages']
+    style = [v for v in json.load(open(os.path.join(o.style, 'style.json')))['pages'] if sum(v['ink']) / 3 < 160]   # (a page whose 'ink' is near its parchment: mis-measured)
     pieces = [np.asarray(Image.open(p).convert('RGB')).astype(np.float32) for p in sorted(glob.glob(os.path.join(o.style, 'parchment-*.png')))]
     if not style or not pieces: raise SystemExit(f'nothing measured in {o.style}: run measure first')
     music = []
