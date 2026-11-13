@@ -516,6 +516,34 @@
     return { clefs, odd };
   }
 
+  // ---------------------------------------------------------------- the voices on an opening
+  // In a choirbook every voice is on the same opening (the two facing pages), and the page is turned where every
+  // voice has reached the same place: so on each opening each voice's staves last as long, and each voice ends it
+  // at the same time from the start. Each opening (pairOf: the page facing a page, or null) with two voices or more
+  // on it: [{ pages: [a, b], voices: [{ voice, minims (its staves' there), end (minims from the start at its last
+  // staff's end), last (that staff) }] }], in page order. scored: as perform takes it (scoredBeats).
+  function openings(doc, pairOf, scored = scoredBeats(doc)) {
+    const pageOf = new Map();
+    (doc.pages || []).forEach((pg, i) => (pg.staves || []).forEach(st => pageOf.set(st.id, i)));
+    const opening = i => { const j = pairOf ? pairOf(i) : null; return j === null || j === undefined ? i : Math.min(i, j); };
+    const by = new Map();                                  // opening → voice → { minims, end, last }
+    for (const { voice, staves } of voices(doc)) {
+      if (!voice) continue;
+      let t = 0;
+      for (const e of perform(staves, scored)) {
+        const o = opening(pageOf.get(e.staff));
+        if (!by.has(o)) by.set(o, new Map());
+        const v = by.get(o).get(voice) || { minims: 0, end: 0, last: null };
+        v.minims += e.beats; t = e.at + e.beats; v.end = t; v.last = e.staff;
+        by.get(o).set(voice, v);
+      }
+    }
+    return [...by].filter(([, m]) => m.size > 1).sort((a, b) => a[0] - b[0]).map(([o, m]) => ({
+      pages: [o, pairOf && pairOf(o) !== null && pairOf(o) !== undefined && pairOf(o) > o ? pairOf(o) : o],
+      voices: [...m].map(([voice, v]) => Object.assign({ voice }, v))
+    }));
+  }
+
   // ---------------------------------------------------------------- MusicXML
   // A document's mensural staves transcribed into modern notation, as MusicXML (Finale, Sibelius, MuseScore, Dorico;
   // Serenissima Press sets it back in mensural notation): a part for each voice (as voices()), the values kept as
@@ -698,5 +726,5 @@ ${parts.join('\n')}
 `;
   }
 
-  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, itemWidth: it => widthOf(it), clefsOf, inArea, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
+  global.CGMensural = { VALUES, parse, text, ligOf, musicxml, openings, itemWidth: it => widthOf(it), clefsOf, inArea, pitch, ligRules, check, layout, transform, geometry, mei, noteSign, perform, voices, together, scoredBeats };
 })(typeof window !== 'undefined' ? window : globalThis);

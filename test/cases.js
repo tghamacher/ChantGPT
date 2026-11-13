@@ -220,6 +220,28 @@
         const mx = Math.min(...pts.map(p => p[0])), ys = pts.filter(p => p[0] < mx + 0.05).map(p => p[1]), y = ys.reduce((a, c) => a + c, 0) / ys.length;
         if (Math.abs(y) > 0.15) bad.push(`${k}: its head ${y.toFixed(2)} of a space from its place.`);
       }
+      // (and every note, square heads too, black ones too: its outline near its origin centred on its place)
+      for (const k of Object.keys(T).filter(k => /^k?(Mx|L|B|Sb|M|Sm|F|Sf)(\.|$)/.test(k))) {
+        const ys = [...T[k].d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map(m => +m[2]).filter(y => Math.abs(y) < 0.9), mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+        if (Math.abs(mid) > 0.15) bad.push(`${k}: its head's middle ${mid.toFixed(2)} of a space from its place.`);
+      }
+      return bad;
+    } },
+    { name: 'mensural: each voice on an opening as long as the others, ending together', unit: () => {
+      const M = global.CGMensural, C = global.CGChant, bad = [];
+      const lines = [0, 1, 2, 3, 4].map(k => [100, 200 + 10 * k, 900, 200 + 10 * k]);
+      const doc = C.newDocument({ name: 'm.pdf', type: 'pdf', sizes: [[1000, 1000], [1000, 1000], [1000, 1000], [1000, 1000]] });
+      doc.notation = 'mensural';
+      const st = (id, voice, t) => ({ id, lines, syllables: [], voice, mensural: M.parse(t) });
+      // (pages 1-2 an opening, 3-4 the next; C: a breve two semibreves, four minims)
+      doc.pages[0].staves = [st('a1', 'Cantus', 'c1 C B4 B5')];
+      doc.pages[1].staves = [st('t1', 'Tenor', 'c4 C B4 Sb5')];
+      doc.pages[2].staves = [st('a2', 'Cantus', 'c1 B4')];
+      doc.pages[3].staves = [st('t2', 'Tenor', 'c4 B3 Sb4')];
+      const pair = i => (i % 2 ? i - 1 : i + 1), ops = M.openings(doc, pair, null);
+      bad.push(...same('two openings', ops.map(o => o.pages), [[0, 1], [2, 3]]));
+      bad.push(...same('the first: Cantus 8 minims, Tenor 6', ops[0].voices.map(v => [v.voice, v.minims]), [['Cantus', 8], ['Tenor', 6]]));
+      bad.push(...same('the second: 4 and 6, but both end at 12 from the start', ops[1].voices.map(v => [v.minims, v.end]), [[4, 12], [6, 12]]));
       return bad;
     } },
     { name: 'mensural: a sign read is put on its ink (the reader says it a little late)', unit: () => {
@@ -764,6 +786,33 @@
         bad.push(...same('one voice alone, in sequence', got && got.map(e => [e.voice, e.i, e.at, e.beats]), [[undefined, 2, undefined, 4], [undefined, 3, undefined, 2]]));
       } finally { P.play = real; E.mark(null); }
       bad.push(...same('none marked when stopped', w.document.querySelectorAll('#overlay .mitem.playing').length, 0));
+      return bad;
+    } },
+    { name: 'app: mensural signs accepted one by one (Enter, the next doubtful), the staff (Shift+Enter); a voice short on an opening checked', browser: true, unit: async app => {
+      const { w } = await app('test/pages/mensural-print.png', 'test/pages/mensural-print.png');
+      const E = w.CGEditor, M = w.CGMensural, doc = w.CGApp.state.doc, bad = [];
+      doc.notation = 'mensural';
+      const items = M.parse('c4 C Sb5 M6 B4 Sb3 L2');
+      items[2].conf = 0.5; items[4].conf = 0.6; items[5].conf = 0.99;
+      doc.pages[0].staves.push(Object.assign({ id: 'p1s1', syllables: [], mensural: items }, await printedStaff(0)));
+      E.draw();
+      const key = (k, shiftKey = false) => E.key({ key: k, shiftKey, ctrlKey: false, metaKey: false, altKey: false });
+      E.selectMensural('p1s1', 2);
+      key('Enter');
+      bad.push(...same('accepted, and on to the next doubtful', [items[2].checked, E.mensuralItem && E.mensuralItem.i], ['item', 4]));
+      bad.push(...same('drawn green', w.document.querySelectorAll('#overlay .msign.ok, #overlay .mshape.ok').length > 0, true));
+      E.selected = 'p1s1'; key('Enter', true);
+      bad.push(...same('the staff not accepted with a doubtful sign left: it is selected', [items.some(it => it.checked === 'staff'), E.mensuralItem && E.mensuralItem.i], [false, 4]));
+      key('Enter'); E.selected = 'p1s1'; key('Enter', true);
+      bad.push(...same('then the staff: every sign checked', items.every(it => it.checked), true));
+      // (a voice short on the opening: the Tenor on page 2, a semibreve less than the Cantus)
+      w.CGApp.setSpread(false, false);
+      doc.pages[1].staves.push(Object.assign({ id: 'p2s1', syllables: [], mensural: M.parse('c4 C Sb5 M6 B4 L2') }, await printedStaff(1)));
+      E.setVoice(doc.pages[0].staves[0], 'Cantus'); E.setVoice(doc.pages[1].staves[0], 'Tenor');
+      E.draw();
+      const found = [...w.document.querySelectorAll('#checkList button')].map(b => b.textContent).filter(t => /semibreves/.test(t));
+      bad.push(...same('the Tenor short on pages 1–2', found.length === 1 && /Tenor has .* semibreves, the others .*: 1 short/.test(found[0]), true));
+      w.CGApp.setSpread(false, true);
       return bad;
     } },
     { name: 'app: a mensural note double-clicked plays from there; clicked while playing, plays from there', browser: true, unit: async app => {

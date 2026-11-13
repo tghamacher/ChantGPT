@@ -60,7 +60,9 @@
     else putPage(doc.pages[snap.page], snap.staves);
     doc.chants = JSON.parse(snap.chants);
   }
+  let edits = 0;                                             // (each change counted: what is worked out from the music is kept until the next)
   function commit(before) {
+    edits++;
     const after = before.page === null ? snapshotAll() : snapshot();
     if (after.staves === before.staves && after.chants === before.chants) return;
     history.undo.push({ before, after });
@@ -69,6 +71,7 @@
     ctx.changed();
   }
   function step(from, to, which) {
+    edits++;
     const h = from.pop();
     if (!h) return;
     to.push(h);
@@ -155,7 +158,7 @@
     const before = snapshot(), why = fn(it, st);
     if (typeof why === 'string') { ctx.say(why, true); return; }
     const now = mOf();
-    if (now) delete now.conf;                                  // (changed by a person: taken as right)
+    if (now) { delete now.conf; now.checked = 'edited'; }      // (changed by a person: taken as right, and checked)
     commit(before);
     draw();
     const bad = mitem ? M.check(st.mensural).filter(b => b.startsWith(`Item ${mitem.i + 1}:`)) : [];
@@ -284,6 +287,30 @@
     draw();
   }
   // the next item along the staff (or the one before)
+  // the selected item accepted (checked: green, as a neume accepted), and on to the next doubtful one on the staff
+  // (orange), else the next item
+  function mAccept() {
+    const st = staffOf(selected), it = mOf();
+    if (!st || !it) return;
+    const before = snapshot();
+    if (it.checked !== 'edited') it.checked = 'item';
+    commit(before);
+    const n = st.mensural.length, from = mitem.i;
+    let k = -1;
+    for (let d = 1; d <= n; d++) { const j = (from + d) % n, x = st.mensural[j]; if (doubtful(x)) { k = j; break; } }
+    if (k < 0 && from + 1 < n) k = from + 1;
+    if (k >= 0) mitem = { i: k, n: st.mensural[k].k === 'lig' ? 0 : null };
+    draw();
+    if (k < 0) ctx.say('That was the staff\'s last sign: accept the staff (Shift+Enter) to check the rest with it.');
+  }
+  // the next (or the one before) still doubtful
+  function mNextDoubt(d) {
+    const st = staffOf(selected);
+    if (!st || !(st.mensural || []).length) return;
+    const n = st.mensural.length, from = mitem ? mitem.i : d > 0 ? -1 : n;
+    for (let s = 1; s <= n; s++) { const j = ((from + d * s) % n + n) % n; if (doubtful(st.mensural[j])) { mitem = { i: j, n: st.mensural[j].k === 'lig' ? 0 : null }; draw(); return; } }
+    ctx.say('Nothing doubtful left on this staff.');
+  }
   function mNext(d) {
     const st = staffOf(selected);
     if (!st || !(st.mensural || []).length) return;
@@ -829,6 +856,7 @@
   // (the recognizer unsure of it) is unchecked: then the first of those is selected, to be looked at alone.
   function acceptStaff() {
     const st = staffOf(selected);
+    if (st && mensural(st)) { mAcceptStaff(st); return; }
     if (!st || !st.syllables.length) return;
     const left = [];
     st.syllables.forEach((syl, s) => {
@@ -855,6 +883,34 @@
     letGo();
     draw();
     ctx.say(`Staff accepted${n ? ` (${n} more ${n === 1 ? 'thing' : 'things'} checked with it)` : ''}.` + (next ? ' On to the next staff.' : ' That was the last staff with chant on this page.'));
+  }
+
+  // a mensural staff accepted: its doubtful signs first, one by one (Enter each); then all of it checked, and on to
+  // the next mensural staff with signs on it
+  function mAcceptStaff(st) {
+    const items = st.mensural || [];
+    if (!items.length) return;
+    const left = items.map((it, i) => doubtful(it) ? i : -1).filter(i => i >= 0);
+    if (left.length) {
+      mitem = { i: left[0], n: items[left[0]].k === 'lig' ? 0 : null };
+      draw();
+      ctx.say(`${left.length} doubtful ${left.length === 1 ? 'sign' : 'signs'} (orange) on this staff still to check, one by one (Enter accepts each, Tab the next). Then accept the staff.`, true);
+      return;
+    }
+    const before = snapshot();
+    let n = 0;
+    for (const it of items) if (!it.checked) { it.checked = 'staff'; n++; }
+    commit(before);
+    const list = page().staves, next = list.slice(list.indexOf(st) + 1).find(t => mensural(t) && (t.mensural || []).length);
+    if (next) selected = next.id;
+    letGo();
+    draw();
+    ctx.say(`Staff accepted${n ? ` (${n} more ${n === 1 ? 'sign' : 'signs'} checked with it)` : ''}.` + (next ? ' On to the next staff.' : ' That was the last mensural staff with signs on this page.'));
+  }
+  // how far a mensural staff has been checked
+  function mProgress(st) {
+    const items = st.mensural || [], done = items.filter(it => it.checked).length, doubts = items.filter(doubtful).length;
+    return `${done} of ${items.length} signs checked` + (doubts ? `; ${doubts} doubtful (orange) to look at.` : '.');
   }
 
   // ---------------------------------------------------------------- the chant on a staff
@@ -1447,6 +1503,10 @@
         it.k === 'note' || inLig ? { label: 'Join to the next in a ligature', key: 'J', disabled: !st.mensural[i + 1], run: mJoin } : null,
         inLig ? { label: it.notes[mitem.n].obl ? 'Oblique with the next ✓' : 'Oblique with the next', key: 'O', disabled: mitem.n >= it.notes.length - 1, run: mOblique } : null,
         inLig ? { label: 'Cut the ligature after this note', disabled: mitem.n >= it.notes.length - 1, run: mSplit } : null,
+        { label: it.checked ? 'Accepted ✓' : 'Accept', key: 'Enter', run: mAccept },
+        { label: 'Next doubtful', key: 'Tab', run: () => mNextDoubt(1) },
+        { label: 'Accept the whole staff', key: 'Shift+Enter', run: () => mAcceptStaff(st) },
+        '-',
         { label: st.voice ? 'Play from here, every voice' : 'Play from here', key: 'Space', run: () => listen({ staff: st.id, i }) },
         st.voice ? { label: `Play the ${st.voice} alone from here`, run: () => listen({ staff: st.id, i }, true) } : null,
         { label: 'Delete', key: 'Del', run: mRemove },
@@ -1516,6 +1576,7 @@
         { label: 'Read the notes', disabled: busy, title: mensural(st) ? 'Read by the mensural reader (models/mensural): what is on the staff is replaced' : '', run: () => readNotes(false) },
         mensural(st) ? null : { label: 'Read the words', disabled: busy || !st.syllables.length, title: 'Read the words under its notes', run: () => readWords(false) },
         { label: 'Play from this staff', disabled: mensural(st) ? !(st.mensural || []).length : !st.syllables.length, run: () => listen({ staff: st.id, s: 0, i: 0 }) },
+        mensural(st) ? { label: 'Accept the staff', key: 'Shift+Enter', disabled: !(st.mensural || []).length, run: () => mAcceptStaff(st) } : null,
         ...(mensural(st) ? [] : [
           { label: 'Accept the staff', key: 'Shift+Enter', disabled: !st.syllables.length, run: acceptStaff },
           { label: st.begins === true ? 'A chant begins on this staff ✓' : 'A chant begins on this staff', key: 'B', run: () => toggleBegins() },
@@ -2102,7 +2163,8 @@
       if (k === 'ArrowDown') { mShift(-1, all); return true; }
       if (k === 'ArrowLeft') { mNudge(-unit() * 3); return true; }
       if (k === 'ArrowRight') { mNudge(unit() * 3); return true; }
-      if (k === 'Tab') { mNext(e.shiftKey ? -1 : 1); return true; }
+      if (k === 'Tab') { mNextDoubt(e.shiftKey ? -1 : 1); return true; }
+      if (k === 'Enter') { mAccept(); return true; }
       if (k === 'Delete') { mRemove(); return true; }
       // (Backspace, as when typing: this one gone, the one before selected)
       if (k === 'Backspace') { const i = mitem.i; mRemove(); if (i > 0) { mitem = { i: i - 1, n: null }; draw(); } return true; }
@@ -2222,7 +2284,7 @@
       // a mensural staff's contents: Serenissima's glyphs, and the shapes drawn for ligatures and signs
       if (mensural(st) && (st.mensural || []).length) {
         const L = M.layout(st), mg = el('g', { class: 'mensural-notes' }, g);
-        const doubt = v => { const it = st.mensural[v.item]; return it && it.conf !== undefined && it.conf < DOUBT ? ' doubt' : ''; };
+        const doubt = v => { const it = st.mensural[v.item]; return !it ? '' : it.checked ? ' ok' : it.conf !== undefined && it.conf < DOUBT ? ' doubt' : ''; };
         for (const v of L.shapes) el('path', { d: v.d, class: 'mshape' + (v.fill === true ? ' fill' : v.fill === 'outline' ? ' outline' : '') + doubt(v), 'stroke-width': L.pen * (v.fill === 'outline' ? 1.4 : 1) }, mg);
         for (const v of L.signs) el('path', { d: v.d, class: 'msign' + doubt(v), transform: M.transform(v, L.angle) }, mg);
         for (const v of L.texts) {
@@ -2270,7 +2332,7 @@
       }
     }
     // the checks' findings on this page: a mark over each place (a whole staff's at its start), to click
-    if (!fast && !target) alerts = K.check(ctx.state.doc).concat(clefAlerts());
+    if (!fast && !target) alerts = K.check(ctx.state.doc).concat(clefAlerts(), openingAlerts());
     for (const [k, a] of alerts.entries()) {
       if (a.page !== (target ? target.page : ctx.state.page)) continue;
       const st = pg.staves.find(v => v.id === a.staff), it = st && a.i !== null && st.syllables[a.s] && st.syllables[a.s].items[a.i];
@@ -2311,7 +2373,7 @@
     set('mensGroup', doc === 'mensural' || mensHere);
     const chantStaves = list.some(v => !mensural(v));
     set('readText', doc === 'chant' || chantStaves);
-    set('acceptStaff', doc === 'chant' || chantStaves);
+    set('acceptStaff', true);
     set('beginsRow', !st || !mensural(st));
     set('voiceArea', doc === 'mensural'); set('voiceFree', doc === 'mensural');
     if (doc !== 'mensural' && areaTool) areaTool = null;
@@ -2361,9 +2423,9 @@
       if (ip) { ip.hidden = !it; if (it && document.activeElement !== ig) ig.value = it.g; }
       document.getElementById('splitHere').disabled = !it || item.i === 0;
       document.getElementById('linePrev').disabled = document.getElementById('lineNext').disabled = !it && !syl;
-      document.getElementById('acceptStaff').disabled = !st || !st.syllables.length;
+      document.getElementById('acceptStaff').disabled = !st || (mensural(st) ? !(st.mensural || []).length : !st.syllables.length);
       document.getElementById('chantInfo').textContent = it ? neumeInfo(st, it) : syl ? '' : !st ? ''
-        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) : `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: Read the notes, or click an item to select it, drag it, or right-click for more; right-click the staff to add one.`)
+        : mensural(st) ? (mOf() ? mDescribe(st, mOf()) + (mOf().checked ? ' Accepted.' : ' Enter accepts it.') : (st.mensural || []).length ? `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: ${mProgress(st)} Click a sign to select it (Enter accepts it, Tab the next doubtful), or Shift+Enter to accept the staff.` : `A mensural staff${st.voice ? `, the ${st.voice}` : ' (no voice named: right-click it to say which)'}: Read the notes, or click an item to select it, drag it, or right-click for more; right-click the staff to add one.`)
         : st.syllables.length ? progress(st)
         : chant ? `This staff has ${chant.headers.name ? `"${chant.headers.name}"` : 'a chant'} on it (${chant.staves.length} ${chant.staves.length === 1 ? 'staff' : 'staves'}).`
         : 'This staff has no chant yet.';
@@ -2429,6 +2491,39 @@
     doc.pages.forEach((pg, k) => pg.staves.forEach(st => pageOf.set(st, k)));
     return M.clefsOf(doc).odd.map(o => ({ staff: o.staff.id, page: pageOf.get(o.staff), s: null, i: null, kind: 'clef', level: 'note',
       text: `This ${o.voice} staff begins with ${o.clef.toUpperCase()}, the ${o.voice}'s others with ${o.usual.toUpperCase()}: a voice keeps its clef, as a rule. Misread? (Right-click the staff to use the ${o.voice}'s.)` }));
+  }
+  // On each opening (as the two-page view pairs the pages), the voices whose staves there last longer or shorter than
+  // the rest, or that end it at another time from the start: a note or rest misread, or one missed (marked at the
+  // voice's last staff on the opening). In semibreves (two minims), as a choir beats the tactus.
+  let openingMemo = null;
+  function openingAlerts() {
+    const doc = ctx.state.doc, app0 = global.CGApp, key = `${edits}:${app0 ? app0.state.firstAlone : ''}:${doc.pages.length}`;
+    if (openingMemo && openingMemo.key === key && openingMemo.doc === doc) return openingMemo.out;
+    const out0 = openingAlertsNow(doc);
+    openingMemo = { key, doc, out: out0 };
+    return out0;
+  }
+  function openingAlertsNow(doc) {
+    if (!M.voices(doc).some(v => v.voice)) return [];
+    const app = global.CGApp, pairOf = app ? app.partner : null, pageOf = new Map(), out = [];
+    doc.pages.forEach((pg, k) => pg.staves.forEach(st => pageOf.set(st.id, k)));
+    const sb = m => { const v = m / 2, w = Math.floor(v + 1e-6), f = v - w; return (w ? String(w) : '') + (Math.abs(f - 0.5) < 0.01 ? '½' : Math.abs(f - 0.25) < 0.01 ? '¼' : Math.abs(f - 0.75) < 0.01 ? '¾' : f > 0.01 ? f.toFixed(2).slice(1) : '') || '0'; };
+    const most = vals => { const c = new Map(); for (const v of vals) { const k = Math.round(v * 8) / 8; c.set(k, (c.get(k) || 0) + 1); } return [...c].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]; };
+    let list;
+    try { list = M.openings(doc, pairOf); } catch (e) { return []; }
+    for (const op of list) {
+      const usual = most(op.voices.map(v => v.minims)), end = most(op.voices.map(v => v.end));
+      const where = op.pages[0] === op.pages[1] ? `page ${op.pages[0] + 1}` : `pages ${op.pages[0] + 1}–${op.pages[1] + 1}`;
+      for (const v of op.voices) {
+        const d = v.minims - usual, de = v.end - end;
+        if (Math.abs(d) < 0.01 && Math.abs(de) < 0.01) continue;
+        const text = Math.abs(d) >= 0.01
+          ? `On ${where} the ${v.voice} has ${sb(v.minims)} semibreves, the others ${sb(usual)}: ${sb(Math.abs(d))} ${d < 0 ? 'short' : 'over'}. A note or rest misread, or one missed? (Each voice reaches the page turn together.)`
+          : `The ${v.voice} ends ${where} ${sb(Math.abs(de))} semibreves ${de < 0 ? 'before' : 'after'} the others, counting from the start: a voice short or over on an opening before.`;
+        out.push({ staff: v.last, page: pageOf.get(v.last), s: null, i: null, kind: 'opening', level: 'warn', text });
+      }
+    }
+    return out;
   }
   // the findings listed in the side panel, page by page
   function checkList() {
