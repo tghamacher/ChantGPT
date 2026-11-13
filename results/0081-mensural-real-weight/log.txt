@@ -74,3 +74,45 @@ epoch 3 batch 1700: loss 0.145 (870 s)
 epoch 3 batch 1800: loss 0.144 (884 s)
 epoch 3 batch 1900: loss 0.144 (897 s)
 epoch 3 batch 2000: loss 0.144 (911 s)
+epoch 3 batch 2100: loss 0.143 (925 s)
+epoch 3 batch 2200: loss 0.143 (938 s)
+epoch 3: loss 0.143; synthetic test staves: token errors 1.25%, note errors 1.40%; real: token errors 39.84%, note errors 39.62% (943 s)
+epoch 4 batch 0: loss 0.149 (944 s)
+epoch 4 batch 100: loss 0.137 (957 s)
+epoch 4 batch 200: loss 0.144 (971 s)
+epoch 4 batch 300: loss 0.140 (985 s)
+epoch 4 batch 400: loss 0.140 (1000 s)
+epoch 4 batch 500: loss 0.142 (1013 s)
+epoch 4 batch 600: loss 0.140 (1027 s)
+epoch 4 batch 700: loss 0.140 (1041 s)
+epoch 4 batch 800: loss 0.140 (1055 s)
+epoch 4 batch 900: loss 0.140 (1068 s)
+epoch 4 batch 1000: loss 0.140 (1081 s)
+epoch 4 batch 1100: loss 0.138 (1095 s)
+epoch 4 batch 1200: loss 0.138 (1109 s)
+epoch 4 batch 1300: loss 0.136 (1122 s)
+epoch 4 batch 1400: loss 0.137 (1136 s)
+epoch 4 batch 1500: loss 0.137 (1150 s)
+epoch 4 batch 1600: loss 0.138 (1164 s)
+epoch 4 batch 1700: loss 0.138 (1178 s)
+epoch 4 batch 1800: loss 0.138 (1191 s)
+epoch 4 batch 1900: loss 0.138 (1205 s)
+epoch 4 batch 2000: loss 0.138 (1218 s)
+epoch 4 batch 2100: loss 0.138 (1232 s)
+epoch 4 batch 2200: loss 0.138 (1245 s)
+epoch 4: loss 0.138; synthetic test staves: token errors 1.16%, note errors 1.30%; real: token errors 39.95%, note errors 39.74% (1250 s)
+
+$ recognizer.py test --model training/data/m0081/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+51 staves: token errors 20.12%, note errors 19.86%
+
+$ recognizer.py test --model training/data/m0078/best.pt --data training/data/capitan --real-labels labels.jsonl --held 10
+51 staves: token errors 21.01%, note errors 20.58%
+
+$ recognizer.py test --model training/data/m0081/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 78.56%, note errors 78.33%
+
+$ recognizer.py test --model training/data/m0078/best.pt --data training/data/seils --real-labels labels.jsonl --held 10
+21 staves: token errors 73.11%, note errors 72.82%
+
+$ recognizer.py export --model training/data/m0081/best.pt --mensural --onnx OUT/mensural.onnx
+-> D:\ChantGPT\chantgpt-jobs\results\0081-mensural-real-weight/mensural.onnx (5.8 MB)
