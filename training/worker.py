@@ -16,7 +16,8 @@ queue/<id>.json on that branch:
 
 Only the training scripts are run (recognizer.py: train, test, export, clean, rebreak; cantus.py: lines, collect, tidy;
 cmme.py: fetch, staves, pair, which fetch a CMME edition from cmme.org and pair it with pages saved here; idemstyle.py:
-measure, staves, which draw synthetic staves in the look of pages saved here),
+measure, staves, which draw synthetic staves in the look of pages saved here; selftrain.py: read, which keeps the
+staves the reader reads surely on pages saved here, as labels),
 with arguments that stay inside this repository: nothing else. OUT in an argument is the job's results folder, DATA
 the clone of training-data (to share pages to). The one path allowed outside: the folder cantus.py collect reads the
 app's zips from (--downloads), which it only reads; and its --manifest, an https address it only matches.
@@ -30,7 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SELF = open(os.path.abspath(__file__), encoding='utf-8').read()   # (this worker as it was started: see renew())
 REPO = os.path.dirname(HERE)
 ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'},
-           'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}}
+           'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}, 'selftrain.py': {'read'}}
 
 
 def git(where, *args, check=True, quiet=False):

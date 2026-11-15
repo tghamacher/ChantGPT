@@ -291,6 +291,19 @@ labels of mensjrp and mens5) drawn in that ink, with lines of that weight, on th
 a few numbers are kept of the pages. The Occo Codex's pages (IDEM; the Royal Library of Belgium's images, digitised by
 Alamire Digital Lab) are the first; any book's pages saved by the app can be measured so.
 
+## 8c. Self-training on a book's own pages
+
+```
+python -I training/selftrain.py read --scans training/data/scans/occo --model training/data/m0086/best.pt \
+    --exclude-held training/data/occo --check training/data/occo
+```
+
+The reader reads every staff of a book's pages, and keeps as labels the staves it reads surely (every sign at 0.9 of
+its belief or more), eight signs or more, begun with a clef and keeping the rules (ligatures, rests' places): the hand
+learnt from its own sure readings, the labels nobody's edition, so the reader made from them may be shared. The pages a
+labelled folder holds out for testing are left out (--exclude-held), and --check measures how right the sure readings
+are against another's labels of the same staves (CMME's, for Occo: only measured, not kept).
+
 ## 9. Mensural notation: the Occo Codex (CMME's edition, IDEM's pages), private for now
 
 ```
