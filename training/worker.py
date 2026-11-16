@@ -31,7 +31,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SELF = open(os.path.abspath(__file__), encoding='utf-8').read()   # (this worker as it was started: see renew())
 REPO = os.path.dirname(HERE)
 ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'},
-           'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}, 'selftrain.py': {'read'}}
+           'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}, 'selftrain.py': {'read'},
+           'edition.py': {'pair'}}
 
 
 def git(where, *args, check=True, quiet=False):

@@ -304,6 +304,36 @@ learnt from its own sure readings, the labels nobody's edition, so the reader ma
 labelled folder holds out for testing are left out (--exclude-held), and --check measures how right the sure readings
 are against another's labels of the same staves (CMME's, for Occo: only measured, not kept).
 
+## 8d. Editions paired with their sources
+
+```
+python -I training/edition.py pair --editions "training/data/jrpscores/Jos/Jos03*.krn" \
+    --scans training/data/scans/petrucci-jos2 --model training/data/m0086/best.pt --print --out training/data/petrucci
+python -I training/edition.py selftest --editions "training/data/jrpscores/Jos/Jos0302*.krn"
+```
+
+Each staff found on a facsimile's pages is read, and the stretch of an edition of the same music it reads most like is
+found: the edition's voices are indexed by their intervals three at a time, so a transposed edition is found as
+readily as one at pitch, and the staff is lined up with the stretch note by note (its custos marks where it ends; a
+staff that begins just after the last of its voice ended begins there). Then each edition's transposition (the shift
+most staves read, less their clefs) and reduction (the one under which most notes' lengths fit the signs read: x1, x2,
+x4) is found and undone, and the reading is put right by it: a note's place from the edition's pitch, a value that
+doesn't fit the edition's length (perfection, alteration and coloration allowed for), a note missed put in, one seen
+that isn't there taken out, the clef the one that says the edition's pitches, the custos the next note's place. What
+an edition can't say (ligatures, dots, signs, black notes where the lengths agree) stays the reader's. A staff the
+edition changed more than --worth of (0.3), or that breaks a rule (selftrain.keeps_rules), is left out.
+
+Editions: JRP's **kern (training-data `jrpscores-1.zip`: the whole of jrp-scores, CC BY-NC 4.0, with its licence) or
+MusicXML (.musicxml, .xml, .mxl). Only editions that may be used: JRP's, the user's own, ones their editors allow
+(not CPDL's: its site reserves AI training). The pages: the user downloads them (IMSLP's are for people, not crawlers);
+Petrucci's prints of Josquin's masses (Missarum Josquin I-III) match JRP's editions, made from them.
+
+selftest (no pages, no reader): staves cut from the editions as a scribe would write them, misread now and then, and
+put right by the same editions written out transposed and with their values halved as MusicXML. Josquin's Missa Da
+pacem: 11.2% of signs misread → 1.5% wrong in the labels (331 of 386 staves labelled); Obrecht at pitch 10.6 → 1.7%;
+La Rue up 4 steps, values quartered 11.3 → 1.6%. And a made-up printed page of the Gloria's tenor, the reader
+stubbed with misreadings: all 8 staves labelled exactly.
+
 ## 9. Mensural notation: the Occo Codex (CMME's edition, IDEM's pages), private for now
 
 ```
