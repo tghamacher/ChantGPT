@@ -1,0 +1,10 @@
+job 0087-occo-selftrain: Self-training on the Occo Codex's pages (IDEM; the Royal Library of Belgium's images, saved here): the app's reader (0086) reads every staff; those read surely (every sign at 0.9 or more), eight signs or more, keeping the rules, kept as labels (nobody's edition: the reader may be shared). CMME's held-out pages left out, and the sure readings measured against CMME's labels of the same staves (only measured). Then 0086 trained further with them (x3), Capitan, seils2 and the synthetic staves; tested against 0086 on Occo (held-out, CMME's labels), Capitan, seils2. Exported if better.
+code: df9d590
+
+$ selftrain.py read --scans training/data/scans/occo --model training/data/m0086/best.pt --out training/data/occoself --sure 0.9 --exclude-held training/data/occo --check training/data/occo
+Traceback (most recent call last):
+  File "D:\ChantGPT\changpt-repo\training\selftrain.py", line 15, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+(step 1 failed: exit 1)
+(nothing to keep at training/data/m0087/best.pt)
