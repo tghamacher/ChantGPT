@@ -1,0 +1,37 @@
+job 0088-cmme: PRIVATE (CMME gives no licence): every CMME edition (projects 4 Occo, 9 Berchem, 10 Bayeux, 14 The Other Josquin, 0 miscellaneous) fetched, each in its own reading cut into staves (cmme.py staves --source ANY), drawn in the Occo look (idemstyle.py staves: 20,000); then 0086 trained further on them with the synthetic staves, Capitan, seils2 and Occo's pairs with CMME's edition. Tested against 0086 and 0076 (the private Occo reader) on Occo (held out), Capitan, seils2. Nothing kept or exported: the reader stays on this computer.
+code: f4dc296
+
+$ cmme.py fetch --projects 4,9,10,14,0
+BrusBRIV922/Fevin-MissaProDefunctis-07Agnus.cmme.xml (not whole on the server: left out)
+misc/Anon-AveRosaSpeciosa-VatC234.cmme.xml
+misc/Anon-Magnificat-BrusBR5557.cmme.xml
+TheOtherJosquin/TOJ-MissaMiMi-01Kyrie.cmme.xml
+TheOtherJosquin/TOJ-MissaMiMi-02Gloria.cmme.xml
+TheOtherJosquin/TOJ-MissaMiMi-03Credo.cmme.xml
+TheOtherJosquin/TOJ-MissaMiMi-04Sanctus.cmme.xml
+TheOtherJosquin/TOJ-MissaMiMi-05Agnus.cmme.xml
+misc/Josquin-MissaAllezRegretz-03Credo.cmme.xml
+TheOtherJosquin/TOJ-AveCaroChristiCara.cmme.xml
+misc/Anon-AbsalonFiliMi.cmme.xml
+misc/Josquin-MissaUneMousse-01Kyrie.cmme.xml
+misc/Josquin-MissaUneMousse-02Gloria.cmme.xml
+TheOtherJosquin/TOJ-SanctiDeiOmnes.cmme.xml
+TheOtherJosquin/TOJ-MissaQuemDicuntHomines-01Kyrie.cmme.xml
+TheOtherJosquin/TOJ-MissaQuemDicuntHomines-02Gloria.cmme.xml
+TheOtherJosquin/TOJ-MissaQuemDicuntHomines-03Credo.cmme.xml
+TheOtherJosquin/TOJ-MissaQuemDicuntHomines-04Sanctus.cmme.xml
+TheOtherJosquin/TOJ-MissaQuemDicuntHomines-05Agnus.cmme.xml
+TheOtherJosquin/TOJ-LaudaJerusalemDominum.cmme.xml
+misc/Mouton-AveMariaGratiaPlena-BolCQ19.cmme.xml
+TheOtherJosquin/TOJ-TeDeum-2.cmme.xml
+TheOtherJosquin/TOJ-BeatiOmnesQuiTiment-a4.cmme.xml
+TheOtherJosquin/TOJ-BeatiOmnesQuiTiment-a6.cmme.xml
+TheOtherJosquin/TOJ-TeDeum-1.cmme.xml
+TheOtherJosquin/TOJ-ConfiteminiDomino.cmme.xml
+Berchem/Berchem-FactumEstVerbum.cmme.xml
+Berchem/Berchem-OFelixRegina.cmme.xml
+Berchem/Berchem-OLuxEtDecus.cmme.xml
+Berchem/Berchem-PeccantemMeQuotidie.cmme.xml
+Berchem/Berchem-HodieInJordane.cmme.xml
+ParisBNF9346/001-Cest_a_ce_Jolly_moys.cmme.xml
+ParisBNF9346/002-Hellas_mon_cueur.cmme.xml
