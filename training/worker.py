@@ -212,7 +212,25 @@ def renew():
         sys.exit(subprocess.call([sys.executable] + (['-I'] if sys.flags.isolated else []) + sys.argv))
 
 
+def right_python():
+    """Started by a Python without the training's packages (numpy, torch: not the venv's, say), the worker starts
+    again with the venv's (venv beside or in this repository), so no job fails for want of them."""
+    try:
+        import numpy, torch                                   # noqa: F401
+        return
+    except ImportError as e:
+        missing = str(e)
+    for d in (REPO, os.path.dirname(REPO)):
+        for v in ('venv', '.venv'):
+            py = os.path.join(d, v, 'Scripts', 'python.exe') if os.name == 'nt' else os.path.join(d, v, 'bin', 'python')
+            if os.path.exists(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
+                say(f'({missing} in {sys.executable}: starting again with {py})')
+                sys.exit(subprocess.call([py] + (['-I'] if sys.flags.isolated else []) + sys.argv))
+    say(f'(warning: {missing}, and no venv found: start the worker with the venv\'s Python)')
+
+
 def main():
+    right_python()
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('--jobs', default=os.path.join(os.path.dirname(REPO), 'chantgpt-jobs'))
     a.add_argument('--data', default=os.path.join(os.path.dirname(REPO), 'chantgpt-data'))

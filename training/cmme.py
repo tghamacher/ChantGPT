@@ -18,6 +18,9 @@ Other sources CMME collates, the same way (their staff breaks are among its read
 14; Berchem, project 9), by the name CMME gives the source's reading, e.g. Kassel 4° Ms. Mus. 24's partbooks:
     python -I training/cmme.py fetch --projects 14,9
     python -I training/cmme.py staves --source "KasL 24" --name kasl24
+Or every edition fetched, each in its own reading, as music to draw in a book's look (idemstyle.py staves --music):
+    python -I training/cmme.py fetch --projects 4,9,10,14,0
+    python -I training/cmme.py staves --source ANY --name all --music-out training/data/cmmeall
     python -I training/cmme.py pair --name kasl24 --scans training/data/scans/kasl24-1,training/data/scans/kasl24-2 --model …
 
 The pages: open https://data.idemdatabase.org/IE7950914/manifest in the app with &save=all&width=2400 (the app saves
@@ -43,6 +46,7 @@ AGENT = 'ChantGPT (music recognition research; https://github.com/tghamacher/Cha
 NS = '{http://www.cmme.org}'
 DIR = os.path.join(HERE, 'data', 'cmme')
 OCCO = 'BrusBR IV.922'
+ANY = 'ANY'                                                  # (--source ANY: each edition's own reading)
 PROJECT = 4                                                  # (CMME's editorial project: The Occo Codex)
 VAL = {'Maxima': 'Mx', 'Longa': 'L', 'Brevis': 'B', 'Semibrevis': 'Sb', 'Minima': 'M', 'Semiminima': 'Sm', 'Fusa': 'F', 'Semifusa': 'Sf'}
 STEMMED_DOWN = {'Mx', 'L'}                                   # (CGMensural's default stems: these down, the small values up)
@@ -245,10 +249,12 @@ def edition(path, source=OCCO):
     # (the source's reading: a version taken from it that isn't the edition's own (named by its source, or the
     # version's ID the source's name, as The Other Josquin names them); else the edition's, if edited from it)
     named = lambda v: txt(v, 'ID') == source or (kid(v, 'Source') is not None and txt(kid(v, 'Source'), 'Name') == source)
-    occo = next((txt(v, 'ID') for v in versions if kid(v, 'Default') is None and named(v)), None)
-    default_is_occo = any(kid(v, 'Default') is not None and named(v) for v in versions)
-    if not occo and not default_is_occo: return []
-    version = occo or 'DEFAULT'
+    if source == ANY: version = 'DEFAULT'                     # (every edition, in its own reading: as music to draw)
+    else:
+        occo = next((txt(v, 'ID') for v in versions if kid(v, 'Default') is None and named(v)), None)
+        default_is_occo = any(kid(v, 'Default') is not None and named(v) for v in versions)
+        if not occo and not default_is_occo: return []
+        version = occo or 'DEFAULT'
     title = f'{txt(gen, "Composer", "")}: {txt(gen, "Title", "")} {txt(gen, "Section", "")}'.strip()
     names = [txt(v, 'Name', '') for v in kid(root, 'VoiceData').findall(NS + 'Voice')]
     events = {}                                              # voice -> its events, section after section
@@ -268,6 +274,34 @@ def edition(path, source=OCCO):
     return out
 
 
+def lig_join(toks):
+    return re.sub(r' ?~ ?', '~', ' '.join(toks)).replace('[ ', '[').replace(' ]', ']')
+
+
+def cut(tokens, rng=None, lo=14, hi=34):
+    """A staff longer than a scribe's (an edition's own reading has no staff breaks where its source's are only among
+    the variants) cut into staves of lo to hi signs, never inside a ligature, each begun with the clef and signature
+    and ended with a custos on the next note's place."""
+    import random
+    rng = rng or random.Random(len(tokens))
+    if len(tokens) <= hi: return [tokens]
+    k = 1
+    while k < len(tokens) and re.fullmatch(r'b-?\d+', tokens[k]): k += 1
+    head, body = tokens[:k], tokens[k:]
+    if not re.fullmatch(r'[cfg][1-5]', head[0]): return []
+    out, i = [], 0
+    while i < len(body):
+        j, depth, want = i, 0, rng.randint(lo, hi)
+        while j < len(body) and (j - i < want or depth):
+            depth += body[j] == '['; depth -= body[j] in (']', ']*'); j += 1
+        piece = body[i:j]
+        nxt = next((re.match(r'\[?(?:Mx|Sb|Sm|Sf|L|B|M|F)(-?\d+)', t) for t in body[j:] if re.match(r'\[?(Mx|Sb|Sm|Sf|L|B|M|F)-?\d', t)), None)
+        if nxt and not re.fullmatch(r'\+-?\d+', piece[-1]): piece = piece + [f'+{nxt.group(1)}']
+        if len(piece) >= 6: out.append(head + piece)
+        i = j
+    return out
+
+
 def staves(o):
     rows = []
     files = sorted(f for f in os.listdir(DIR) if f.endswith('.cmme.xml'))
@@ -277,6 +311,12 @@ def staves(o):
     with open(os.path.join(DIR, o.name + '.jsonl'), 'w', encoding='utf-8') as fh:
         for r in rows: fh.write(json.dumps(r) + '\n')
     said = [r for r in rows if r['text']]
+    if o.music_out:                                          # (as labels, for idemstyle.py staves --music to draw)
+        os.makedirs(o.music_out, exist_ok=True)
+        with open(os.path.join(o.music_out, 'labels.jsonl'), 'w', encoding='utf-8') as fh:
+            for r in said:
+                for k, toks in enumerate(cut(r['tokens'])):
+                    fh.write(json.dumps({'file': f'{r["file"]}-{r["voice"]}-{r["line"]}-{k}', 'text': lig_join(toks), 'tokens': toks}) + '\n')
     print(f'{len(rows)} staves in {len(files)} files, {len(said)} of them said in the text form '
           f'({sum(len(r["tokens"]) for r in said)} signs) of {o.source} -> {os.path.join(DIR, o.name + ".jsonl")}')
 
@@ -376,6 +416,7 @@ if __name__ == '__main__':
     a.add_argument('--wait', type=float, default=2.0, help='fetch: seconds between requests')
     a.add_argument('--projects', default=str(PROJECT), help='fetch: CMME\'s editorial projects (4 Occo, 9 Berchem, 14 The Other Josquin)')
     a.add_argument('--source', default=OCCO, help='staves: the source, as CMME names its reading (BrusBR IV.922, KasL 24, RosU 49, …)')
+    a.add_argument('--music-out', help='staves: also its staves as labels.jsonl in this folder (music for idemstyle.py staves)')
     a.add_argument('--name', default='occo', help='staves, pair: what its staves are called (training/data/cmme/<name>.jsonl)')
     a.add_argument('--scans', help='pair: the pages (cantus.py collect), a folder or several, comma between (training/data/scans/<name>)')
     a.add_argument('--model', help='pair: the mensural reader\'s checkpoint')
