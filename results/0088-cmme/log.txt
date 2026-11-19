@@ -73,3 +73,8 @@ $ idemstyle.py staves --music training/data/cmmeall --count 20000 --out training
 6000
 8000
 10000
+12000
+14000
+16000
+18000
+20000
