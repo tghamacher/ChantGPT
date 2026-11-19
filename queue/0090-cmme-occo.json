@@ -1,6 +1,6 @@
 {
  "id": "0090-cmme-occo",
- "about": "PRIVATE (CMME gives no licence): 0088 trained further with Occo's pairs with CMME's edition weighed three times (0088 read 16.0% of Occo's held-out notes wrong against 0076's 10.6%, but kept Capitan and seils2 where 0086 has them, where 0076 lost seils2: 44%), with the CMME music drawn in the Occo look, the synthetic staves, Capitan and seils2. Tested against 0088 and 0076. Nothing kept or exported.",
+ "about": "PRIVATE (CMME gives no licence): 0088 trained further with the real staves (Occo's pairs with CMME's edition, Capitan, seils2) weighed six times, not three (0088 read 16.0% of Occo's held-out notes wrong against 0076's 10.6%, but kept Capitan and seils2 where 0086 has them, where 0076 lost seils2: 44%), with the CMME music drawn in the Occo look, the synthetic staves, Capitan and seils2. Tested against 0088 and 0076. Nothing kept or exported.",
  "data": [
   "mens-1.zip",
   "mens-2.zip",
@@ -26,7 +26,7 @@
    "--real-labels",
    "labels.jsonl",
    "--real-weight",
-   "3",
+   "6",
    "--resume",
    "training/data/m0088/best.pt",
    "--grow-vocab",
