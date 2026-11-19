@@ -35,3 +35,41 @@ Berchem/Berchem-PeccantemMeQuotidie.cmme.xml
 Berchem/Berchem-HodieInJordane.cmme.xml
 ParisBNF9346/001-Cest_a_ce_Jolly_moys.cmme.xml
 ParisBNF9346/002-Hellas_mon_cueur.cmme.xml
+ParisBNF9346/003-A_la_duche_de_normendie.cmme.xml
+ParisBNF9346/004-Royne_des_flours_que_Je_desire_tant.cmme.xml
+ParisBNF9346/005-Le_bon_espoir_que_mon_cueur.cmme.xml
+ParisBNF9346/006-En_amours_na_sinon_bien.cmme.xml
+ParisBNF9346/007-Souvent_je_mesbatz.cmme.xml
+ParisBNF9346/008-Dieu_merci_jay_bien_laboure.cmme.xml
+ParisBNF9346/009-En_despit_des_faulx_envyeux.cmme.xml
+ParisBNF9346/010-Belle_belle_tresdoulce_mere.cmme.xml
+misc/Anon-PermanentVierge-PulcraEs-SanctaDeiGenitrix-DijBM517.cmme.xml
+misc/Anon-MissaNarayJeJamais-01Kyrie.cmme.xml
+misc/Anon-MissaNarayJeJamais-02Gloria.cmme.xml
+misc/Anon-MissaNarayJeJamais-03Credo.cmme.xml
+misc/Anon-MissaNarayJeJamais-04Sanctus.cmme.xml
+misc/Anon-MissaNarayJeJamais-05Agnus.cmme.xml
+TheOtherJosquin/TOJ-SalveSanctaFacies.cmme.xml
+TheOtherJosquin/TOJ-JubilateDeo.cmme.xml
+TheOtherJosquin/TOJ-Missa-Duos-01EtIncarnatus.cmme.xml
+TheOtherJosquin/TOJ-Missa-Duos-02Crucifixus.cmme.xml
+TheOtherJosquin/TOJ-Missa-Duos-03AgnusDei2.cmme.xml
+TheOtherJosquin/TOJ-ChristusMortuusEst.cmme.xml
+TheOtherJosquin/TOJ-ODulcisAmica.cmme.xml
+TheOtherJosquin/TOJ-ClamaviAdDominum.cmme.xml
+TheOtherJosquin/TOJ-IlluminaOculos.cmme.xml
+TheOtherJosquin/TOJ-BenediciteOmniaOpera.cmme.xml
+TheOtherJosquin/TOJ-KyriePaschale.cmme.xml
+TheOtherJosquin/TOJ-PuerNatusEst.cmme.xml
+111 files of 70 compositions (59 fetched now) -> D:\ChantGPT\changpt-repo\training\data\cmme
+
+$ cmme.py staves --source ANY --name all --music-out training/data/cmmeall
+BrusBRIV922__Fevin-MissaProDefunctis-07Agnus.cmme.xml: not whole, left out
+1547 staves in 111 files, 1460 of them said in the text form (120462 signs) of ANY -> D:\ChantGPT\changpt-repo\training\data\cmme\all.jsonl
+
+$ idemstyle.py staves --music training/data/cmmeall --count 20000 --out training/data/menscmme --seed 31
+2000
+4000
+6000
+8000
+10000
