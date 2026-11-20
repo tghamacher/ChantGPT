@@ -328,6 +328,12 @@ MusicXML (.musicxml, .xml, .mxl). Only editions that may be used: JRP's, the use
 (not CPDL's: its site reserves AI training). The pages: the user downloads them (IMSLP's are for people, not crawlers);
 Petrucci's prints of Josquin's masses (Missarum Josquin I-III) match JRP's editions, made from them.
 
+The pages (IMSLP's PDFs, downloaded by hand) are made page images first, a folder a PDF, facing pages cut at their
+fold: `edition.py pages --downloads <folder> --out training/data/scans/petrucci`; pair then takes the folder of
+folders (--only/--skip choose among them by name). With the whole of JRP to search (1.1 million notes), 88% of
+staves misread as in the selftest are found in the right piece (the rhythm searched with the intervals, and the
+staff before taken as a hint); an edition fewer than 3 staves were found of is left out (--min-staves).
+
 selftest (no pages, no reader): staves cut from the editions as a scribe would write them, misread now and then, and
 put right by the same editions written out transposed and with their values halved as MusicXML. Josquin's Missa Da
 pacem: 11.2% of signs misread → 1.5% wrong in the labels (331 of 386 staves labelled); Obrecht at pitch 10.6 → 1.7%;

@@ -519,6 +519,11 @@ def pair(o):
     for d in o.scans.split(','):                              # (a folder of folders: each of them, a book or partbook)
         subs = sorted(os.path.join(d, x) for x in os.listdir(d) if os.path.isdir(os.path.join(d, x)))
         dirs += subs if subs and not any(re.search(r'\.(jpe?g|png|tiff?)$', f, re.I) for f in os.listdir(d)) else [d]
+    if o.only: dirs = [d for d in dirs if re.search(o.only, os.path.basename(d), re.I)]
+    if o.skip: dirs = [d for d in dirs if not re.search(o.skip, os.path.basename(d), re.I)]
+    if not dirs:                                              # (nothing to pair: said, and no labels, not a failure)
+        print('no folders of pages to pair'); os.makedirs(o.out, exist_ok=True)
+        open(os.path.join(o.out, 'labels.jsonl'), 'w').close(); return
     pages = [(d, f) for d in dirs for f in sorted(os.listdir(d)) if re.search(r'\.(jpe?g|png|tiff?)$', f, re.I)]
     found = []                                               # (file, tokens, match)
     prev = None                                              # (where the last staff found ended)
@@ -538,17 +543,20 @@ def pair(o):
             Image.fromarray(a).save(os.path.join(o.out, file))
             found.append((file, read, mt)); n += 1
         print(f'{pg}: {len(st)} staves, {n} found in the editions ({len(found)} so far)', flush=True)
-    kept = settle(index, found, o.worth, selftrain.keeps_rules, o.out)
+    kept = settle(index, found, o.worth, selftrain.keeps_rules, o.out, min_staves=o.min_staves)
     print(f'{kept} staves labelled, of {len(found)} found in the editions, on {len(pages)} pages -> {o.out}')
 
 
-def settle(index, found, worth, rules, out_dir=None, quiet=False):
+def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3):
     """Each edition's transposition and reduction (those most of its staves agree on), then each staff's label; the
     labels written (out_dir) or returned."""
     by_ed = defaultdict(list)
     for f, read, m in found: by_ed[index.voices[m[1]][0]].append((f, read, m))
     labels, kept = [], 0
     for ed, items in sorted(by_ed.items()):
+        if len(items) < min_staves:                          # (an edition only a staff or two seemed to be of: chance)
+            if not quiet: print(f'{ed}: {len(items)} staves: too few to trust, left out')
+            continue
         # the reduction: the one under which most paired notes' lengths fit the signs read
         fits = Counter()
         for f, read, m in items:
@@ -683,6 +691,9 @@ def selftest(o):
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['pages', 'pair', 'selftest'])
+    a.add_argument('--only', help='pair: only the folders of pages whose names match this')
+    a.add_argument('--skip', help='pair: not the folders of pages whose names match this')
+    a.add_argument('--min-staves', type=int, default=3, help='pair: an edition fewer staves were found of is left out')
     a.add_argument('--downloads', help='pages: the folder the PDFs were downloaded to (only read)')
     a.add_argument('--size', type=int, default=2400, help='pages: a page\'s longer side, in pixels, at most')
     a.add_argument('--editions', nargs='+', help='the editions\' files (globs): .krn, .musicxml, .xml, .mxl')
