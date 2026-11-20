@@ -31,7 +31,7 @@ selftest: each edition's voices cut into staves as a scribe would write them (jr
 now and then (a step off, a value mistaken, a note missed or one seen that isn't there); the edition itself written
 out transposed down a fourth with its values halved, as MusicXML; and the readings put right by it: how often the
 labels come out as the staves really are."""
-import argparse, glob, io, json, os, random, re, sys, zipfile
+import argparse, glob, io, json, os, random, re, sys, time, zipfile
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 from fractions import Fraction as Fr
@@ -616,6 +616,8 @@ def pair(o):
     prev = None                                              # (where the last staff found ended)
     for d, pg in pages:
         name = re.sub(r'\W', '', (os.path.basename(os.path.normpath(d)) + '_' if len(dirs) > 1 else '') + os.path.splitext(pg)[0])
+        t0 = time.time()
+        print(f'{os.path.basename(d)}/{pg} …', flush=True)   # (before: if a page hangs, the log says which)
         try: gray, st = staves_on(os.path.join(d, pg))
         except Exception as e: print(f'{pg}: {e}'); continue
         n = 0
@@ -629,7 +631,7 @@ def pair(o):
             file = f'{name}-{k + 1}.png'
             Image.fromarray(a).save(os.path.join(o.out, file))
             found.append((file, read, mt)); n += 1
-        print(f'{pg}: {len(st)} staves, {n} found in the editions ({len(found)} so far)', flush=True)
+        print(f'{pg}: {len(st)} staves, {n} found in the editions ({len(found)} so far; {time.time() - t0:.0f} s)', flush=True)
     kept = settle(index, found, o.worth, selftrain.keeps_rules, o.out, min_staves=o.min_staves, at_pitch=o.at_pitch)
     print(f'{kept} staves labelled, of {len(found)} found in the editions, on {len(pages)} pages -> {o.out}')
 
