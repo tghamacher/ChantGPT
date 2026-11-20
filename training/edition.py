@@ -487,7 +487,8 @@ def turn_by_reader(ims, model):
     for turn in (90, -90):
         sure = []
         for im in ims:
-            g = np.asarray(im.rotate(turn, expand=True)).astype(np.float32)
+            r = im.rotate(turn, expand=True); r.thumbnail((2400, 1800))     # (the size the staff finder knows)
+            g = np.asarray(r).astype(np.float32)
             for lines, gg in P.find(g)[:4]:
                 a = F.straighten5(g, lines).astype(np.uint8)
                 x, n = recognizer.collate([recognizer.ink(a)])
@@ -542,7 +543,7 @@ def pages(o):
                 c = gutter(np.asarray(im).astype(np.float32))
                 halves = [im.crop((0, 0, c, im.height)), im.crop((c, 0, im.width, im.height))]
             for h in halves:
-                f = o.size / max(h.size)
+                f = min(o.size / max(h.size), o.width / h.width)  # (no wider than the staff finder knows: ~1200)
                 if f < 1: h = h.resize((int(h.width * f), int(h.height * f)), Image.LANCZOS)
                 n += 1
                 h.save(os.path.join(out, f'p{n:04d}.png'))
@@ -790,6 +791,7 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['pages', 'show', 'pair', 'selftest'])
     a.add_argument('--at-pitch', action='store_true', help='pair: the editions keep the sources\' pitch and values (as JRP\'s): neither is looked for')
+    a.add_argument('--width', type=int, default=1200, help='pages: a page\'s width, in pixels, at most (printstaves.py finds staves at about this)')
     a.add_argument('--again', action='store_true', help='pages: made again, though made before')
     a.add_argument('--per', type=int, default=3, help='show: pages of each folder')
     a.add_argument('--only', help='pair: only the folders of pages whose names match this')
