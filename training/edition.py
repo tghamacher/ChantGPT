@@ -45,7 +45,9 @@ CLEF_AT = {'c': 28, 'f': 24, 'g': 32}                       # (the pitch each cl
 CLEFS = ['c1', 'c2', 'c3', 'c4', 'c5', 'f3', 'f4', 'f5', 'g1', 'g2']
 REDUCTIONS = [Fr(1), Fr(2), Fr(4), Fr(1, 2)]                # (the source's values the edition's times this)
 SHIFT = 'shift'
-OFFBEAT = 0.15                                               # (a staff more of whose notes than this don't last as the edition's: not kept)
+OFFBEAT = 0.3                                                # (a staff more of whose notes than this don't last as the edition's: not kept)
+IN_TIME = 0.15                                               # (a staff in time with the edition: as few as this don't; of an edition's staves, IN_TIME_SHARE must be)
+IN_TIME_SHARE = 0.2
 COMMON = 30000                                               # (an interval trigram in more places than this: not used to find a staff)
 
 
@@ -462,33 +464,79 @@ def gutter(gray):
     return a + int(np.argmin(sd[4:-4])) + 4
 
 
+def sideways(im):
+    """Is a page's image turned on its side (its staves' lines running down it, not across)?"""
+    import numpy as np
+    import printstaves as P
+    small = im.copy(); small.thumbnail((1600, 1600))
+    g = np.asarray(small).astype(np.float32)
+    dark = g < (P.otsu(g) + float(np.percentile(g, 90))) / 2   # (faint lines too, halfway to the paper)
+    def lines(d):                                            # (long thin runs across: lines, not a dark border or gap)
+        thin = d & ~(np.roll(d, 3, 0) & np.roll(d, -3, 0))
+        return P.runs(thin).sum()
+    return lines(dark.T) > 2 * lines(dark)
+
+
+def turn_by_reader(ims, model):
+    """Which way to turn sideways pages up (90: anticlockwise, -90: clockwise): the one under which the reader reads
+    their staves more surely (the music read upside down is read unsurely)."""
+    import numpy as np, torch, recognizer
+    import fivestaves as F, printstaves as P
+    mdl, s = recognizer.restore(model)
+    score = {}
+    for turn in (90, -90):
+        sure = []
+        for im in ims:
+            g = np.asarray(im.rotate(turn, expand=True)).astype(np.float32)
+            for lines, gg in P.find(g)[:4]:
+                a = F.straighten5(g, lines).astype(np.uint8)
+                x, n = recognizer.collate([recognizer.ink(a)])
+                with torch.no_grad(): pr = torch.softmax(mdl(x), 1)[0, :, :int(n[0])]
+                best = pr.max(0).values; arg = pr.argmax(0)
+                if (arg != 0).any(): sure.append(float(best[arg != 0].mean()))
+        score[turn] = float(np.mean(sure)) if sure else 0.0
+    return max(score, key=score.get), score
+
+
 def pages(o):
     """The PDFs downloaded from IMSLP (their names begin IMSLP or hold PMLP), each a folder of page images: a page's
-    image as the PDF holds it (or drawn at 300 dpi, if it holds it otherwise), gray, its longer side at most --size;
-    a scan of two facing pages (wider than tall) cut in two at its fold."""
+    image as the PDF holds it (or drawn at 300 dpi, if it holds it otherwise), gray; turned up if it lies on its side
+    (the way the reader reads it better, with --model; else anticlockwise); a scan of two facing pages (wider than
+    tall) cut in two at its fold; its longer side at most --size."""
     import numpy as np
     from PIL import Image
     try: import pymupdf as fitz
     except ImportError: import fitz
     pdfs = sorted(p for p in glob.glob(os.path.join(o.downloads, '*.pdf')) if re.search(r'IMSLP|PMLP', os.path.basename(p), re.I))
     if not pdfs: raise SystemExit(f'no IMSLP PDFs in {o.downloads}')
+    def image(doc, page):
+        ims = page.get_images(full=True)
+        if len(ims) == 1:
+            try: return Image.open(io.BytesIO(doc.extract_image(ims[0][0])['image'])).convert('L')
+            except Exception: pass
+        pix = page.get_pixmap(dpi=300)
+        return Image.frombytes('RGB' if pix.n >= 3 else 'L', (pix.width, pix.height), pix.samples).convert('L')
     for p in pdfs:
         name = re.sub(r'\W+', '_', re.sub(r'^IMSLP\d+-PMLP\d+-', '', os.path.splitext(os.path.basename(p))[0])).strip('_')[:60]
         out = os.path.join(o.out, name)
-        if os.path.isdir(out) and os.listdir(out): print(f'{name}: done before'); continue
+        if os.path.isdir(out) and os.listdir(out) and not o.again: print(f'{name}: done before'); continue
+        if os.path.isdir(out):
+            for f in glob.glob(os.path.join(out, '*.png')): os.remove(f)
         os.makedirs(out, exist_ok=True)
         doc = fitz.open(p)
+        # (which way a sideways book is turned up: decided once for the PDF, from a few of its pages)
+        turn = None
+        sample = [image(doc, doc[k]) for k in range(len(doc))[len(doc) // 4: len(doc) // 4 + 12: 3]]
+        side = [im for im in sample if sideways(im)]
+        if len(side) * 2 >= len(sample) and side:
+            if o.model:
+                turn, score = turn_by_reader(side, o.model)
+                print(f'{name}: on its side; turned {"anticlockwise" if turn == 90 else "clockwise"} (the reader\'s sureness {score})')
+            else: turn = 90
         n = 0
         for k, page in enumerate(doc):
-            ims = page.get_images(full=True)
-            im = None
-            if len(ims) == 1:
-                try: im = Image.open(io.BytesIO(doc.extract_image(ims[0][0])['image']))
-                except Exception: im = None
-            if im is None:
-                pix = page.get_pixmap(dpi=300)
-                im = Image.frombytes('RGB' if pix.n >= 3 else 'L', (pix.width, pix.height), pix.samples if pix.n in (1, 3) else pix.samples)
-            im = im.convert('L')
+            im = image(doc, page)
+            if turn is not None and sideways(im): im = im.rotate(turn, expand=True)
             halves = [im]
             if im.width > 1.15 * im.height:                    # (two facing pages)
                 c = gutter(np.asarray(im).astype(np.float32))
@@ -610,8 +658,8 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3, 
         if not quiet:
             print(f'{ed}: {len(items)} staves; the source\'s values {"the edition's" if red == 1 else f"the edition\'s times {red}"}; '
                   f'{"at the edition\'s pitch" if t == 0 else f"{abs(t)} steps {"above" if t > 0 else "below"} the edition"}')
-        mine = []                                            # (this edition's labels: kept if most of its staves fit it)
-        tried = 0
+        mine = []                                            # (this edition's labels: kept if enough of its staves keep its time)
+        tried = in_time = 0
         last, perfs = {}, {}                                            # (a voice: where in it its last staff labelled ended)
         for f, read, m in items:
             # (a staff that begins just after the last one of its voice ended begins there: a note the reader missed at
@@ -621,6 +669,7 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3, 
             if not got: continue
             toks, fixed, perf, end, offbeat = got
             tried += 1
+            in_time += offbeat <= IN_TIME
             if offbeat > OFFBEAT: continue                     # (its rhythm isn't the edition's: not this music, or misread)
             last[m[1]] = end; perfs[m[1]] = perf
             base = m[4] - t                                    # (the clef that says these pitches)
@@ -632,9 +681,10 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3, 
             ed_, vn, _, _ = index.voices[m[1]]
             text = re.sub(r' ?~ ?', '~', ' '.join(toks)).replace('[ ', '[').replace(' ]', ']')
             mine.append({'file': f, 'text': text, 'tokens': toks, 'fixed': fixed, 'fit': round(m[0], 3), 'from': f'{ed_} {vn}'})
-        # (an edition most of whose staves don't keep its rhythm, or that so few do: not the music on these pages)
-        if len(mine) < min_staves or len(mine) < 0.5 * tried:
-            if not quiet: print(f'{ed}: only {len(mine)} of {tried} staves fit it: left out')
+        # (an edition few of whose staves keep its time (the reader misreads values, so not all of the right music's
+        # do; none of the wrong music's): not the music on these pages)
+        if in_time < min_staves or in_time < IN_TIME_SHARE * tried:
+            if not quiet: print(f'{ed}: only {in_time} of {tried} staves in time with it: left out')
             continue
         labels += mine; kept += len(mine)
     if out_dir:
@@ -740,6 +790,7 @@ if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['pages', 'show', 'pair', 'selftest'])
     a.add_argument('--at-pitch', action='store_true', help='pair: the editions keep the sources\' pitch and values (as JRP\'s): neither is looked for')
+    a.add_argument('--again', action='store_true', help='pages: made again, though made before')
     a.add_argument('--per', type=int, default=3, help='show: pages of each folder')
     a.add_argument('--only', help='pair: only the folders of pages whose names match this')
     a.add_argument('--skip', help='pair: not the folders of pages whose names match this')
