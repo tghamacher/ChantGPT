@@ -1296,3 +1296,905 @@ p0201.png: 5 staves, 4 found in the editions (2169 so far)
 p0202.png: 3 staves, 3 found in the editions (2172 so far)
 p0203.png: 5 staves, 5 found in the editions (2177 so far)
 p0204.png: 4 staves, 4 found in the editions (2181 so far)
+p0205.png: 3 staves, 3 found in the editions (2184 so far)
+p0206.png: 2 staves, 2 found in the editions (2186 so far)
+p0207.png: 6 staves, 6 found in the editions (2192 so far)
+p0208.png: 6 staves, 6 found in the editions (2198 so far)
+p0209.png: 4 staves, 4 found in the editions (2202 so far)
+p0210.png: 3 staves, 3 found in the editions (2205 so far)
+p0211.png: 6 staves, 5 found in the editions (2210 so far)
+p0212.png: 5 staves, 5 found in the editions (2215 so far)
+p0213.png: 4 staves, 4 found in the editions (2219 so far)
+p0214.png: 3 staves, 3 found in the editions (2222 so far)
+p0215.png: 6 staves, 6 found in the editions (2228 so far)
+p0216.png: 5 staves, 5 found in the editions (2233 so far)
+p0217.png: 6 staves, 5 found in the editions (2238 so far)
+p0218.png: 4 staves, 4 found in the editions (2242 so far)
+p0219.png: 6 staves, 6 found in the editions (2248 so far)
+p0220.png: 5 staves, 4 found in the editions (2252 so far)
+p0221.png: 4 staves, 4 found in the editions (2256 so far)
+p0222.png: 3 staves, 2 found in the editions (2258 so far)
+p0223.png: 6 staves, 6 found in the editions (2264 so far)
+p0224.png: 6 staves, 6 found in the editions (2270 so far)
+p0225.png: 3 staves, 2 found in the editions (2272 so far)
+p0226.png: 3 staves, 3 found in the editions (2275 so far)
+p0227.png: 6 staves, 6 found in the editions (2281 so far)
+p0228.png: 5 staves, 4 found in the editions (2285 so far)
+p0229.png: 0 staves, 0 found in the editions (2285 so far)
+p0230.png: 0 staves, 0 found in the editions (2285 so far)
+p0231.png: 0 staves, 0 found in the editions (2285 so far)
+p0232.png: 0 staves, 0 found in the editions (2285 so far)
+p0233.png: 0 staves, 0 found in the editions (2285 so far)
+p0234.png: 0 staves, 0 found in the editions (2285 so far)
+p0235.png: 0 staves, 0 found in the editions (2285 so far)
+p0236.png: 0 staves, 0 found in the editions (2285 so far)
+p0237.png: 0 staves, 0 found in the editions (2285 so far)
+p0238.png: 0 staves, 0 found in the editions (2285 so far)
+p0239.png: 0 staves, 0 found in the editions (2285 so far)
+p0240.png: 0 staves, 0 found in the editions (2285 so far)
+Agr1001a-Missa_In_myne_zin-Gloria: 5 staves; the source's values the edition's; 8 steps above the edition
+Agr1001b-Missa_In_myne_zin-Credo: 10 staves; the source's values the edition's; 3 steps above the edition
+Agr1001c-Missa_In_myne_zin-Sanctus: 9 staves; the source's values the edition's times 2; 3 steps above the edition
+Agr1001d-Missa_In_myne_zin-Agnus: 7 staves; the source's values the edition's times 2; 5 steps above the edition
+Agr1004b-Missa_Malheur_me_bat-Gloria: 8 staves; the source's values the edition's; 10 steps above the edition
+Agr1004c-Missa_Malheur_me_bat-Credo: 6 staves; the source's values the edition's; 3 steps above the edition
+Agr1004d-Missa_Malheur_me_bat-Sanctus: 7 staves; the source's values the edition's; 3 steps above the edition
+Agr1004e-Missa_Malheur_me_bat-Agnus: 5 staves; the source's values the edition's; 4 steps below the edition
+Agr3002-Lheure_est_venue__Circumdederunt_me: 7 staves; the source's values the edition's; 2 steps below the edition
+Ano0207a-Missa_sine_nomine_Kyrie: 2 staves: too few to trust, left out
+Ano0207c-Missa_sine_nomine_Credo: 1 staves: too few to trust, left out
+Ano0207d-Missa_sine_nomine_Sanctus: 5 staves; the source's values the edition's times 1/2; 2 steps above the edition
+Ano0207e-Missa_sine_nomine_Agnus: 3 staves; the source's values the edition's times 2; 5 steps above the edition
+Ano0421-Ave_nostra_salus: 1 staves: too few to trust, left out
+Ano1001a-Missa_Bergerette_savoysienne-Kyrie-Jena_32: 1 staves: too few to trust, left out
+Ano1001b-Missa_Bergerette_savoysienne-Gloria-Jena_32: 3 staves; the source's values the edition's; 7 steps below the edition
+Ano1001d-Missa_Bergerette_savoysienne-Sanctus-Jena_32: 5 staves; the source's values the edition's; 6 steps below the edition
+Ano1001e-Missa_Bergerette_savoysienne-Agnus-Jena_32: 1 staves: too few to trust, left out
+Ano1002-Sanctus_Super_iste_puer_magnus--Munich_3154: 1 staves: too few to trust, left out
+Ano1025d-Missa_Lardant_desir-Sanctus-Cappella_Sistina_51: 3 staves; the source's values the edition's times 2; 2 steps above the edition
+Ano1025e-Missa_Lardant_desir-Agnus-Cappella_Sistina_51: 7 staves; the source's values the edition's times 2; 4 steps above the edition
+Ano1026c-Missa_Gross_senen-Credo--Trent_89: 1 staves: too few to trust, left out
+Ano1026d-Missa_Gross_senen-Sanctus--Trent_89: 4 staves; the source's values the edition's; 2 steps above the edition
+Ano2006-Da_pacem_domine_III--Cappella_Sistina_15: 1 staves: too few to trust, left out
+Ano2073-Ave_Maria...virgo_serena--Munich_41: 6 staves; the source's values the edition's; 7 steps below the edition
+Ano3001-Fama_malum--Brussels_228: 3 staves; the source's values the edition's; 4 steps below the edition
+Ano3002-Tambur_tambur--Cortona__Paris: 2 staves: too few to trust, left out
+Ano3004-O_Belle_dyane--Laborde: 1 staves: too few to trust, left out
+Ano3005-Textless_piece_a_3--Verona_757: 1 staves: too few to trust, left out
+Ano3019-De_ma_griefve_maladie__Se_je_ne_suis_mariee--rondeau: 3 staves; the source's values the edition's; 6 steps above the edition
+Ano3020-Donne_vidue__Tarrach_barach__Jeus_diray--Pixerecourt_Chansonnier: 1 staves: too few to trust, left out
+Ano3030-Puisque_a_chascun_ris__Pardonnez_moi__Lautrier_maloie--rondeau: 2 staves: too few to trust, left out
+Ano3032-Quant_je_suis_seullecte--rondeau: 2 staves: too few to trust, left out
+Ano3033-Robinet__Se_tu_te_marie__Helas_pourquoy--Escorial_B: 1 staves: too few to trust, left out
+Ano3034-Rolet__La_tricotee__Maistre_Piere--Escorial_B: 2 staves: too few to trust, left out
+Ano3037-Se_je_suis_despourveu__Veni_veni--Escorial_B: 1 staves: too few to trust, left out
+Ano3091-Canto_delle_parete: 1 staves: too few to trust, left out
+Ano3093-Sil_vous_plaist_bien_que_je_vous_tiegne: 2 staves: too few to trust, left out
+Ano3097-A_ceste_derraine_venue--virelai: 1 staves: too few to trust, left out
+Ano3098-Aime_qui_vouldra--rondeau: 1 staves: too few to trust, left out
+Ano3101-Gardez_le_trait_de_la_fenestre--rondeau: 1 staves: too few to trust, left out
+Ano3104-Jamais_ne_seray_amoureulx--rondeau: 1 staves: too few to trust, left out
+Ano3105-Jamais_si_bien_ne_me_peut_advenir--rondeau: 1 staves: too few to trust, left out
+Ano3110-La_plus_grant_chiere_de_jamais--rondeau: 2 staves: too few to trust, left out
+Ano3113-Les_tres_des_plus_heureulx_du_monde--rondeau: 1 staves: too few to trust, left out
+Ano3115-Mon_cueur_a_demy_se_depart--rondeau: 1 staves: too few to trust, left out
+Ano3119-Ostez_la_moi_de_mon_oreille--virelai: 1 staves: too few to trust, left out
+Ano3120-Par_Dieu_ma_dame_cest_a_tort--virelai: 1 staves: too few to trust, left out
+Ano3123-Ravy_damours_despourveu_de_bon_sens--rondeau: 1 staves: too few to trust, left out
+Ano3131-Jay_pris_amours_a_ma_devise--prob_orig_version: 1 staves: too few to trust, left out
+Ano3150-Jay_pris_deux_poux_a_ma_chemise--rondeau__Dijon-Chansonnier: 2 staves: too few to trust, left out
+Ano3152-Jamais_nul_jour_de_ma_vie--rondeau__Dijon_Chansonnier: 2 staves: too few to trust, left out
+Ano3156-Laumosne_au_povre_desireulx--rondeau__Dijon_Chansonnier: 1 staves: too few to trust, left out
+Ano3226-Oublie_oublie--Leuven_Chansonnier: 1 staves: too few to trust, left out
+Ano3237-De_sartor_nui_sian_maestri--Canto_dei_sartori_Perugia_G.20: 2 staves: too few to trust, left out
+Ano7131.2-Jay_pris_amours_a_ma_devise--version_with_low_Ct: 2 staves: too few to trust, left out
+Bin3032-Je_ne_vis_onques_la_pareille: 1 staves: too few to trust, left out
+Bru1011c-Missa_Pro_defunctis-Dies_irae-Sequence: 2 staves: too few to trust, left out
+Bru2012-Gloria_laus_et_honor: 12 staves; the source's values the edition's times 2; 4 steps above the edition
+Bus1001a-Missa_Lhomme_arme-Kyrie: 1 staves: too few to trust, left out
+Bus1001b-Missa_Lhomme_arme-Gloria: 2 staves: too few to trust, left out
+Bus1001c-Missa_Lhomme_arme-Credo: 5 staves; the source's values the edition's; 2 steps above the edition
+Bus1001d-Missa_Lhomme_arme-Sanctus: 2 staves: too few to trust, left out
+Bus1001e-Missa_Lhomme_arme-Agnus: 2 staves: too few to trust, left out
+Bus2003-Anima_mea_liquefacta_est__Stirips_Jesse: 2 staves: too few to trust, left out
+Bus2004-Anthoni_usque_limina: 5 staves; the source's values the edition's; 2 steps above the edition
+Bus2007-In_hydraulis: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Bus3001-Acordes_moy: 14 staves; the source's values the edition's; 4 steps above the edition
+Bus3006-A_une_dame: 2 staves: too few to trust, left out
+Bus3009-Bel_Acueil_le_sergent_dAmours: 1 staves: too few to trust, left out
+Bus3010-Bone_chere: 2 staves: too few to trust, left out
+Bus3011-Ce_nest_pas_moy: 1 staves: too few to trust, left out
+Bus3016-Corps_digne__Dieu_quel_mariage: 2 staves: too few to trust, left out
+Bus3018-En_tous_les_lieux: 1 staves: too few to trust, left out
+Bus3019-En_voyant_sa_dame: 1 staves: too few to trust, left out
+Bus3022-Faulx_mesdisans: 1 staves: too few to trust, left out
+Bus3027-Jay_mains_de_biens: 1 staves: too few to trust, left out
+Bus3029-Je_ne_demande_aultre_degre: 11 staves; the source's values the edition's; at the edition's pitch
+Bus3035-Lautrier_que_passa: 9 staves; the source's values the edition's; 2 steps below the edition
+Bus3036-Le_corps_sen_va: 1 staves: too few to trust, left out
+Bus3039-Maintes_femmes: 2 staves: too few to trust, left out
+Bus3042-Ma_vostre_cueur: 1 staves: too few to trust, left out
+Bus3043-Mon_mignault__Gracieuse_plaisante_muniere: 10 staves; the source's values the edition's; 2 steps below the edition
+Bus3049-Quant_jay_au_cueur: 1 staves: too few to trust, left out
+Bus3052-Quelque_pauvre_homme_II: 1 staves: too few to trust, left out
+Bus3054-Seule_a_par_moy: 1 staves: too few to trust, left out
+Bus3055-Soudainement_mon_cueur_a_pris: 1 staves: too few to trust, left out
+Bus3056-Terrible_dame: 1 staves: too few to trust, left out
+Bus3059-Ung_que_plus_tous_I: 1 staves: too few to trust, left out
+Bus3061-Vous_marchez__Marionnette: 1 staves: too few to trust, left out
+Bus3064-Armours_fait_moult_tant__Il_est_de_bonne_heure_ne__Tant_que_nostre_argent_dura: 5 staves; the source's values the edition's; 2 steps below the edition
+Bus3069-Jay_pris_amours: 8 staves; the source's values the edition's; at the edition's pitch
+Com1002a-Missa_Lhomme_arme-Kyrie: 2 staves: too few to trust, left out
+Com1002d-Missa_Lhomme_arme-Sanctus: 4 staves; the source's values the edition's times 1/2; 11 steps above the edition
+Com3001-Alons_fere_nos_barbes: 14 staves; the source's values the edition's; at the edition's pitch
+Com3005-Chanter_ne_puis_chieux_la_mynonne: 12 staves; the source's values the edition's; 4 steps above the edition
+Com3027-Ne_vous_hastez_pas_en_malheure: 3 staves; the source's values the edition's; 4 steps above the edition
+Com3028-Nous_sommes_de_lordre_de_Saint_Babouin: 24 staves; the source's values the edition's; 2 steps below the edition
+Com3029-Pensant_au_bien_que_ma_dame_ma_fait: 1 staves: too few to trust, left out
+Com3031-Pour_estre_ou_nombre_des_loyaulx: 1 staves: too few to trust, left out
+Com3032-Puis_que_si_bien_mest_advenu: 3 staves; the source's values the edition's; 3 steps below the edition
+Com3035-Se_mieulx_ne_vient_damours_peu_me_contente: 1 staves: too few to trust, left out
+Com3036-Se_pis_ne_vient_damours_je_me_contente: 1 staves: too few to trust, left out
+Com3040-Tant_ha_bon_oeul: 23 staves; the source's values the edition's; 4 steps below the edition
+Com3042-Une_plaisante_fillette: 2 staves: too few to trust, left out
+Com3043-Un_franc_archier_a_la_guerre_sen_va: 6 staves; the source's values the edition's; 4 steps below the edition
+Com3044-Va_ten_regret_celuy_qui_me_convoye: 2 staves: too few to trust, left out
+Com3045-Venes_regretz_venes_il_en_est_heure: 13 staves; the source's values the edition's; 4 steps below the edition
+Com3046-Vive_le_noble_roy_de_France: 1 staves: too few to trust, left out
+Com3047-Voles_oir_une_chanson: 1 staves: too few to trust, left out
+Com3048-Vostre_bargeronette_mamiette: 12 staves; the source's values the edition's; 2 steps below the edition
+Com3049-Vous_me_faittes_morir_denvie: 3 staves; the source's values the edition's times 2; 2 steps above the edition
+Com3052-Scaramella_fa_la_galla: 2 staves: too few to trust, left out
+Das1002b-Missa_Preter_rerum_seriem-Gloria: 3 staves; the source's values the edition's; at the edition's pitch
+Das1002c-Missa_Preter_rerum_seriem-Credo: 4 staves; the source's values the edition's; 5 steps below the edition
+Duf1002a-Missa_Ave_regina_celorum-Kyrie: 2 staves: too few to trust, left out
+Duf1002c-Missa_Ave_regina_celorum-Credo: 1 staves: too few to trust, left out
+Duf1002d-Missa_Ave_regina_celorum-Sanctus: 1 staves: too few to trust, left out
+Duf1003a-Missa_Ecce_ancilla_domini-Kyrie: 2 staves: too few to trust, left out
+Duf1003b-Missa_Ecce_ancilla_domini-Gloria: 1 staves: too few to trust, left out
+Duf1003c-Missa_Ecce_ancilla_domini-Credo: 3 staves; the source's values the edition's; 3 steps below the edition
+Duf1003d-Missa_Ecce_ancilla_domini-Sanctus: 2 staves: too few to trust, left out
+Duf1004b-Missa_Lhomme_arme-Gloria: 3 staves; the source's values the edition's; 5 steps above the edition
+Duf1004d-Missa_Lhomme_arme-Sanctus: 2 staves: too few to trust, left out
+Duf1004e-Missa_Lhomme_arme-Agnus: 2 staves: too few to trust, left out
+Duf2027b-Ave_maris_stella_verse_2__Sumens_illud_ave-hymn: 1 staves: too few to trust, left out
+Duf2054-Nuper_rosarum_flores__Terribilis_est_locus_iste: 1 staves: too few to trust, left out
+Duf3007.2-Craindre_vous_vueil_doulce_dame_de_pris: 1 staves: too few to trust, left out
+Duf3014-Resvellies_vous_et_faites_chiere_lye--ballade: 2 staves: too few to trust, left out
+Duf3016-Adieu_ces_bons_vins_de_Lannoys: 1 staves: too few to trust, left out
+Duf3017-Adieu_mamour_adieu_ma_joye: 2 staves: too few to trust, left out
+Duf3022-Belle_vueillez_moy_vengier: 1 staves: too few to trust, left out
+Duf3025-Bon_jour_bon_mois_bon_an_et_bonne_estraine: 1 staves: too few to trust, left out
+Duf3078-Malheureulx_cueur_que_vieulx_tu_faire: 1 staves: too few to trust, left out
+Fry2002-O_florens_rosa: 2 staves: too few to trust, left out
+Fva1001a-Missa_Ave_Maria-Kyrie: 4 staves; the source's values the edition's; 3 steps above the edition
+Fva1001b-Missa_Ave_Maria-Gloria: 2 staves: too few to trust, left out
+Fva1001c-Missa_Ave_Maria-Credo: 8 staves; the source's values the edition's; 7 steps below the edition
+Fva1001d-Missa_Ave_Maria-Sanctus: 3 staves; the source's values the edition's; 6 steps below the edition
+Fva1001e-Missa_Ave_Maria-Agnus: 2 staves: too few to trust, left out
+Gas0101c-Missa_Ave_regina_celorum-Credo: 3 staves; the source's values the edition's; 1 steps above the edition
+Gas0102a-Missa_O_venus_bant-Kyrie: 2 staves: too few to trust, left out
+Gas0102b-Missa_O_venus_bant-Gloria: 4 staves; the source's values the edition's times 2; 4 steps above the edition
+Gas0102c-Missa_O_venus_bant-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Gas0102d-Missa_O_venus_bant-Sanctus: 4 staves; the source's values the edition's; 7 steps below the edition
+Gas0102e-Missa_O_venus_bant-Agnus: 3 staves; the source's values the edition's times 2; 3 steps above the edition
+Gas0103a-Missa_Princesse_damourettes-Kyrie: 1 staves: too few to trust, left out
+Gas0103b-Missa_Princesse_damourettes-Gloria: 1 staves: too few to trust, left out
+Gas0103c-Missa_Princesse_damourettes-Credo: 2 staves: too few to trust, left out
+Gas0103e-Missa_Princesse_damourettes-Agnus: 2 staves: too few to trust, left out
+Gas0104b-Missa_Se_mieulx_ne_vient-Gloria: 5 staves; the source's values the edition's; 1 steps above the edition
+Gas0104c-Missa_Se_mieulx_ne_vient-Credo: 1 staves: too few to trust, left out
+Gas0104d-Missa_Se_mieulx_ne_vient-Sanctus: 1 staves: too few to trust, left out
+Gas0104e-Missa_Se_mieulx_ne_vient-Agnus: 3 staves; the source's values the edition's; 1 steps above the edition
+Gas0201a-Missa_brevis-Kyrie: 1 staves: too few to trust, left out
+Gas0201b-Missa_brevis-Gloria: 1 staves: too few to trust, left out
+Gas0201c-Missa_brevis-Credo: 3 staves; the source's values the edition's times 2; 5 steps above the edition
+Gas0201d-Missa_brevis-Sanctus: 3 staves; the source's values the edition's; 9 steps below the edition
+Gas0201e-Missa_brevis-Agnus: 1 staves: too few to trust, left out
+Gas0202a-Missa_Et_trop_penser-Kyrie: 2 staves: too few to trust, left out
+Gas0202d-Missa_Et_trop_penser-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Gas0202e-Missa_Et_trop_penser-Agnus: 1 staves: too few to trust, left out
+Gas0203b-Missa_Nas_tu_pas-Gloria: 3 staves; the source's values the edition's; 1 steps below the edition
+Gas0203d-Missa_Nas_tu_pas-Sanctus: 1 staves: too few to trust, left out
+Gas0204b-Missa_Octavi_toni-Gloria: 4 staves; the source's values the edition's; 10 steps above the edition
+Gas0204c-Missa_octavi_toni-Credo: 1 staves: too few to trust, left out
+Gas0204d-Missa_Octavi_toni-Sanctus: 1 staves: too few to trust, left out
+Gas0204e-Missa_Octavi_toni-Agnus: 1 staves: too few to trust, left out
+Gas0205-Credo: 3 staves; the source's values the edition's; 9 steps above the edition
+Gas0206-Credo_cardinale: 2 staves: too few to trust, left out
+Gas0301a-Ave_mundi_domina-Ave_mundi_domina: 2 staves: too few to trust, left out
+Gas0301d-Ave_mundi_domina-Anima_mea_liquefacta_est: 1 staves: too few to trust, left out
+Gas0301e-Ave_mundi_dominia-Ave_regina_caelorum: 1 staves: too few to trust, left out
+Gas0301g-Ave_mundi_domina-O_virginum_praeclara: 1 staves: too few to trust, left out
+Gas0302a-Quam_pulchra_es-Quam_pulchra_es: 1 staves: too few to trust, left out
+Gas0302c-Quam_pulchra_es-Salve_virgo_salutata: 1 staves: too few to trust, left out
+Gas0302e-Quam_pulchra_es-Ave_regina_caelorum_mater: 3 staves; the source's values the edition's times 2; at the edition's pitch
+Gas0302g-Quam_pulchra_es-Mater_patris_filia: 1 staves: too few to trust, left out
+Gas0302h-Quam_pulchra_es-Tota_pulchra_es: 3 staves; the source's values the edition's; 8 steps below the edition
+Gas0303a-In_honorem_sancti_spiritus-Spiritus_domini: 2 staves: too few to trust, left out
+Gas0303b-In_honorem_sancti_spiritus-Veni_sancte_spiritus: 1 staves: too few to trust, left out
+Gas0303c-In_honorem_sancti_spiritus-Beata_gens: 1 staves: too few to trust, left out
+Gas0303d-In_honorem_sancti_spiritus-Confirma_hoc_deus: 1 staves: too few to trust, left out
+Gas0303e-In_honorem_sancti_spiritus-Loquebantur_variis_linguis: 3 staves; the source's values the edition's; 4 steps above the edition
+Gas0303e.2-In_honorem_sancti_spiritus-Sancti_spiritus_adsit_nobis: 3 staves; the source's values the edition's; 6 steps below the edition
+Gas0401-Ave_domina_sancta_Maria: 2 staves: too few to trust, left out
+Gas0403-Ave_regina_celorum: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Gas0404-Salve_sancta_parens: 1 staves: too few to trust, left out
+Gas0407-Mater_digna_Dei: 1 staves: too few to trust, left out
+Gas0408-Ave_stella_matutina: 1 staves: too few to trust, left out
+Gas0409-Ibo_mihi_ad_montem_Mirrhe: 2 staves: too few to trust, left out
+Gas0410-O_pulcherrima_mulierum: 1 staves: too few to trust, left out
+Gas0412-Adonay_sanctissime_domine_deus: 2 staves: too few to trust, left out
+Gas0413-O_beate_Sebastiane: 3 staves; the source's values the edition's; 6 steps below the edition
+Gas0414-Anima_Christi_sanctifica_me: 2 staves: too few to trust, left out
+Gas0416-Panis_angelicus: 1 staves: too few to trust, left out
+Gas0418-Verbum_caro_factum_est: 3 staves; the source's values the edition's; 4 steps below the edition
+Gas0420-Stabat_mater: 1 staves: too few to trust, left out
+Gas0501a-In_coena_Domini_Lectio_prima: 2 staves: too few to trust, left out
+Gas0502-Magnificat_octavi_toni: 6 staves; the source's values the edition's; 3 steps above the edition
+Gas0503-Bon_temps_Adieu_mes_amours: 2 staves: too few to trust, left out
+Gas0504-Que_fait_le_cocu_au_bois: 1 staves: too few to trust, left out
+Gas0505-Sans_regretz: 1 staves: too few to trust, left out
+Gas0506-La_stangetta: 11 staves; the source's values the edition's; 2 steps below the edition
+Gas0507-O_Venus_bant: 12 staves; the source's values the edition's; 2 steps above the edition
+Gas0509-Jay_pris_amours_De_tous_biens_plaine: 11 staves; the source's values the edition's; 2 steps below the edition
+Isa1039-Credo_II: 5 staves; the source's values the edition's; 2 steps below the edition
+Isa1040-Credo_III: 9 staves; the source's values the edition's; 4 steps below the edition
+Isa1041-Credo_IV: 1 staves: too few to trust, left out
+Isa3002-Alla_battaglia: 6 staves; the source's values the edition's times 2; 3 steps below the edition
+Jap3001-Amours_amours_amours: 3 staves; the source's values the edition's; at the edition's pitch
+Jap3003-Cela_sans_plus_ne_souffi_pas: 5 staves; the source's values the edition's; 4 steps above the edition
+Jap3005-Et_qui_la_dira__Dieu_gard_celle: 4 staves; the source's values the edition's; at the edition's pitch
+Jap3007-Fortuna_dun_gran_tempo: 2 staves: too few to trust, left out
+Jap3008-Hellas_quelle_est_a_mon_gre: 7 staves; the source's values the edition's; 4 steps below the edition
+Jap3010-Jay_bien_nori: 3 staves; the source's values the edition's; 3 steps below the edition
+Jap3011-Jay_pris_amours_I: 18 staves; the source's values the edition's; 2 steps below the edition
+Jap3012-Jay_pris_amours_II: 6 staves; the source's values the edition's; at the edition's pitch
+Jap3013-Je_cuide__De_tous_biens_plaine: 12 staves; the source's values the edition's; at the edition's pitch
+Jap3015-Nenciozza_mia: 9 staves; the source's values the edition's; at the edition's pitch
+Jap3018-Si_congie_pris: 18 staves; the source's values the edition's; at the edition's pitch
+Jap3019-Tmeiskin: 4 staves; the source's values the edition's; 1 steps above the edition
+Jap3020-Tan_bien_mi_son_pensada: 10 staves; the source's values the edition's; at the edition's pitch
+Jap3021-Trois_filles_estoient: 1 staves: too few to trust, left out
+Jos0301b-Missa_Ave_maris_stella-Gloria: 1 staves: too few to trust, left out
+Jos0301c-Missa_Ave_maris_stella-Credo: 4 staves; the source's values the edition's times 2; at the edition's pitch
+Jos0301d-Missa_Ave_maris_stella-Sanctus: 2 staves: too few to trust, left out
+Jos0302a-Missa_Da_pacem-Kyrie: 2 staves: too few to trust, left out
+Jos0302b-Missa_Da_pacem-Gloria: 2 staves: too few to trust, left out
+Jos0302c-Missa_Da_pacem-Credo: 1 staves: too few to trust, left out
+Jos0302d-Missa_Da_pacem-Sanctus: 4 staves; the source's values the edition's; 1 steps below the edition
+Jos0302e-Missa_Da_pacem-Agnus: 1 staves: too few to trust, left out
+Jos0303a-Missa_De_beata_virgine-Kyrie: 1 staves: too few to trust, left out
+Jos0303b-Missa_De_beata_virgine-Gloria: 4 staves; the source's values the edition's; 5 steps below the edition
+Jos0303d-Missa_De_beata_virgine-Sanctus: 3 staves; the source's values the edition's times 2; 7 steps below the edition
+Jos0303e-Missa_De_beata_virgine-Agnus: 4 staves; the source's values the edition's times 2; 3 steps below the edition
+Jos0304c-Missa_Cum_iocunditate-Credo: 6 staves; the source's values the edition's; 5 steps below the edition
+Jos0304d-Missa_Cum_iocunditate-Sanctus: 4 staves; the source's values the edition's times 1/2; at the edition's pitch
+Jos0304e-Missa_Cum_iocunditate-Agnus: 2 staves: too few to trust, left out
+Jos0401d-Missa_Ferialis-Sanctus: 4 staves; the source's values the edition's; 2 steps below the edition
+Jos0401e-Missa_Ferialis-Agnus: 2 staves: too few to trust, left out
+Jos0402a-Missa_Gaudeamus-Kyrie: 1 staves: too few to trust, left out
+Jos0402b-Missa_Gaudeamus-Gloria: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0402c-Missa_Gaudeamus-Credo: 4 staves; the source's values the edition's; 1 steps below the edition
+Jos0402d-Missa_Gaudeamus-Sanctus: 3 staves; the source's values the edition's times 2; 8 steps below the edition
+Jos0402e-Missa_Gaudeamus-Agnus: 4 staves; the source's values the edition's; 4 steps below the edition
+Jos0403c-Missa_Pange_lingua-Credo: 2 staves: too few to trust, left out
+Jos0403d-Missa_Pange_lingua-Sanctus: 1 staves: too few to trust, left out
+Jos0403e-Missa_Pange_lingua-Agnus: 1 staves: too few to trust, left out
+Jos0404b-Missa_Pro_Defunctis-Kyrie: 2 staves: too few to trust, left out
+Jos0404c-Missa_Pro_Defunctis-Gradual: 1 staves: too few to trust, left out
+Jos0404d-Missa_Pro_Defunctis-Offertory: 1 staves: too few to trust, left out
+Jos0405b-Missa_Sub_tuum_presidium-Gloria: 2 staves: too few to trust, left out
+Jos0405d-Missa_Sub_tuum_presidium-Sanctus: 2 staves: too few to trust, left out
+Jos0406a-Missa_Veni_sancte_spiritus-Kyrie: 2 staves: too few to trust, left out
+Jos0406b-Missa_Veni_sancte_spiritus-Gloria: 3 staves; the source's values the edition's; 2 steps below the edition
+Jos0406c-Missa_Veni_sancte_spiritus-Credo: 4 staves; the source's values the edition's times 2; 2 steps below the edition
+Jos0406d-Missa_Veni_sancte_spiritus-Sanctus: 2 staves: too few to trust, left out
+Jos0406e-Missa_Veni_sancte_spiritus-Agnus: 2 staves: too few to trust, left out
+Jos0501a-Missa_Lami_Baudichon-Kyrie: 2 staves: too few to trust, left out
+Jos0501c-Missa_Lami_Baudichon-Credo: 4 staves; the source's values the edition's; 1 steps above the edition
+Jos0502a-Missa_Une_mousse_de_Biscaye-Kyrie: 2 staves: too few to trust, left out
+Jos0502b-Missa_Une_mousse_de_Biscaye-Gloria: 3 staves; the source's values the edition's; 6 steps above the edition
+Jos0502c-Missa_Une_mousse_de_Biscaye-Credo: 3 staves; the source's values the edition's; 6 steps above the edition
+Jos0602b-Missa_Lhomme_arme_sexti_toni-Gloria: 1 staves: too few to trust, left out
+Jos0602c-Missa_Lhomme_arme_sexti_toni-Credo: 2 staves: too few to trust, left out
+Jos0602d-Missa_Lhomme_arme_sexti_toni-Sanctus: 1 staves: too few to trust, left out
+Jos0602e-Missa_Lhomme_arme_sexti_toni-Agnus: 1 staves: too few to trust, left out
+Jos0603a-Missa_Lhomme_arme_super_voces_musicales-Kyrie: 1 staves: too few to trust, left out
+Jos0603b-Missa_Lhomme_arme_super_voces_musicales-Gloria: 3 staves; the source's values the edition's; 3 steps below the edition
+Jos0603c-Missa_Lhomme_arme_super_voces_musicales-Credo: 1 staves: too few to trust, left out
+Jos0603d-Missa_Lhomme_arme_super_voces_musicales-Sanctus: 1 staves: too few to trust, left out
+Jos0603e-Missa_Lhomme_arme_super_voces_musicales-Agnus: 1 staves: too few to trust, left out
+Jos0701a-Missa_Allez_regretz_I-Kyrie: 4 staves; the source's values the edition's; 2 steps below the edition
+Jos0701c-Missa_Allez_regretz_I-Credo: 4 staves; the source's values the edition's times 2; 2 steps below the edition
+Jos0701d-Missa_Allez_regretz_I-Sanctus: 1 staves: too few to trust, left out
+Jos0701e-Missa_Allez_regretz_I-Agnus: 1 staves: too few to trust, left out
+Jos0702a-Missa_Allez_regretz_II-Kyrie: 7 staves; the source's values the edition's; 4 steps below the edition
+Jos0702c-Missa_Allez_regretz_II-Credo: 1 staves: too few to trust, left out
+Jos0702e-Missa_Allez_regretz_II-Agnus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0703b-Missa_Dung_aultre_amer-Gloria: 1 staves: too few to trust, left out
+Jos0703c-Missa_Dung_aultre_amer-Credo: 1 staves: too few to trust, left out
+Jos0703e-Missa_Dung_aultre_amer-Agnus: 1 staves: too few to trust, left out
+Jos0801b-Missa_Faisant_regretz-Gloria: 2 staves: too few to trust, left out
+Jos0801c-Missa_Faisant_regretz-Credo: 2 staves: too few to trust, left out
+Jos0801d-Missa_Faisant_regretz-Sanctus: 1 staves: too few to trust, left out
+Jos0802b-Missa_Fortuna_desperata-Gloria: 1 staves: too few to trust, left out
+Jos0802e-Missa_Fortuna_desperata-Agnus: 1 staves: too few to trust, left out
+Jos0901a-Missa_Malheur_me_bat-Kyrie: 2 staves: too few to trust, left out
+Jos0901b-Missa_Malheur_me_bat-Gloria: 4 staves; the source's values the edition's; 7 steps above the edition
+Jos0901c-Missa_Malheur_me_bat-Credo: 4 staves; the source's values the edition's; 2 steps below the edition
+Jos0901d-Missa_Malheur_me_bat-Sanctus: 7 staves; the source's values the edition's; 4 steps below the edition
+Jos0901e-Missa_Malheur_me_bat-Agnus: 1 staves: too few to trust, left out
+Jos0902a-Missa_Mon_seul_plaisir-Kyrie: 2 staves: too few to trust, left out
+Jos0902c-Missa_Mon_seul_plaisir-Credo: 1 staves: too few to trust, left out
+Jos0902e-Missa_Mon_seul_plaisir-Agnus: 1 staves: too few to trust, left out
+Jos0903e-Missa_Di_dadi-Agnus: 2 staves: too few to trust, left out
+Jos0904c-Missa_Rosina-Credo: 5 staves; the source's values the edition's; 7 steps below the edition
+Jos1001b-Missa_Mater_patris-Gloria: 1 staves: too few to trust, left out
+Jos1001c-Missa_Mater_patris-Credo: 2 staves: too few to trust, left out
+Jos1001d-Missa_Mater_patris-Sanctus: 4 staves; the source's values the edition's; 3 steps above the edition
+Jos1001e-Missa_Mater_patris-Agnus: 17 staves; the source's values the edition's; 6 steps above the edition
+Jos1002a-Missa_Missus_est_Gabriel_Angelus-Kyrie: 1 staves: too few to trust, left out
+Jos1002b-Missa_Missus_est_Gabriel_Angelus-Gloria: 1 staves: too few to trust, left out
+Jos1002c-Missa_Missus_est_Gabriel_Angelus-Credo: 3 staves; the source's values the edition's times 2; at the edition's pitch
+Jos1002d-Missa_Missus_est_Gabriel_Angelus-Sanctus: 4 staves; the source's values the edition's; 10 steps below the edition
+Jos1003a-Missa_Quem_dicunt_homines-Kyrie: 2 staves: too few to trust, left out
+Jos1003b-Missa_Quem_dicunt_homines-Gloria: 3 staves; the source's values the edition's times 2; 1 steps above the edition
+Jos1003c-Missa_Quem_dicunt_homines-Credo: 1 staves: too few to trust, left out
+Jos1003d-Missa_Quem_dicunt_homines-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos1003e-Missa_Quem_dicunt_homines-Agnus: 3 staves; the source's values the edition's times 2; 5 steps below the edition
+Jos1101c-Missa_Hercules_dux_Ferrarie-Credo: 9 staves; the source's values the edition's times 2; 9 steps above the edition
+Jos1101d-Missa_Hercules_dux_Ferrarie-Sanctus: 2 staves: too few to trust, left out
+Jos1101e-Missa_Hercules_dux_Ferrarie-Agnus: 2 staves: too few to trust, left out
+Jos1102a-Missa_La_sol_fa_re_mi-Kyrie: 1 staves: too few to trust, left out
+Jos1102c-Missa_La_sol_fa_re_mi-Credo: 1 staves: too few to trust, left out
+Jos1102d-Missa_La_sol_fa_re_mi-Sanctus: 3 staves; the source's values the edition's; 2 steps below the edition
+Jos1102e-Missa_La_sol_fa_re_mi-Agnus: 2 staves: too few to trust, left out
+Jos1201b-Missa_Ad_fugam-Gloria: 1 staves: too few to trust, left out
+Jos1201c-Missa_Ad_fugam-Credo: 5 staves; the source's values the edition's; 2 steps below the edition
+Jos1201d.b-Missa_Ad_fugam-Sanctus-version_II: 2 staves: too few to trust, left out
+Jos1202b-Missa_Sine_nomine-Gloria: 1 staves: too few to trust, left out
+Jos1202e-Missa_Sine_nomine-Agnus: 2 staves: too few to trust, left out
+Jos1301-Credo_Chascun_me_crie: 2 staves: too few to trust, left out
+Jos1302-Credo_De_tous_biens_playne: 3 staves; the source's values the edition's; 2 steps above the edition
+Jos1303-Credo_La_belle_se_siet: 3 staves; the source's values the edition's; 5 steps above the edition
+Jos1305-Credo_Vilayge_I: 3 staves; the source's values the edition's times 1/2; 4 steps below the edition
+Jos1306-Credo_Vilayge_II: 7 staves; the source's values the edition's times 2; 2 steps below the edition
+Jos1307-Gloria_De_beata_virgine: 3 staves; the source's values the edition's; 6 steps below the edition
+Jos1309-Sanctus_De_passione: 5 staves; the source's values the edition's; 4 steps below the edition
+Jos1314-Kyrie_Pascale: 2 staves: too few to trust, left out
+Jos1402-Benedicite_omnia_opera: 4 staves; the source's values the edition's times 2; 9 steps below the edition
+Jos1403-Descendi_in_ortum_meum: 2 staves: too few to trust, left out
+Jos1404-Dilectus_Deo_et_hominibus: 4 staves; the source's values the edition's; 3 steps below the edition
+Jos1405-Ecce_Dominus_veniet: 1 staves: too few to trust, left out
+Jos1406-Ecce_tu_pulchra_es: 1 staves: too few to trust, left out
+Jos1407-Lugebat_David_Absalon: 3 staves; the source's values the edition's times 2; 1 steps above the edition
+Jos1408-Miserimini_mei: 2 staves: too few to trust, left out
+Jos1409-Planxit_autem_David: 9 staves; the source's values the edition's times 2; 3 steps above the edition
+Jos1410-Quam_pulchra_es: 2 staves: too few to trust, left out
+Jos1412-Responde_mihi: 2 staves: too few to trust, left out
+Jos1413-Si_dormiero: 2 staves: too few to trust, left out
+Jos1414-Stetit_autem_Salomon: 3 staves; the source's values the edition's; 6 steps above the edition
+Jos1501-Alleluia_Laudate_Dominum: 2 staves: too few to trust, left out
+Jos1502-Beati_omnes_qui_timent_Dominum: 3 staves; the source's values the edition's; 8 steps below the edition
+Jos1503-Beati_omnes_qui_timent_Dominum: 1 staves: too few to trust, left out
+Jos1504-Beati_quorum_remisse_sunt: 3 staves; the source's values the edition's times 2; 1 steps above the edition
+Jos1505-Bonitatem_fecisti_cum_servo_tuo: 8 staves; the source's values the edition's times 2; 1 steps below the edition
+Jos1506-Cantate_Domino_canticum_novum: 1 staves: too few to trust, left out
+Jos1507-Celi_enarrant_gloriam_dei: 5 staves; the source's values the edition's; 9 steps below the edition
+Jos1508-Clamavi_ad_dominum_cum_tribularer: 2 staves: too few to trust, left out
+Jos1509-Confitemini_Domino: 2 staves: too few to trust, left out
+Jos1511-De_profundis_clamavi: 1 staves: too few to trust, left out
+Jos1512-De_profundis_clamavi: 2 staves: too few to trust, left out
+Jos1514-De_profundis_clamavi: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Jos1601-Deus_in_adiutorium_meum: 2 staves: too few to trust, left out
+Jos1602-Deus_in_nomine_tuo: 1 staves: too few to trust, left out
+Jos1605-Domine_exaudi_orationem_meam: 2 staves: too few to trust, left out
+Jos1606-Domine_ne_in_furore: 2 staves: too few to trust, left out
+Jos1607-Domine_ne_in_furore: 1 staves: too few to trust, left out
+Jos1608-Domine_ne_in_furore: 3 staves; the source's values the edition's; 2 steps below the edition
+Jos1609-Domine_ne_projicias_me: 2 staves: too few to trust, left out
+Jos1610-Domine_non_secundum_peccata: 1 staves: too few to trust, left out
+Jos1611-Domine_quis_habitabit: 3 staves; the source's values the edition's times 2; 5 steps below the edition
+Jos1612-Domini_est_terra: 1 staves: too few to trust, left out
+Jos1702-Illumina_oculos: 2 staves: too few to trust, left out
+Jos1703-In_domino_confido: 3 staves; the source's values the edition's; 10 steps below the edition
+Jos1704-In_exitu_Israel_de_Egypto: 4 staves; the source's values the edition's times 2; 4 steps below the edition
+Jos1707-Jubilate_Deo_omnis_terra: 3 staves; the source's values the edition's; at the edition's pitch
+Jos1709-Lauda_Jerusalem_dominum: 1 staves: too few to trust, left out
+Jos1711-Laudate_pueri_Dominum: 5 staves; the source's values the edition's; 6 steps above the edition
+Jos1712-Letare_nova_Syon: 2 staves: too few to trust, left out
+Jos1713-Levavi_oculos_meos: 3 staves; the source's values the edition's; 3 steps below the edition
+Jos1714-Memor_esto_verbi_tui: 3 staves; the source's values the edition's; 4 steps above the edition
+Jos1801-Mirabilia_testimonia_tua_Domine: 5 staves; the source's values the edition's; 3 steps below the edition
+Jos1802-Mirabilia_testimonia_tua: 1 staves: too few to trust, left out
+Jos1803-Miserere_mei_deus: 6 staves; the source's values the edition's; 3 steps below the edition
+Jos1804-Misericordias_domini: 3 staves; the source's values the edition's; 2 steps below the edition
+Jos1805-Paratum_cor_meum: 9 staves; the source's values the edition's; 2 steps below the edition
+Jos1807-Qui_habitat_in_adjutorio_altissimi: 3 staves; the source's values the edition's times 2; 2 steps below the edition
+Jos1808-Qui_habitat_in_adjutorio_altissimi: 2 staves: too few to trust, left out
+Jos1809-Qui_regis_Israel: 1 staves: too few to trust, left out
+Jos1811-Tribulatio_et_angustia: 1 staves: too few to trust, left out
+Jos1812-Usquequo_domine_oblivisceris_me: 3 staves; the source's values the edition's; 7 steps below the edition
+Jos1903-Factum_est_autem: 1 staves: too few to trust, left out
+Jos1905-In_illo_tempore_assumpsit_Jesus: 1 staves: too few to trust, left out
+Jos1906-In_illo_tempore_stetit_Jesus: 1 staves: too few to trust, left out
+Jos1908-In_principio_erat_verbum: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Jos1909-Inter_natos_mulierum: 9 staves; the source's values the edition's times 2; 1 steps below the edition
+Jos1910-Inter_natos_mulierum: 3 staves; the source's values the edition's times 2; 2 steps below the edition
+Jos1912-Lectio_actuum_apostolorum: 3 staves; the source's values the edition's times 2; 4 steps below the edition
+Jos1913-Liber_generationis: 2 staves: too few to trust, left out
+Jos2001-Magnificat_Tertii_toni: 4 staves; the source's values the edition's; at the edition's pitch
+Jos2004-Magnificat_Quarti_toni-Verse_6_Fecit_potentiam: 1 staves: too few to trust, left out
+Jos2005-Magnificat_septimi_toni: 3 staves; the source's values the edition's; 5 steps above the edition
+Jos2006-Missus_est_Gabriel: 4 staves; the source's values the edition's; 7 steps below the edition
+Jos2008-Nunc_dimittis: 1 staves: too few to trust, left out
+Jos2011-Responsum_acceperat_Simeon: 5 staves; the source's values the edition's times 2; 5 steps below the edition
+Jos2012-Scimus_quoniam_diligentibus__De_tous_biens_plaine__Per_omnia_secula: 3 staves; the source's values the edition's; 6 steps below the edition
+Jos2013-Sic_Deus_dilexit_mundum__Circumdederunt_me: 3 staves; the source's values the edition's; 2 steps above the edition
+Jos2014-Tulerunt_Dominum: 2 staves: too few to trust, left out
+Jos2016-Verbum_caro_factum_est: 1 staves: too few to trust, left out
+Jos2101-Ave_caro_Christi_cara: 3 staves; the source's values the edition's times 2; 1 steps above the edition
+Jos2102-Ave_verum_corpus: 2 staves: too few to trust, left out
+Jos2103-Ave_verum_corpus: 1 staves: too few to trust, left out
+Jos2104-Ave_verum: 1 staves: too few to trust, left out
+Jos2106-Magnus_es_tu_domine: 1 staves: too few to trust, left out
+Jos2107-O_admirabile_commercium: 1 staves: too few to trust, left out
+Jos2108-O_bone_et_dulcis_domine__Pater_noster__Ave_Maria...benedicta_tu: 2 staves: too few to trust, left out
+Jos2201-O_Domine_Jesu_Christe: 2 staves: too few to trust, left out
+Jos2202-Pange_lingua_gloriosi: 1 staves: too few to trust, left out
+Jos2203-Qui_velatus: 4 staves; the source's values the edition's; 3 steps above the edition
+Jos2204-Salve_sancta_facies: 2 staves: too few to trust, left out
+Jos2206-Victimae_paschali_laudes__Dung_aultre_amer: 6 staves; the source's values the edition's; 2 steps above the edition
+Jos2207-Victime_paschali_laudes: 5 staves; the source's values the edition's; 1 steps below the edition
+Jos2301-Alma_redemptoris_mater: 1 staves: too few to trust, left out
+Jos2303-Ave_festiva_ferculis: 1 staves: too few to trust, left out
+Jos2305-Ave_Maria: 2 staves: too few to trust, left out
+Jos2307-Ave_Maria_..._virgo_serena: 3 staves; the source's values the edition's times 2; 1 steps above the edition
+Jos2308-Ave_maris_stella: 1 staves: too few to trust, left out
+Jos2309-Ave_maris_stella_verse_4__Monstra_te_esse_matrem: 1 staves: too few to trust, left out
+Jos2310-Ave_mundi_spes: 2 staves: too few to trust, left out
+Jos2311-Ave_nobilissima_creatura: 1 staves: too few to trust, left out
+Jos2313-Benedicta_es_celorum: 4 staves; the source's values the edition's times 4; 5 steps below the edition
+Jos2401-Celorum_decus: 1 staves: too few to trust, left out
+Jos2402-Gaude_virgo: 1 staves: too few to trust, left out
+Jos2403-Illibata_dei_virgo: 1 staves: too few to trust, left out
+Jos2404-Inviolata_integra_et_casta_es: 3 staves; the source's values the edition's; 2 steps above the edition
+Jos2406-Mittit_ad_virginem: 5 staves; the source's values the edition's; 6 steps above the edition
+Jos2407-Nesciens_mater_virgo: 1 staves: too few to trust, left out
+Jos2408-Obsecro_te_domina: 1 staves: too few to trust, left out
+Jos2409-O_virgo_prudentissima: 2 staves: too few to trust, left out
+Jos2411-Preter_rerum_seriem: 1 staves: too few to trust, left out
+Jos2501-Recordare_virgo_mater: 9 staves; the source's values the edition's; 4 steps below the edition
+Jos2502-Regina_celi_letare: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Jos2503-Regina_celi_letare: 2 staves: too few to trust, left out
+Jos2505-Salve_regina: 1 staves: too few to trust, left out
+Jos2506-Salve_regina: 4 staves; the source's values the edition's; 4 steps below the edition
+Jos2507-Sancta_Maria_virgo_virginum: 2 staves: too few to trust, left out
+Jos2511-Verbum_bonum_et_suave: 1 staves: too few to trust, left out
+Jos2513-Virgo_salutiferi__Ave_Maria: 5 staves; the source's values the edition's times 2; 3 steps below the edition
+Jos2514-Vultum_tuum_deprecabuntur: 5 staves; the source's values the edition's; 10 steps above the edition
+Jos2603-Congratulamini_mihi_omnes: 8 staves; the source's values the edition's; 7 steps below the edition
+Jos2604-Deus_pacis_reduxit: 2 staves: too few to trust, left out
+Jos2606-In_illo_tempore_Maria_Magdalena: 4 staves; the source's values the edition's; 8 steps below the edition
+Jos2608-O_admirabile_commercium__Verbum_caro_factum_est: 2 staves: too few to trust, left out
+Jos2610-Puer_natus_est_nobis: 2 staves: too few to trust, left out
+Jos2611-Queramus_cum_pastoribus: 1 staves: too few to trust, left out
+Jos2613-Sancta_trinitas: 2 staves: too few to trust, left out
+Jos2614-Sancti_Dei_omnes: 1 staves: too few to trust, left out
+Jos2615-Te_Deum: 13 staves; the source's values the edition's; 4 steps above the edition
+Jos2616-Te_Deum_laudamus: 4 staves; the source's values the edition's; at the edition's pitch
+Jos2618-Veni_sancte_spiritus: 2 staves: too few to trust, left out
+Jos2701-A_la_mort__Monstra_te_esse_matrem: 1 staves: too few to trust, left out
+Jos2703-Cela_sans_plus: 6 staves; the source's values the edition's; 2 steps below the edition
+Jos2704-Cela_sans_plus: 5 staves; the source's values the edition's; 2 steps below the edition
+Jos2705-Ce_povre_mendiant__Pauper_sum_ego: 1 staves: too few to trust, left out
+Jos2706-De_tous_biens_plaine: 2 staves: too few to trust, left out
+Jos2709-Et_trop_penser: 1 staves: too few to trust, left out
+Jos2710-Fors_seulement_I: 1 staves: too few to trust, left out
+Jos2711-Fortuna_desperata: 1 staves: too few to trust, left out
+Jos2712-Fortuna_dun_gran_tempo: 13 staves; the source's values the edition's; at the edition's pitch
+Jos2713-Helas_madame: 1 staves: too few to trust, left out
+Jos2714-Helas_que_pourra: 1 staves: too few to trust, left out
+Jos2720-La_belle_se_siet: 2 staves: too few to trust, left out
+Jos2722-La_plus_des_plus: 9 staves; the source's values the edition's; 6 steps below the edition
+Jos2724-Madame_helas: 10 staves; the source's values the edition's; 1 steps below the edition
+Jos2725-Marguerite: 13 staves; the source's values the edition's; at the edition's pitch
+Jos2726-Mes_pensees: 7 staves; the source's values the edition's; at the edition's pitch
+Jos2729-O_Venus_bant: 3 staves; the source's values the edition's; 12 steps above the edition
+Jos2730-Pensif_mari: 7 staves; the source's values the edition's; at the edition's pitch
+Jos2731-Petite_camusette: 2 staves: too few to trust, left out
+Jos2734-Si_jay_perdu_mon_amy: 2 staves: too few to trust, left out
+Jos2735-Si_jeusse_Marion: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Jos2736-Vray_dieu_damour: 1 staves: too few to trust, left out
+Jos2803-Adieu_mes_amours: 13 staves; the source's values the edition's; 2 steps below the edition
+Jos2804-Baisiez_moy: 1 staves: too few to trust, left out
+Jos2806-Bergerette_savoysienne: 10 staves; the source's values the edition's; 2 steps below the edition
+Jos2807-Comment_peult_avoir_joye: 13 staves; the source's values the edition's; 2 steps below the edition
+Jos2808-Cueurs_desolez: 3 staves; the source's values the edition's; 7 steps below the edition
+Jos2809-De_tous_biens_plaine: 2 staves: too few to trust, left out
+Jos2811-Dulces_exuviae: 1 staves: too few to trust, left out
+Jos2814-Entre_je_suis: 1 staves: too few to trust, left out
+Jos2815-Fama_malum: 1 staves: too few to trust, left out
+Jos2816-Fors_seulement_II: 3 staves; the source's values the edition's; 1 steps below the edition
+Jos2819-Je_ris: 2 staves: too few to trust, left out
+Jos2823-Lhomme_arme: 6 staves; the source's values the edition's; at the edition's pitch
+Jos2824-Lourdault_Lourdault: 15 staves; the source's values the edition's; 4 steps above the edition
+Jos2826-Mon_seul_plaisir: 1 staves: too few to trust, left out
+Jos2828-Plus_nulz_regrets: 1 staves: too few to trust, left out
+Jos2831-Se_congie_prens: 2 staves: too few to trust, left out
+Jos2832-Si_jay_perdu: 1 staves: too few to trust, left out
+Jos2833-Tant_vous_aimme: 1 staves: too few to trust, left out
+Jos2834-Tous_les_regretz: 12 staves; the source's values the edition's; 2 steps above the edition
+Jos2836-Vive_le_roy: 2 staves: too few to trust, left out
+Jos2840-Fors_seulement_III: 2 staves: too few to trust, left out
+Jos2901-Cent_mille_regretz: 1 staves: too few to trust, left out
+Jos2902-Cueur_langoreulx: 1 staves: too few to trust, left out
+Jos2905-Du_mien_amant: 2 staves: too few to trust, left out
+Jos2906-En_non_saichant: 1 staves: too few to trust, left out
+Jos2907-Faulte_dargent: 1 staves: too few to trust, left out
+Jos2911-Je_ne_me_puis_tenir_daimer: 1 staves: too few to trust, left out
+Jos2912-La_Spagna: 3 staves; the source's values the edition's times 2; 5 steps below the edition
+Jos2914.1-Ma_bouche_rit--a_5: 2 staves: too few to trust, left out
+Jos2915-Mi_lares_vous_tousjours_languir: 3 staves; the source's values the edition's; 2 steps above the edition
+Jos2916-Mala_se_nea: 1 staves: too few to trust, left out
+Jos2918-Nymphes_des_bois__Requiem: 1 staves: too few to trust, left out
+Jos3003-Baisiez_moy: 6 staves; the source's values the edition's times 2; at the edition's pitch
+Jos3007-Petite_camusette: 1 staves: too few to trust, left out
+Jos3008-Pour_souhaitter: 3 staves; the source's values the edition's times 2; 3 steps below the edition
+Jos3010-Se_congie_prens: 4 staves; the source's values the edition's; 5 steps below the edition
+Jos3011-Si_vous_navez: 1 staves: too few to trust, left out
+Jos3012-Tenez_moy_en_voz_bras: 1 staves: too few to trust, left out
+Jos9901b-Missa_Mi_mi-Gloria: 1 staves: too few to trust, left out
+Jos9901c-Missa_Mi_mi-Credo: 3 staves; the source's values the edition's; 5 steps below the edition
+Jos9901d-Missa_Mi_mi-Sanctus: 2 staves: too few to trust, left out
+Jos9901e-Missa_Mi_mi-Agnus: 4 staves; the source's values the edition's; 11 steps above the edition
+Jos9902-Hec_est_vita_eterna: 1 staves: too few to trust, left out
+Jos9913-Descendi_in_ortum_meum--secunda_pars_of_Anima_mea_liquefacta_est: 6 staves; the source's values the edition's times 2; 2 steps above the edition
+Jos9922-Pleni_Comment_peult: 1 staves: too few to trust, left out
+Jos9923-Verbum_bonum: 4 staves; the source's values the edition's times 2; 8 steps below the edition
+Mar1001c-Missa_Cela_sans_plus-Credo: 3 staves; the source's values the edition's; 2 steps above the edition
+Mar1001d-Missa_Cela_sans_plus-Sanctus: 2 staves: too few to trust, left out
+Mar1001e-Missa_Cela_sans_plus-Agnus: 1 staves: too few to trust, left out
+Mar1002b-Missa_Coda_di_pavon-Gloria: 2 staves: too few to trust, left out
+Mar1002e-Missa_Coda_di_pavon-Agnus: 2 staves: too few to trust, left out
+Mar1003a-Missa_Cucu-Kyrie: 1 staves: too few to trust, left out
+Mar1003b-Missa_Cucu-Gloria: 2 staves: too few to trust, left out
+Mar1003c-Missa_Cucu-Credo: 3 staves; the source's values the edition's; 4 steps above the edition
+Mar1004b-Missa_Dio_te_salvi_Gotterello-Gloria: 2 staves: too few to trust, left out
+Mar1004c-Missa_Dio_te_salvi_Gotterello-Credo: 3 staves; the source's values the edition's times 1/2; 4 steps below the edition
+Mar1004d-Missa_Dio_te_salvi_Gotterello-Sanctus: 1 staves: too few to trust, left out
+Mar1007a-Missa_In_feuers_hitz-Kyrie: 1 staves: too few to trust, left out
+Mar1007b-Missa_In_feuers_hitz-Gloria: 1 staves: too few to trust, left out
+Mar1007c-Missa_In_feuers_hitz-Credo: 2 staves: too few to trust, left out
+Mar1009c-Missa_La_Martinella-Credo: 3 staves; the source's values the edition's times 2; 2 steps below the edition
+Mar1009d-Missa_La_Martinella-Sanctus: 5 staves; the source's values the edition's times 2; at the edition's pitch
+Mar1010a-Missa_Ma_bouche_rit-Kyrie: 1 staves: too few to trust, left out
+Mar1010b-Missa_Ma_bouche_rit-Gloria: 1 staves: too few to trust, left out
+Mar1010c-Missa_Ma_bouche_rit-Credo: 4 staves; the source's values the edition's; 2 steps below the edition
+Mar1010d-Missa_Ma_bouche_rit-Sanctus: 1 staves: too few to trust, left out
+Mar2001-Ad_Dominum_cum_tribularer: 2 staves: too few to trust, left out
+Mar2002-Ad_te_levavi: 1 staves: too few to trust, left out
+Mar2003-Audi_benigne_conditor: 1 staves: too few to trust, left out
+Mar2004-Aures_ad_nostras: 1 staves: too few to trust, left out
+Mar2006-Ave_maris_stella: 2 staves: too few to trust, left out
+Mar2007-Beati_omnes: 1 staves: too few to trust, left out
+Mar2008-Beatus_vir: 1 staves: too few to trust, left out
+Mar2009-Benedictus_dominus_deus_Israel: 3 staves; the source's values the edition's; 1 steps above the edition
+Mar2010-Benedictus_dominus_deus_meus: 4 staves; the source's values the edition's times 2; 3 steps above the edition
+Mar2014-Confitebor_tibi: 1 staves: too few to trust, left out
+Mar2016-Conserva_me_domine: 1 staves: too few to trust, left out
+Mar2017-Credidi_propter_quod_locutus: 2 staves: too few to trust, left out
+Mar2018-Cum_invocarem: 1 staves: too few to trust, left out
+Mar2019-Da_pacem_domine: 3 staves; the source's values the edition's; at the edition's pitch
+Mar2020-De_profundis_clamavi: 1 staves: too few to trust, left out
+Mar2022-Deus_in_nomine_tuo: 1 staves: too few to trust, left out
+Mar2028-Dilexi_quoniam: 2 staves: too few to trust, left out
+Mar2029-Dixit_dominus: 1 staves: too few to trust, left out
+Mar2031-Domine_non_est_exaltatum: 2 staves: too few to trust, left out
+Mar2036-Domine_non_secundum: 2 staves: too few to trust, left out
+Mar2038-Domine_quis_habitabit: 3 staves; the source's values the edition's; 2 steps below the edition
+Mar2040-Domini_est_terra: 1 staves: too few to trust, left out
+Mar2045-Eripe_me_domine: 1 staves: too few to trust, left out
+Mar2046-Exaltabo_te: 3 staves; the source's values the edition's; 2 steps below the edition
+Mar2047-Exaltabo_te_domine: 1 staves: too few to trust, left out
+Mar2049-Exultet_celum_laudibus: 1 staves: too few to trust, left out
+Mar2051-In_convertendo: 2 staves: too few to trust, left out
+Mar2057-Judica_me_deus: 1 staves: too few to trust, left out
+Mar2058-Letatus_sum: 2 staves: too few to trust, left out
+Mar2060-Lauda_Jerusalem: 1 staves: too few to trust, left out
+Mar2067-Levavi_oculos_meos: 1 staves: too few to trust, left out
+Mar2074-Memento_domine_David: 1 staves: too few to trust, left out
+Mar2075-Miserere_mei_deus: 1 staves: too few to trust, left out
+Mar2078-Notus_in_Judea_deus: 1 staves: too few to trust, left out
+Mar2079-O_beate_Sebastiane: 4 staves; the source's values the edition's times 2; 3 steps above the edition
+Mar2082-Quare_fremuerunt_gentes: 1 staves: too few to trust, left out
+Mar2084-Sepe_expugnaverunt_me: 2 staves: too few to trust, left out
+Mar2087-Sanctorum_meritis: 4 staves; the source's values the edition's times 2; 4 steps below the edition
+Mar2088-Super_flumina_Babilonis: 1 staves: too few to trust, left out
+Mar2091-Vexilla_regis: 1 staves: too few to trust, left out
+Mar2095-Perfunde_celi_rore: 1 staves: too few to trust, left out
+Mar3001-Biaulx_parle_tousjours: 1 staves: too few to trust, left out
+Mar3002-Cela_sans_plus: 3 staves; the source's values the edition's; 2 steps above the edition
+Mar3003-De_la_bonne_chiere: 1 staves: too few to trust, left out
+Mar3006-Fortuna_desperata: 1 staves: too few to trust, left out
+Mar3007-Fortuna_dun_gran_tempo: 1 staves: too few to trust, left out
+Mar3009-Fuge_la_morie: 1 staves: too few to trust, left out
+Mar3011-Il_est_tel: 2 staves: too few to trust, left out
+Mar3013-Jay_pris_amours_I: 1 staves: too few to trust, left out
+Mar3015-Jespoir_mieulx: 1 staves: too few to trust, left out
+Mar3021-Non_per_la: 3 staves; the source's values the edition's; 8 steps below the edition
+Mar3032-Textless_I_Fa_mi_re_ut_re: 1 staves: too few to trust, left out
+Mar3042-Jay_pris_amours_II: 4 staves; the source's values the edition's; 2 steps below the edition
+Obr1001a-Missa_Adieu_mes_amours-Kyrie: 1 staves: too few to trust, left out
+Obr1001c-Missa_Adieu_mes_amours-Credo: 4 staves; the source's values the edition's times 2; 2 steps below the edition
+Obr1001d-Missa_Adieu_mes_amours-Sanctus: 3 staves; the source's values the edition's; 5 steps above the edition
+Obr1001e-Missa_Adieu_mes_amours-Agnus: 2 staves: too few to trust, left out
+Obr1002a-Missa_Ave_regina_celorum-Kyrie: 1 staves: too few to trust, left out
+Obr1002b-Missa_Ave_regina_celorum-Gloria: 2 staves: too few to trust, left out
+Obr1002c-Missa_Ave_regina_celorum-Credo: 7 staves; the source's values the edition's; 2 steps below the edition
+Obr1002d-Missa_Ave_regina_celorum-Sanctus: 2 staves: too few to trust, left out
+Obr1002e-Missa_Ave_regina_celorum-Agnus: 3 staves; the source's values the edition's times 2; 4 steps below the edition
+Obr1007a-Missa_De_Sancto_Martino-Kyrie: 1 staves: too few to trust, left out
+Obr2010-Factor_orbis__Veni_domine: 3 staves; the source's values the edition's; 1 steps above the edition
+Obr2012-Inter_preclarissimas_virtutes: 5 staves; the source's values the edition's; 3 steps below the edition
+Obr2018-Mille_quingentis__Requiem: 4 staves; the source's values the edition's; 4 steps below the edition
+Obr2028-Salve_crux: 2 staves: too few to trust, left out
+Oke1001a-Kyrie_Gloria_Credo_Sine_nomine-Kyrie: 1 staves: too few to trust, left out
+Oke1001b-Kyrie_Gloria_Credo_Sine_nomine-Gloria: 1 staves: too few to trust, left out
+Oke1001c-Kyrie_Gloria_Credo_Sine_nomine-Credo: 2 staves: too few to trust, left out
+Oke1002c-Missa_Au_travail_suis-Credo: 2 staves: too few to trust, left out
+Oke1003b-Missa_Caput-Gloria: 4 staves; the source's values the edition's; at the edition's pitch
+Oke1003d-Missa_Caput-Sanctus: 3 staves; the source's values the edition's; 8 steps above the edition
+Oke1004.1a-Missa_Cuiusvis_toni-Kyrie-on_D: 1 staves: too few to trust, left out
+Oke1004.1b-Missa_Cuiusvis_toni-Gloria-on_D: 1 staves: too few to trust, left out
+Oke1004.1d-Missa_Cuiusvis_toni-Sanctus-on_D: 1 staves: too few to trust, left out
+Oke1004.3c-Missa_Cuiusvis_toni-Credo-on_F: 2 staves: too few to trust, left out
+Oke1005b-Missa_De_plus_en_plus-Gloria: 1 staves: too few to trust, left out
+Oke1005c-Missa_De_plus_en_plus-Credo: 2 staves: too few to trust, left out
+Oke1005d-Missa_De_plus_en_plus-Sanctus: 3 staves; the source's values the edition's; 8 steps below the edition
+Oke1006a-Missa_Ecce_ancilla_domini-Kyrie: 1 staves: too few to trust, left out
+Oke1006b-Missa_Ecce_ancilla_domini-Gloria: 3 staves; the source's values the edition's; 8 steps below the edition
+Oke1006c-Missa_Ecce_ancilla_domini-Credo: 1 staves: too few to trust, left out
+Oke1006e-Missa_Ecce_ancilla_domini-Agnus: 3 staves; the source's values the edition's times 2; 4 steps above the edition
+Oke1007a-Missa_Fors_seulement-Kyrie: 1 staves: too few to trust, left out
+Oke1007b-Missa_Fors_seulement-Gloria: 7 staves; the source's values the edition's; 1 steps above the edition
+Oke1007c-Missa_Fors_seulement-Credo: 2 staves: too few to trust, left out
+Oke1008b-Missa_Lhomme_arme-Gloria: 1 staves: too few to trust, left out
+Oke1008c-Missa_Lhomme_arme-Credo: 1 staves: too few to trust, left out
+Oke1008d-Missa_Lhomme_arme-Sanctus: 2 staves: too few to trust, left out
+Oke1010a-Missa_Mi_mi-Kyrie: 2 staves: too few to trust, left out
+Oke1010b-Missa_Mi_mi-Gloria: 2 staves: too few to trust, left out
+Oke1010c-Missa_Mi_mi-Credo: 2 staves: too few to trust, left out
+Oke1010d-Missa_Mi_mi-Sanctus: 4 staves; the source's values the edition's; 4 steps above the edition
+Oke1011a-Missa_Prolationum-Kyrie: 1 staves: too few to trust, left out
+Oke1011b-Missa_Prolationum-Gloria: 1 staves: too few to trust, left out
+Oke1011c-Missa_Prolationum-Credo: 1 staves: too few to trust, left out
+Oke1011d-Missa_Prolationum-Sanctus: 2 staves: too few to trust, left out
+Oke1011e-Missa_Prolationum-Agnus: 1 staves: too few to trust, left out
+Oke1012b-Missa_Quinti_toni-Gloria: 4 staves; the source's values the edition's times 2; 1 steps below the edition
+Oke1012d-Missa_Quinti_toni-Sanctus: 1 staves: too few to trust, left out
+Oke1012e-Missa_Quinti_toni-Agnus: 1 staves: too few to trust, left out
+Oke1013e-Requiem-Offertory_Domine_Jesu_Christe: 4 staves; the source's values the edition's; 1 steps below the edition
+Oke1014-Credo_Village: 3 staves; the source's values the edition's; 9 steps below the edition
+Oke3001-Aultre_Venus: 1 staves: too few to trust, left out
+Oke3004-Fors_seullement_contre: 2 staves: too few to trust, left out
+Oke3006-Il_ne_men_chault: 1 staves: too few to trust, left out
+Oke3007-Je_nay_dueil: 1 staves: too few to trust, left out
+Oke3008-La_despourveue: 1 staves: too few to trust, left out
+Oke3011-Ma_bouche_rit: 12 staves; the source's values the edition's; 4 steps below the edition
+Oke3016-Presque_transi: 1 staves: too few to trust, left out
+Oke3018-Ques_mi_vida: 2 staves: too few to trust, left out
+Oke3021-Tant_fuz_gentement: 1 staves: too few to trust, left out
+Oke3025-Departes_vous: 1 staves: too few to trust, left out
+Ort1001a-Missa_Dominicalis-Kyrie: 1 staves: too few to trust, left out
+Ort1001b-Missa_Dominicalis-Gloria: 4 staves; the source's values the edition's; 1 steps below the edition
+Ort1001c-Missa_Dominicalis-Credo: 3 staves; the source's values the edition's; 4 steps below the edition
+Ort1001d-Missa_Dominicalis-Sanctus: 1 staves: too few to trust, left out
+Ort1001e-Missa_Dominicalis-Agnus: 1 staves: too few to trust, left out
+Ort1002b-Missa_Jay_pris_amours-Gloria: 1 staves: too few to trust, left out
+Ort1002c.b-Missa_Jay_pris_amours-Credo-second_setting: 3 staves; the source's values the edition's; 9 steps below the edition
+Ort1002d-Missa_Jay_pris_amours-Sanctus: 3 staves; the source's values the edition's times 2; 2 steps below the edition
+Ort1002e-Missa_Jay_pris_amours-Agnus: 2 staves: too few to trust, left out
+Ort1003a-Missa_La_belle_se_siet-Kyrie: 2 staves: too few to trust, left out
+Ort1003c-Missa_La_belle_se_siet-Credo: 5 staves; the source's values the edition's times 2; 16 steps above the edition
+Ort1003d-Missa_La_belle_se_siet-Sanctus: 4 staves; the source's values the edition's; 4 steps above the edition
+Ort1003e-Missa_La_belle_se_siet-Agnus: 3 staves; the source's values the edition's; 8 steps below the edition
+Ort1005b-Missa_Mi_mi-Gloria-Missa_Petite_camusette: 5 staves; the source's values the edition's times 2; 4 steps below the edition
+Ort1005c-Missa_Mi_mi-Credo-Missa_Petite_camusette: 4 staves; the source's values the edition's; 8 steps below the edition
+Ort1005d-Missa_Mi_mi-Sanctus-Missa_Petite_camusette: 1 staves: too few to trust, left out
+Ort1005e-Missa_Mi_mi-Agnus-Missa_Petite_camusette: 2 staves: too few to trust, left out
+Ort1006a-Missa_Ad_fugam-Kyrie: 1 staves: too few to trust, left out
+Ort1006c-Missa_Ad_fugam-Credo: 2 staves: too few to trust, left out
+Ort1006d-Missa_Ad_fugam-Sanctus: 2 staves: too few to trust, left out
+Ort1006e-Missa_Ad_fugam-Agnus: 1 staves: too few to trust, left out
+Ort1007-Kyrie_De_beata_virgine: 1 staves: too few to trust, left out
+Ort1008-Credo_Le_serviteur: 3 staves; the source's values the edition's; 3 steps above the edition
+Ort2001-Ave_Maria_gratia_plena: 17 staves; the source's values the edition's; 2 steps above the edition
+Ort2002-Ave_Maria_mater_gratie: 1 staves: too few to trust, left out
+Ort2004-Domine_non_secundum_peccata_nostra: 2 staves: too few to trust, left out
+Ort2006-Lucis_creator_optime: 1 staves: too few to trust, left out
+Ort2008-Salve_regis_mater_sanctissima__Hic_est_sacerdos: 2 staves: too few to trust, left out
+Ort2010-Descendi_in_ortum_meum: 1 staves: too few to trust, left out
+Ort3001-Dung_aultre_amer: 5 staves; the source's values the edition's; at the edition's pitch
+Ort3004-Fors_seulement: 1 staves: too few to trust, left out
+Ort3009-Venus_tu_ma_pris: 7 staves; the source's values the edition's; 2 steps below the edition
+Pip1004a-Missa_Fors_seulement-Kyrie: 2 staves: too few to trust, left out
+Pip1004c-Missa_Fors_seulement-Credo: 4 staves; the source's values the edition's times 2; 3 steps above the edition
+Pip1004d-Missa_Fors_seulement-Sanctus: 2 staves: too few to trust, left out
+Pip1004e-Missa_Fors_seulement-Agnus: 5 staves; the source's values the edition's; at the edition's pitch
+Rue1001b-Missa_Alleluia-Gloria: 3 staves; the source's values the edition's; 5 steps below the edition
+Rue1002a-Missa_Almana-Kyrie: 2 staves: too few to trust, left out
+Rue1002b-Missa_Almana-Gloria: 2 staves: too few to trust, left out
+Rue1002c-Missa_Almana-Credo: 2 staves: too few to trust, left out
+Rue1002d-Missa_Almana-Sanctus: 1 staves: too few to trust, left out
+Rue1002e-Missa_Almana-Agnus: 3 staves; the source's values the edition's; 4 steps below the edition
+Rue1003b-Missa_Assumpta_est_Maria-Gloria: 1 staves: too few to trust, left out
+Rue1004b-Missa_Ave_Maria-Gloria: 3 staves; the source's values the edition's times 2; 5 steps below the edition
+Rue1004e-Missa_Ave_Maria-Agnus: 2 staves: too few to trust, left out
+Rue1005c-Missa_Ave_sanctissima_Maria-Credo: 1 staves: too few to trust, left out
+Rue1005d-Missa_Ave_sanctissima_Maria-Sanctus: 1 staves: too few to trust, left out
+Rue1005e-Missa_Ave_sanctissima_Maria-Agnus: 2 staves: too few to trust, left out
+Rue1006a-Missa_Conceptio_tua-Kyrie: 1 staves: too few to trust, left out
+Rue1006b-Missa_Conceptio_tua-Gloria: 2 staves: too few to trust, left out
+Rue1006c-Missa_Conceptio_tua-Credo: 5 staves; the source's values the edition's; 6 steps above the edition
+Rue1006d-Missa_Conceptio_tua-Sanctus: 7 staves; the source's values the edition's; 5 steps above the edition
+Rue1006e-Missa_Conceptio_tua-Agnus: 1 staves: too few to trust, left out
+Rue1008a-Missa_De_beata_virgine-Kyrie: 1 staves: too few to trust, left out
+Rue1008b-Missa_De_beata_virgine-Gloria: 2 staves: too few to trust, left out
+Rue1008c-Missa_De_beata_virgine-Credo: 3 staves; the source's values the edition's times 2; 6 steps below the edition
+Rue1008d-Missa_De_beata_virgine-Sanctus: 1 staves: too few to trust, left out
+Rue1009b-Missa_De_feria-Gloria: 1 staves: too few to trust, left out
+Rue1009c-Missa_De_feria-Credo: 3 staves; the source's values the edition's times 2; 2 steps below the edition
+Rue1009d-Missa_De_feria-Sanctus: 3 staves; the source's values the edition's; 2 steps above the edition
+Rue1009e-Missa_De_feria-Agnus: 1 staves: too few to trust, left out
+Rue1011a-Missa_De_sancta_cruce-Kyrie: 1 staves: too few to trust, left out
+Rue1011b-Missa_De_sancta_cruce-Gloria: 1 staves: too few to trust, left out
+Rue1011c-Missa_De_sancta_cruce-Credo: 1 staves: too few to trust, left out
+Rue1011d-Missa_De_sancta_cruce-Sanctus: 1 staves: too few to trust, left out
+Rue1011e-Missa_De_sancta_cruce-Agnus: 5 staves; the source's values the edition's; 7 steps below the edition
+Rue1012b-Missa_De_Sancto_Antonio-Gloria: 3 staves; the source's values the edition's times 2; 2 steps above the edition
+Rue1012c-Missa_De_Sancto_Antonio-Credo: 5 staves; the source's values the edition's; 2 steps below the edition
+Rue1012d-Missa_De_Sancto_Antonio-Sanctus: 1 staves: too few to trust, left out
+Rue1012e-Missa_De_Sancto_Antonio-Agnus: 1 staves: too few to trust, left out
+Rue1013b-Missa_De_Sancto_Job-Gloria: 2 staves: too few to trust, left out
+Rue1013c-Missa_De_Sancto_Job-Credo: 5 staves; the source's values the edition's times 2; 3 steps below the edition
+Rue1013d-Missa_De_Sancto_Job-Sanctus: 2 staves: too few to trust, left out
+Rue1014c-Missa_de_septem_doloribus-Credo: 7 staves; the source's values the edition's; 5 steps above the edition
+Rue1014e-Missa_de_septem_doloribus-Agnus: 4 staves; the source's values the edition's times 2; 2 steps below the edition
+Rue1015a-Missa_De_virginibus-Kyrie: 4 staves; the source's values the edition's; at the edition's pitch
+Rue1015b-Missa_De_virginibus-Gloria: 1 staves: too few to trust, left out
+Rue1015c-Missa_De_virginibus-Credo: 4 staves; the source's values the edition's; 3 steps below the edition
+Rue1015d-Missa_De_virginibus-Sanctus: 4 staves; the source's values the edition's times 2; 5 steps below the edition
+Rue1015e-Missa_De_virginibus-Agnus: 1 staves: too few to trust, left out
+Rue1016a-Missa_Incessament-Kyrie: 2 staves: too few to trust, left out
+Rue1016b-Missa_Incessament-Gloria: 2 staves: too few to trust, left out
+Rue1016c-Missa_Incessament-Credo: 6 staves; the source's values the edition's; 4 steps below the edition
+Rue1016d-Missa_Incessament-Sanctus: 2 staves: too few to trust, left out
+Rue1016e-Missa_Incessament-Agnus: 1 staves: too few to trust, left out
+Rue1017a-Missa_Inviolata-Kyrie: 1 staves: too few to trust, left out
+Rue1017b-Missa_Inviolata-Gloria: 2 staves: too few to trust, left out
+Rue1017c-Missa_Inviolata-Credo: 5 staves; the source's values the edition's; 3 steps above the edition
+Rue1017d-Missa_Inviolata-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Rue1017e-Missa_Inviolata-Agnus: 1 staves: too few to trust, left out
+Rue1018a-Missa_Ista_est_speciosa-Kyrie: 2 staves: too few to trust, left out
+Rue1018b-Missa_Ista_est_speciosa-Gloria: 2 staves: too few to trust, left out
+Rue1018c-Missa_Ista_est_speciosa-Credo: 3 staves; the source's values the edition's times 2; 3 steps above the edition
+Rue1018d-Missa_Ista_est_speciosa-Sanctus: 5 staves; the source's values the edition's; at the edition's pitch
+Rue1020a-Missa_Nunca_fue_pena_mayor-Kyrie: 1 staves: too few to trust, left out
+Rue1020b-Missa_Nunca_fue_pena_mayor-Gloria: 1 staves: too few to trust, left out
+Rue1020c-Missa_Nunca_fue_pena_mayor-Credo: 3 staves; the source's values the edition's; 4 steps below the edition
+Rue1020d-Missa_Nunca_fue_pena_mayor-Sanctus: 2 staves: too few to trust, left out
+Rue1021c-Missa_O_gloriosa_domina-Credo: 3 staves; the source's values the edition's; 3 steps below the edition
+Rue1022b-Missa_O_salutaris_hostia-Gloria: 2 staves: too few to trust, left out
+Rue1022c-Missa_O_salutaris_hostia-Credo: 2 staves: too few to trust, left out
+Rue1023a-Missa_Pascale-Kyrie: 5 staves; the source's values the edition's times 2; 1 steps above the edition
+Rue1023b-Missa_Pascale-Gloria: 5 staves; the source's values the edition's; 8 steps below the edition
+Rue1023c-Missa_Pascale-Credo: 4 staves; the source's values the edition's; 7 steps below the edition
+Rue1023d-Missa_Pascale-Sanctus: 2 staves: too few to trust, left out
+Rue1024d-Missa_Pro_fidelibus_defunctis-Offertorium: 1 staves: too few to trust, left out
+Rue1024f-Missa_Pro_fidelibus_defunctis-Agnus: 3 staves; the source's values the edition's times 1/2; 8 steps above the edition
+Rue1025b-Missa_Puer_natus_est_nobis-Gloria: 1 staves: too few to trust, left out
+Rue1025d-Missa_Puer_natus_est_nobis-Sanctus: 3 staves; the source's values the edition's; 6 steps below the edition
+Rue1026a-Missa_Sancta_Dei_genitrix-Kyrie: 1 staves: too few to trust, left out
+Rue1028b-Missa_Sine_nomine_I-Gloria: 1 staves: too few to trust, left out
+Rue1028c-Missa_Sine_nomine_I-Credo: 3 staves; the source's values the edition's times 2; 2 steps above the edition
+Rue1028d-Missa_Sine_nomine_I-Sanctus: 5 staves; the source's values the edition's; 2 steps below the edition
+Rue1028e-Missa_Sine_nomine_I-Agnus: 1 staves: too few to trust, left out
+Rue1030b-Missa_Tandernaken-Gloria: 1 staves: too few to trust, left out
+Rue1030c-Missa_Tandernaken-Credo: 2 staves: too few to trust, left out
+Rue1030d-Missa_Tandernaken-Sanctus: 4 staves; the source's values the edition's; at the edition's pitch
+Rue1030e-Missa_Tandernaken-Agnus: 2 staves: too few to trust, left out
+Rue1031a-Missa_Tous_les_regretz-Kyrie: 2 staves: too few to trust, left out
+Rue1031b-Missa_Tous_les_regretz-Gloria: 4 staves; the source's values the edition's; 5 steps below the edition
+Rue1031c-Missa_Tous_les_regretz-Credo: 4 staves; the source's values the edition's; 4 steps above the edition
+Rue1031d-Missa_Tous_les_regretz-Sanctus: 3 staves; the source's values the edition's; 8 steps below the edition
+Rue1032-Kyrie_In_festo_pasche: 4 staves; the source's values the edition's times 2; 8 steps below the edition
+Rue1033-Credo: 3 staves; the source's values the edition's times 2; 9 steps above the edition
+Rue1034-Credo_Sex_vocum: 5 staves; the source's values the edition's times 2; 6 steps below the edition
+Rue1037-Credo_Lamour_de_moy: 2 staves: too few to trust, left out
+Rue2002-Considera_Israel: 1 staves: too few to trust, left out
+Rue2004-Delicta_iuventutis: 2 staves: too few to trust, left out
+Rue2006-Lauda_anima_mea_dominum: 2 staves: too few to trust, left out
+Rue2007-Laudate_dominum: 1 staves: too few to trust, left out
+Rue2009-Magnificat_Secundi_toni: 8 staves; the source's values the edition's; 5 steps below the edition
+Rue2010-Magnificat_Quarti_toni: 2 staves: too few to trust, left out
+Rue2014-Magnificat_Octavi_toni: 4 staves; the source's values the edition's; 7 steps above the edition
+Rue2015-O_domine_Jesu_Christe: 1 staves: too few to trust, left out
+Rue2017-Pater_de_celis_deus: 3 staves; the source's values the edition's; 3 steps below the edition
+Rue2018-Quis_dabit_pacem: 1 staves: too few to trust, left out
+Rue2022-Salve_regina_II: 1 staves: too few to trust, left out
+Rue2023-Salve_regina_III: 3 staves; the source's values the edition's; 2 steps below the edition
+Rue2024-Salve_regina_IV: 2 staves: too few to trust, left out
+Rue2026-Salve_regina_VI: 2 staves: too few to trust, left out
+Rue3001-A_vous_non_autre: 1 staves: too few to trust, left out
+Rue3002-Autant_en_emporte_le_vent: 1 staves: too few to trust, left out
+Rue3003-Ce_nest_pas_jeu: 11 staves; the source's values the edition's; at the edition's pitch
+Rue3011-Il_est_bien_heureux: 1 staves: too few to trust, left out
+Rue3017-Pour_ce_que_le_suis: 1 staves: too few to trust, left out
+Rue3019-Pourquoy_tant: 1 staves: too few to trust, left out
+Rue3020-Pour_ung_jamais: 2 staves: too few to trust, left out
+Rue3022-Tous_les_regretz: 1 staves: too few to trust, left out
+Rue3023-Tous_nobles_coeurs: 2 staves: too few to trust, left out
+Rue3024-Trop_plus_secret: 2 staves: too few to trust, left out
+Tin1001a-Missa_Lhomme_arme-Kyrie: 2 staves: too few to trust, left out
+Tin1001b-Missa_Lhomme_arme-Gloria: 1 staves: too few to trust, left out
+Tin1001c-Missa_Lhomme_arme-Credo: 4 staves; the source's values the edition's times 2; at the edition's pitch
+Tin1002b-Missa_Sine_nomine_I-Gloria: 4 staves; the source's values the edition's; 8 steps above the edition
+Tin1002c-Missa_Sine_nomine_I-Credo: 6 staves; the source's values the edition's times 2; 3 steps above the edition
+Tin1002e-Missa_Sine_nomine_I-Agnus: 2 staves: too few to trust, left out
+Tin2003-Lamentationes_Jeremie: 3 staves; the source's values the edition's; 1 steps above the edition
+Tin3002-Comme_femme: 8 staves; the source's values the edition's; 2 steps above the edition
+Tin3006-Le_souvenir_I: 1 staves: too few to trust, left out
+Tin3007-Le_souvenir_II: 1 staves: too few to trust, left out
+Tin3008-O_invida_fortuna: 1 staves: too few to trust, left out
+210 staves labelled, of 2285 found in the editions, on 584 pages -> training/data/petrucci-odh
+
+$ recognizer.py train --data training/data/mens,training/data/mensjrp,training/data/mens5,training/data/mensidem --real training/data/capitan,training/data/seils2,training/data/petrucci --real-labels labels.jsonl --resume training/data/m0086/best.pt --grow-vocab --width 192 --epochs 6 --lr 4e-4 --batch 32 --out training/data/m0092
+92912 staves to learn from (1881 real, each 3 times), 2731 synthetic and 227 real to test on; 0 left out for tokens the model hasn't; 434 tokens; 1,461,979 weights; on privateuseone:0
+D:\ChantGPT\changpt-repo\venv\Lib\site-packages\torch\optim\adamw.py:380: UserWarning: The operator 'aten::lerp.Scalar_out' is not currently supported on the DML backend and will fall back to run on the CPU. This may have performance implications. (Triggered internally at C:\__w\1\s\pytorch-directml-plugin\torch_directml\csrc\dml\dml_cpu_fallback.cpp:17.)
+  exp_avg.lerp_(grad, 1 - beta1)
+epoch 1 batch 0: loss 0.233 (1 s)
+epoch 1 batch 100: loss 0.216 (17 s)
+epoch 1 batch 200: loss 0.199 (33 s)
+epoch 1 batch 300: loss 0.194 (47 s)
+epoch 1 batch 400: loss 0.190 (62 s)
+epoch 1 batch 500: loss 0.186 (78 s)
+epoch 1 batch 600: loss 0.181 (92 s)
+epoch 1 batch 700: loss 0.181 (107 s)
+epoch 1 batch 800: loss 0.177 (122 s)
+epoch 1 batch 900: loss 0.173 (137 s)
+epoch 1 batch 1000: loss 0.171 (152 s)
+epoch 1 batch 1100: loss 0.171 (167 s)
+epoch 1 batch 1200: loss 0.169 (181 s)
+epoch 1 batch 1300: loss 0.168 (195 s)
+epoch 1 batch 1400: loss 0.166 (210 s)
+epoch 1 batch 1500: loss 0.165 (226 s)
+epoch 1 batch 1600: loss 0.164 (240 s)
+epoch 1 batch 1700: loss 0.162 (255 s)
+epoch 1 batch 1800: loss 0.162 (270 s)
+epoch 1 batch 1900: loss 0.162 (285 s)
+epoch 1 batch 2000: loss 0.161 (299 s)
+epoch 1 batch 2100: loss 0.161 (314 s)
+epoch 1 batch 2200: loss 0.160 (329 s)
+epoch 1 batch 2300: loss 0.160 (344 s)
+epoch 1 batch 2400: loss 0.159 (358 s)
+epoch 1 batch 2500: loss 0.158 (373 s)
+epoch 1 batch 2600: loss 0.157 (388 s)
+epoch 1 batch 2700: loss 0.157 (403 s)
+epoch 1 batch 2800: loss 0.156 (418 s)
+epoch 1 batch 2900: loss 0.156 (433 s)
+epoch 1: loss 0.156; synthetic test staves: token errors 1.34%, note errors 1.50%; real: token errors 12.91%, note errors 12.72% (434 s)
+epoch 2 batch 0: loss 0.169 (435 s)
+epoch 2 batch 100: loss 0.123 (449 s)
+epoch 2 batch 200: loss 0.139 (462 s)
+epoch 2 batch 300: loss 0.143 (475 s)
+epoch 2 batch 400: loss 0.142 (489 s)
+epoch 2 batch 500: loss 0.143 (502 s)
+epoch 2 batch 600: loss 0.145 (516 s)
+epoch 2 batch 700: loss 0.144 (529 s)
+epoch 2 batch 800: loss 0.143 (543 s)
+epoch 2 batch 900: loss 0.144 (557 s)
+epoch 2 batch 1000: loss 0.143 (570 s)
+epoch 2 batch 1100: loss 0.142 (584 s)
+epoch 2 batch 1200: loss 0.144 (597 s)
