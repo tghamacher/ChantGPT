@@ -505,3 +505,607 @@ p0031.png: 0 staves, 0 found in the editions (1755 so far)
 p0032.png: 4 staves, 4 found in the editions (1759 so far)
 p0033.png: 0 staves, 0 found in the editions (1759 so far)
 p0034.png: 0 staves, 0 found in the editions (1759 so far)
+p0035.png: 0 staves, 0 found in the editions (1759 so far)
+p0036.png: 0 staves, 0 found in the editions (1759 so far)
+p0037.png: 0 staves, 0 found in the editions (1759 so far)
+p0038.png: 0 staves, 0 found in the editions (1759 so far)
+p0039.png: 0 staves, 0 found in the editions (1759 so far)
+p0040.png: 0 staves, 0 found in the editions (1759 so far)
+p0041.png: 0 staves, 0 found in the editions (1759 so far)
+p0042.png: 0 staves, 0 found in the editions (1759 so far)
+p0043.png: 0 staves, 0 found in the editions (1759 so far)
+p0044.png: 0 staves, 0 found in the editions (1759 so far)
+p0045.png: 0 staves, 0 found in the editions (1759 so far)
+p0046.png: 0 staves, 0 found in the editions (1759 so far)
+p0047.png: 0 staves, 0 found in the editions (1759 so far)
+p0048.png: 0 staves, 0 found in the editions (1759 so far)
+p0049.png: 0 staves, 0 found in the editions (1759 so far)
+p0050.png: 0 staves, 0 found in the editions (1759 so far)
+p0051.png: 0 staves, 0 found in the editions (1759 so far)
+p0052.png: 0 staves, 0 found in the editions (1759 so far)
+p0053.png: 0 staves, 0 found in the editions (1759 so far)
+p0054.png: 1 staves, 0 found in the editions (1759 so far)
+p0055.png: 0 staves, 0 found in the editions (1759 so far)
+p0056.png: 0 staves, 0 found in the editions (1759 so far)
+p0057.png: 0 staves, 0 found in the editions (1759 so far)
+p0058.png: 0 staves, 0 found in the editions (1759 so far)
+p0059.png: 0 staves, 0 found in the editions (1759 so far)
+p0060.png: 1 staves, 0 found in the editions (1759 so far)
+p0061.png: 0 staves, 0 found in the editions (1759 so far)
+p0062.png: 0 staves, 0 found in the editions (1759 so far)
+p0063.png: 0 staves, 0 found in the editions (1759 so far)
+p0064.png: 0 staves, 0 found in the editions (1759 so far)
+p0065.png: 0 staves, 0 found in the editions (1759 so far)
+p0066.png: 0 staves, 0 found in the editions (1759 so far)
+p0067.png: 0 staves, 0 found in the editions (1759 so far)
+p0068.png: 0 staves, 0 found in the editions (1759 so far)
+p0069.png: 0 staves, 0 found in the editions (1759 so far)
+p0070.png: 0 staves, 0 found in the editions (1759 so far)
+p0071.png: 0 staves, 0 found in the editions (1759 so far)
+p0072.png: 0 staves, 0 found in the editions (1759 so far)
+p0073.png: 0 staves, 0 found in the editions (1759 so far)
+p0074.png: 0 staves, 0 found in the editions (1759 so far)
+p0075.png: 0 staves, 0 found in the editions (1759 so far)
+p0076.png: 0 staves, 0 found in the editions (1759 so far)
+p0077.png: 0 staves, 0 found in the editions (1759 so far)
+p0078.png: 0 staves, 0 found in the editions (1759 so far)
+p0079.png: 0 staves, 0 found in the editions (1759 so far)
+p0080.png: 0 staves, 0 found in the editions (1759 so far)
+p0081.png: 0 staves, 0 found in the editions (1759 so far)
+p0082.png: 0 staves, 0 found in the editions (1759 so far)
+p0083.png: 0 staves, 0 found in the editions (1759 so far)
+p0084.png: 0 staves, 0 found in the editions (1759 so far)
+p0085.png: 0 staves, 0 found in the editions (1759 so far)
+p0086.png: 0 staves, 0 found in the editions (1759 so far)
+p0087.png: 6 staves, 6 found in the editions (1765 so far)
+p0088.png: 0 staves, 0 found in the editions (1765 so far)
+p0089.png: 0 staves, 0 found in the editions (1765 so far)
+p0090.png: 0 staves, 0 found in the editions (1765 so far)
+p0091.png: 5 staves, 3 found in the editions (1768 so far)
+p0092.png: 0 staves, 0 found in the editions (1768 so far)
+p0093.png: 0 staves, 0 found in the editions (1768 so far)
+p0094.png: 0 staves, 0 found in the editions (1768 so far)
+p0095.png: 4 staves, 2 found in the editions (1770 so far)
+p0096.png: 0 staves, 0 found in the editions (1770 so far)
+p0097.png: 0 staves, 0 found in the editions (1770 so far)
+p0098.png: 0 staves, 0 found in the editions (1770 so far)
+p0099.png: 0 staves, 0 found in the editions (1770 so far)
+p0100.png: 0 staves, 0 found in the editions (1770 so far)
+p0101.png: 0 staves, 0 found in the editions (1770 so far)
+p0102.png: 0 staves, 0 found in the editions (1770 so far)
+p0103.png: 0 staves, 0 found in the editions (1770 so far)
+p0104.png: 0 staves, 0 found in the editions (1770 so far)
+p0105.png: 0 staves, 0 found in the editions (1770 so far)
+p0106.png: 0 staves, 0 found in the editions (1770 so far)
+p0107.png: 0 staves, 0 found in the editions (1770 so far)
+p0108.png: 0 staves, 0 found in the editions (1770 so far)
+p0109.png: 0 staves, 0 found in the editions (1770 so far)
+p0110.png: 0 staves, 0 found in the editions (1770 so far)
+p0111.png: 0 staves, 0 found in the editions (1770 so far)
+p0112.png: 1 staves, 0 found in the editions (1770 so far)
+p0113.png: 0 staves, 0 found in the editions (1770 so far)
+p0114.png: 0 staves, 0 found in the editions (1770 so far)
+p0115.png: 1 staves, 0 found in the editions (1770 so far)
+p0116.png: 1 staves, 0 found in the editions (1770 so far)
+p0117.png: 0 staves, 0 found in the editions (1770 so far)
+p0118.png: 0 staves, 0 found in the editions (1770 so far)
+p0119.png: 0 staves, 0 found in the editions (1770 so far)
+p0120.png: 0 staves, 0 found in the editions (1770 so far)
+p0001.png: 0 staves, 0 found in the editions (1770 so far)
+p0002.png: 0 staves, 0 found in the editions (1770 so far)
+p0003.png: 0 staves, 0 found in the editions (1770 so far)
+p0004.png: 0 staves, 0 found in the editions (1770 so far)
+p0005.png: 0 staves, 0 found in the editions (1770 so far)
+p0006.png: 0 staves, 0 found in the editions (1770 so far)
+p0007.png: 0 staves, 0 found in the editions (1770 so far)
+p0008.png: 0 staves, 0 found in the editions (1770 so far)
+p0009.png: 0 staves, 0 found in the editions (1770 so far)
+p0010.png: 0 staves, 0 found in the editions (1770 so far)
+p0011.png: 0 staves, 0 found in the editions (1770 so far)
+p0012.png: 0 staves, 0 found in the editions (1770 so far)
+p0013.png: 0 staves, 0 found in the editions (1770 so far)
+p0014.png: 0 staves, 0 found in the editions (1770 so far)
+p0015.png: 0 staves, 0 found in the editions (1770 so far)
+p0016.png: 0 staves, 0 found in the editions (1770 so far)
+p0017.png: 0 staves, 0 found in the editions (1770 so far)
+p0018.png: 0 staves, 0 found in the editions (1770 so far)
+p0019.png: 0 staves, 0 found in the editions (1770 so far)
+p0020.png: 0 staves, 0 found in the editions (1770 so far)
+p0021.png: 0 staves, 0 found in the editions (1770 so far)
+p0022.png: 0 staves, 0 found in the editions (1770 so far)
+p0023.png: 0 staves, 0 found in the editions (1770 so far)
+p0024.png: 0 staves, 0 found in the editions (1770 so far)
+p0025.png: 0 staves, 0 found in the editions (1770 so far)
+p0026.png: 0 staves, 0 found in the editions (1770 so far)
+p0027.png: 0 staves, 0 found in the editions (1770 so far)
+p0028.png: 0 staves, 0 found in the editions (1770 so far)
+p0029.png: 0 staves, 0 found in the editions (1770 so far)
+p0030.png: 0 staves, 0 found in the editions (1770 so far)
+p0031.png: 0 staves, 0 found in the editions (1770 so far)
+p0032.png: 0 staves, 0 found in the editions (1770 so far)
+p0033.png: 0 staves, 0 found in the editions (1770 so far)
+p0034.png: 0 staves, 0 found in the editions (1770 so far)
+p0035.png: 0 staves, 0 found in the editions (1770 so far)
+p0036.png: 0 staves, 0 found in the editions (1770 so far)
+p0037.png: 0 staves, 0 found in the editions (1770 so far)
+p0038.png: 0 staves, 0 found in the editions (1770 so far)
+p0039.png: 0 staves, 0 found in the editions (1770 so far)
+p0040.png: 0 staves, 0 found in the editions (1770 so far)
+p0041.png: 0 staves, 0 found in the editions (1770 so far)
+p0042.png: 0 staves, 0 found in the editions (1770 so far)
+p0043.png: 0 staves, 0 found in the editions (1770 so far)
+p0044.png: 0 staves, 0 found in the editions (1770 so far)
+p0045.png: 0 staves, 0 found in the editions (1770 so far)
+p0046.png: 0 staves, 0 found in the editions (1770 so far)
+p0047.png: 0 staves, 0 found in the editions (1770 so far)
+p0048.png: 0 staves, 0 found in the editions (1770 so far)
+p0049.png: 0 staves, 0 found in the editions (1770 so far)
+p0050.png: 0 staves, 0 found in the editions (1770 so far)
+p0051.png: 0 staves, 0 found in the editions (1770 so far)
+p0052.png: 0 staves, 0 found in the editions (1770 so far)
+p0053.png: 0 staves, 0 found in the editions (1770 so far)
+p0054.png: 0 staves, 0 found in the editions (1770 so far)
+p0055.png: 0 staves, 0 found in the editions (1770 so far)
+p0056.png: 0 staves, 0 found in the editions (1770 so far)
+p0057.png: 0 staves, 0 found in the editions (1770 so far)
+p0058.png: 0 staves, 0 found in the editions (1770 so far)
+p0059.png: 0 staves, 0 found in the editions (1770 so far)
+p0060.png: 0 staves, 0 found in the editions (1770 so far)
+p0061.png: 0 staves, 0 found in the editions (1770 so far)
+p0062.png: 0 staves, 0 found in the editions (1770 so far)
+p0063.png: 0 staves, 0 found in the editions (1770 so far)
+p0064.png: 0 staves, 0 found in the editions (1770 so far)
+p0065.png: 0 staves, 0 found in the editions (1770 so far)
+p0066.png: 0 staves, 0 found in the editions (1770 so far)
+p0067.png: 0 staves, 0 found in the editions (1770 so far)
+p0068.png: 0 staves, 0 found in the editions (1770 so far)
+p0069.png: 0 staves, 0 found in the editions (1770 so far)
+p0070.png: 0 staves, 0 found in the editions (1770 so far)
+p0071.png: 0 staves, 0 found in the editions (1770 so far)
+p0072.png: 0 staves, 0 found in the editions (1770 so far)
+p0073.png: 0 staves, 0 found in the editions (1770 so far)
+p0074.png: 0 staves, 0 found in the editions (1770 so far)
+p0075.png: 0 staves, 0 found in the editions (1770 so far)
+p0076.png: 0 staves, 0 found in the editions (1770 so far)
+p0077.png: 0 staves, 0 found in the editions (1770 so far)
+p0078.png: 0 staves, 0 found in the editions (1770 so far)
+p0079.png: 0 staves, 0 found in the editions (1770 so far)
+p0080.png: 0 staves, 0 found in the editions (1770 so far)
+p0081.png: 0 staves, 0 found in the editions (1770 so far)
+p0082.png: 0 staves, 0 found in the editions (1770 so far)
+p0083.png: 0 staves, 0 found in the editions (1770 so far)
+p0084.png: 0 staves, 0 found in the editions (1770 so far)
+p0085.png: 0 staves, 0 found in the editions (1770 so far)
+p0086.png: 0 staves, 0 found in the editions (1770 so far)
+p0087.png: 0 staves, 0 found in the editions (1770 so far)
+p0088.png: 0 staves, 0 found in the editions (1770 so far)
+p0089.png: 0 staves, 0 found in the editions (1770 so far)
+p0090.png: 0 staves, 0 found in the editions (1770 so far)
+p0091.png: 0 staves, 0 found in the editions (1770 so far)
+p0092.png: 0 staves, 0 found in the editions (1770 so far)
+p0093.png: 0 staves, 0 found in the editions (1770 so far)
+p0094.png: 0 staves, 0 found in the editions (1770 so far)
+p0095.png: 0 staves, 0 found in the editions (1770 so far)
+p0096.png: 0 staves, 0 found in the editions (1770 so far)
+p0097.png: 0 staves, 0 found in the editions (1770 so far)
+p0098.png: 0 staves, 0 found in the editions (1770 so far)
+p0099.png: 0 staves, 0 found in the editions (1770 so far)
+p0100.png: 0 staves, 0 found in the editions (1770 so far)
+p0101.png: 0 staves, 0 found in the editions (1770 so far)
+p0102.png: 0 staves, 0 found in the editions (1770 so far)
+p0103.png: 0 staves, 0 found in the editions (1770 so far)
+p0104.png: 0 staves, 0 found in the editions (1770 so far)
+p0105.png: 0 staves, 0 found in the editions (1770 so far)
+p0106.png: 0 staves, 0 found in the editions (1770 so far)
+p0107.png: 0 staves, 0 found in the editions (1770 so far)
+p0108.png: 0 staves, 0 found in the editions (1770 so far)
+p0109.png: 0 staves, 0 found in the editions (1770 so far)
+p0110.png: 0 staves, 0 found in the editions (1770 so far)
+p0111.png: 0 staves, 0 found in the editions (1770 so far)
+p0112.png: 0 staves, 0 found in the editions (1770 so far)
+p0113.png: 0 staves, 0 found in the editions (1770 so far)
+p0114.png: 0 staves, 0 found in the editions (1770 so far)
+p0115.png: 0 staves, 0 found in the editions (1770 so far)
+p0116.png: 0 staves, 0 found in the editions (1770 so far)
+p0117.png: 0 staves, 0 found in the editions (1770 so far)
+p0118.png: 0 staves, 0 found in the editions (1770 so far)
+p0119.png: 0 staves, 0 found in the editions (1770 so far)
+p0120.png: 0 staves, 0 found in the editions (1770 so far)
+p0121.png: 0 staves, 0 found in the editions (1770 so far)
+p0122.png: 0 staves, 0 found in the editions (1770 so far)
+p0123.png: 0 staves, 0 found in the editions (1770 so far)
+p0124.png: 0 staves, 0 found in the editions (1770 so far)
+p0125.png: 0 staves, 0 found in the editions (1770 so far)
+p0126.png: 0 staves, 0 found in the editions (1770 so far)
+p0127.png: 0 staves, 0 found in the editions (1770 so far)
+p0128.png: 0 staves, 0 found in the editions (1770 so far)
+p0129.png: 0 staves, 0 found in the editions (1770 so far)
+p0130.png: 0 staves, 0 found in the editions (1770 so far)
+p0131.png: 0 staves, 0 found in the editions (1770 so far)
+p0132.png: 0 staves, 0 found in the editions (1770 so far)
+Jos0301a-Missa_Ave_maris_stella-Kyrie: 29 staves; the source's values the edition's; at the edition's pitch
+Jos0301b-Missa_Ave_maris_stella-Gloria: 53 staves; the source's values the edition's; at the edition's pitch
+Jos0301c-Missa_Ave_maris_stella-Credo: 101 staves; the source's values the edition's; at the edition's pitch
+Jos0301d-Missa_Ave_maris_stella-Sanctus: 55 staves; the source's values the edition's; at the edition's pitch
+Jos0301e-Missa_Ave_maris_stella-Agnus: 45 staves; the source's values the edition's; at the edition's pitch
+Jos0302a-Missa_Da_pacem-Kyrie: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0302a-Missa_Da_pacem-Kyrie: only 0 of 3 staves in time with it: left out
+Jos0302b-Missa_Da_pacem-Gloria: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0302b-Missa_Da_pacem-Gloria: only 0 of 4 staves in time with it: left out
+Jos0302c-Missa_Da_pacem-Credo: 13 staves; the source's values the edition's; at the edition's pitch
+Jos0302c-Missa_Da_pacem-Credo: only 1 of 13 staves in time with it: left out
+Jos0302d-Missa_Da_pacem-Sanctus: 13 staves; the source's values the edition's; at the edition's pitch
+Jos0302d-Missa_Da_pacem-Sanctus: only 1 of 12 staves in time with it: left out
+Jos0302e-Missa_Da_pacem-Agnus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0302e-Missa_Da_pacem-Agnus: only 0 of 6 staves in time with it: left out
+Jos0303a-Missa_De_beata_virgine-Kyrie: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0303a-Missa_De_beata_virgine-Kyrie: only 0 of 5 staves in time with it: left out
+Jos0303b-Missa_De_beata_virgine-Gloria: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0303b-Missa_De_beata_virgine-Gloria: only 0 of 6 staves in time with it: left out
+Jos0303c-Missa_De_beata_virgine-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0303c-Missa_De_beata_virgine-Credo: only 0 of 5 staves in time with it: left out
+Jos0303d-Missa_De_beata_virgine-Sanctus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0303d-Missa_De_beata_virgine-Sanctus: only 0 of 5 staves in time with it: left out
+Jos0303e-Missa_De_beata_virgine-Agnus: 2 staves: too few to trust, left out
+Jos0304b-Missa_Cum_iocunditate-Gloria: 1 staves: too few to trust, left out
+Jos0304c-Missa_Cum_iocunditate-Credo: 9 staves; the source's values the edition's; at the edition's pitch
+Jos0304c-Missa_Cum_iocunditate-Credo: only 2 of 9 staves in time with it: left out
+Jos0304d-Missa_Cum_iocunditate-Sanctus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0304d-Missa_Cum_iocunditate-Sanctus: only 0 of 6 staves in time with it: left out
+Jos0304e-Missa_Cum_iocunditate-Agnus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0304e-Missa_Cum_iocunditate-Agnus: only 0 of 3 staves in time with it: left out
+Jos0401a-Missa_Ferialis-Kyrie: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0401a-Missa_Ferialis-Kyrie: only 0 of 4 staves in time with it: left out
+Jos0401d-Missa_Ferialis-Sanctus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0401d-Missa_Ferialis-Sanctus: only 0 of 5 staves in time with it: left out
+Jos0401e-Missa_Ferialis-Agnus: 1 staves: too few to trust, left out
+Jos0402a-Missa_Gaudeamus-Kyrie: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0402a-Missa_Gaudeamus-Kyrie: only 1 of 3 staves in time with it: left out
+Jos0402b-Missa_Gaudeamus-Gloria: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0402b-Missa_Gaudeamus-Gloria: only 2 of 4 staves in time with it: left out
+Jos0402c-Missa_Gaudeamus-Credo: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0402c-Missa_Gaudeamus-Credo: only 0 of 5 staves in time with it: left out
+Jos0402d-Missa_Gaudeamus-Sanctus: 7 staves; the source's values the edition's; at the edition's pitch
+Jos0402d-Missa_Gaudeamus-Sanctus: only 0 of 5 staves in time with it: left out
+Jos0402e-Missa_Gaudeamus-Agnus: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0402e-Missa_Gaudeamus-Agnus: only 0 of 4 staves in time with it: left out
+Jos0403a-Missa_Pange_lingua-Kyrie: 2 staves: too few to trust, left out
+Jos0403b-Missa_Pange_lingua-Gloria: 2 staves: too few to trust, left out
+Jos0403c-Missa_Pange_lingua-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0403c-Missa_Pange_lingua-Credo: only 0 of 5 staves in time with it: left out
+Jos0403d-Missa_Pange_lingua-Sanctus: 8 staves; the source's values the edition's; at the edition's pitch
+Jos0403d-Missa_Pange_lingua-Sanctus: only 0 of 6 staves in time with it: left out
+Jos0403e-Missa_Pange_lingua-Agnus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0403e-Missa_Pange_lingua-Agnus: only 0 of 6 staves in time with it: left out
+Jos0404a-Missa_Pro_Defunctis-Introit: 2 staves: too few to trust, left out
+Jos0404c-Missa_Pro_Defunctis-Gradual: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0404c-Missa_Pro_Defunctis-Gradual: only 0 of 4 staves in time with it: left out
+Jos0404d-Missa_Pro_Defunctis-Offertory: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0404d-Missa_Pro_Defunctis-Offertory: only 1 of 3 staves in time with it: left out
+Jos0404e-Missa_Pro_Defunctis-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0404e-Missa_Pro_Defunctis-Sanctus: only 0 of 3 staves in time with it: left out
+Jos0404f-Missa_Pro_Defunctis-Agnus: 1 staves: too few to trust, left out
+Jos0405b-Missa_Sub_tuum_presidium-Gloria: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0405b-Missa_Sub_tuum_presidium-Gloria: only 0 of 5 staves in time with it: left out
+Jos0405c-Missa_Sub_tuum_presidium-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0405c-Missa_Sub_tuum_presidium-Credo: only 0 of 5 staves in time with it: left out
+Jos0405d-Missa_Sub_tuum_presidium-Sanctus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0405d-Missa_Sub_tuum_presidium-Sanctus: only 0 of 5 staves in time with it: left out
+Jos0406a-Missa_Veni_sancte_spiritus-Kyrie: 1 staves: too few to trust, left out
+Jos0406b-Missa_Veni_sancte_spiritus-Gloria: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0406b-Missa_Veni_sancte_spiritus-Gloria: only 0 of 4 staves in time with it: left out
+Jos0406c-Missa_Veni_sancte_spiritus-Credo: 9 staves; the source's values the edition's; at the edition's pitch
+Jos0406c-Missa_Veni_sancte_spiritus-Credo: only 1 of 9 staves in time with it: left out
+Jos0406d-Missa_Veni_sancte_spiritus-Sanctus: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0406d-Missa_Veni_sancte_spiritus-Sanctus: only 0 of 4 staves in time with it: left out
+Jos0406e-Missa_Veni_sancte_spiritus-Agnus: 1 staves: too few to trust, left out
+Jos0501a-Missa_Lami_Baudichon-Kyrie: 15 staves; the source's values the edition's; at the edition's pitch
+Jos0501b-Missa_Lami_Baudichon-Gloria: 39 staves; the source's values the edition's; at the edition's pitch
+Jos0501c-Missa_Lami_Baudichon-Credo: 70 staves; the source's values the edition's; at the edition's pitch
+Jos0502a-Missa_Une_mousse_de_Biscaye-Kyrie: 35 staves; the source's values the edition's; at the edition's pitch
+Jos0502b-Missa_Une_mousse_de_Biscaye-Gloria: 68 staves; the source's values the edition's; at the edition's pitch
+Jos0502c-Missa_Une_mousse_de_Biscaye-Credo: 77 staves; the source's values the edition's; at the edition's pitch
+Jos0601a-Missa_Lhomme_arme_quarti_toni-Kyrie: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0601a-Missa_Lhomme_arme_quarti_toni-Kyrie: only 0 of 3 staves in time with it: left out
+Jos0601d-Missa_Lhomme_arme_quarti_toni-Sanctus: 8 staves; the source's values the edition's; at the edition's pitch
+Jos0601d-Missa_Lhomme_arme_quarti_toni-Sanctus: only 0 of 8 staves in time with it: left out
+Jos0602a-Missa_Lhomme_arme_sexti_toni-Kyrie: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0602a-Missa_Lhomme_arme_sexti_toni-Kyrie: only 0 of 2 staves in time with it: left out
+Jos0602b-Missa_Lhomme_arme_sexti_toni-Gloria: 2 staves: too few to trust, left out
+Jos0602c-Missa_Lhomme_arme_sexti_toni-Credo: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0602c-Missa_Lhomme_arme_sexti_toni-Credo: only 0 of 6 staves in time with it: left out
+Jos0602d-Missa_Lhomme_arme_sexti_toni-Sanctus: 1 staves: too few to trust, left out
+Jos0602e-Missa_Lhomme_arme_sexti_toni-Agnus: 2 staves: too few to trust, left out
+Jos0603a-Missa_Lhomme_arme_super_voces_musicales-Kyrie: 2 staves: too few to trust, left out
+Jos0603b-Missa_Lhomme_arme_super_voces_musicales-Gloria: 13 staves; the source's values the edition's; at the edition's pitch
+Jos0603c-Missa_Lhomme_arme_super_voces_musicales-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0603c-Missa_Lhomme_arme_super_voces_musicales-Credo: only 0 of 4 staves in time with it: left out
+Jos0603d-Missa_Lhomme_arme_super_voces_musicales-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0603d-Missa_Lhomme_arme_super_voces_musicales-Sanctus: only 0 of 3 staves in time with it: left out
+Jos0603e-Missa_Lhomme_arme_super_voces_musicales-Agnus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0603e-Missa_Lhomme_arme_super_voces_musicales-Agnus: only 0 of 5 staves in time with it: left out
+Jos0701a-Missa_Allez_regretz_I-Kyrie: 2 staves: too few to trust, left out
+Jos0701b-Missa_Allez_regretz_I-Gloria: 2 staves: too few to trust, left out
+Jos0701c-Missa_Allez_regretz_I-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0701c-Missa_Allez_regretz_I-Credo: only 0 of 4 staves in time with it: left out
+Jos0701d-Missa_Allez_regretz_I-Sanctus: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0701d-Missa_Allez_regretz_I-Sanctus: only 0 of 6 staves in time with it: left out
+Jos0702a-Missa_Allez_regretz_II-Kyrie: 2 staves: too few to trust, left out
+Jos0702b-Missa_Allez_regrets_II-Gloria: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0702b-Missa_Allez_regrets_II-Gloria: only 0 of 4 staves in time with it: left out
+Jos0702c-Missa_Allez_regretz_II-Credo: 2 staves: too few to trust, left out
+Jos0702e-Missa_Allez_regretz_II-Agnus: 2 staves: too few to trust, left out
+Jos0703a-Missa_Dung_aultre_amer-Kyrie: 14 staves; the source's values the edition's; at the edition's pitch
+Jos0703b-Missa_Dung_aultre_amer-Gloria: 33 staves; the source's values the edition's; at the edition's pitch
+Jos0703c-Missa_Dung_aultre_amer-Credo: 56 staves; the source's values the edition's; at the edition's pitch
+Jos0703c.b-Missa_Dung_aultre_amer-Credo--Jena_31: 2 staves: too few to trust, left out
+Jos0703d-Missa_Dung_aultre_amer-Sanctus: 39 staves; the source's values the edition's; at the edition's pitch
+Jos0703e-Missa_Dung_aultre_amer-Agnus: 13 staves; the source's values the edition's; at the edition's pitch
+Jos0801a-Missa_Faisant_regretz-Kyrie: 6 staves; the source's values the edition's; at the edition's pitch
+Jos0801a-Missa_Faisant_regretz-Kyrie: only 0 of 6 staves in time with it: left out
+Jos0801b-Missa_Faisant_regretz-Gloria: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0801b-Missa_Faisant_regretz-Gloria: only 0 of 3 staves in time with it: left out
+Jos0801c-Missa_Faisant_regretz-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0801c-Missa_Faisant_regretz-Credo: only 0 of 2 staves in time with it: left out
+Jos0801d-Missa_Faisant_regretz-Sanctus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0801d-Missa_Faisant_regretz-Sanctus: only 0 of 3 staves in time with it: left out
+Jos0802b-Missa_Fortuna_desperata-Gloria: 13 staves; the source's values the edition's; at the edition's pitch
+Jos0802d-Missa_Fortuna_desperata-Sanctus: 2 staves: too few to trust, left out
+Jos0901a-Missa_Malheur_me_bat-Kyrie: 46 staves; the source's values the edition's; at the edition's pitch
+Jos0901b-Missa_Malheur_me_bat-Gloria: 52 staves; the source's values the edition's; at the edition's pitch
+Jos0901c-Missa_Malheur_me_bat-Credo: 93 staves; the source's values the edition's; at the edition's pitch
+Jos0901d-Missa_Malheur_me_bat-Sanctus: 85 staves; the source's values the edition's; at the edition's pitch
+Jos0901e-Missa_Malheur_me_bat-Agnus: 68 staves; the source's values the edition's; at the edition's pitch
+Jos0902a-Missa_Mon_seul_plaisir-Kyrie: 3 staves; the source's values the edition's; at the edition's pitch
+Jos0902a-Missa_Mon_seul_plaisir-Kyrie: only 0 of 3 staves in time with it: left out
+Jos0902c-Missa_Mon_seul_plaisir-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Jos0902c-Missa_Mon_seul_plaisir-Credo: only 0 of 4 staves in time with it: left out
+Jos0902d-Missa_Mon_seul_plaisir-Sanctus: 2 staves: too few to trust, left out
+Jos0902e-Missa_Mon_seul_plaisir-Agnus: 1 staves: too few to trust, left out
+Jos0903a-Missa_Di_dadi-Kyrie: 1 staves: too few to trust, left out
+Jos0903d-Missa_Di_dadi-Sanctus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0903d-Missa_Di_dadi-Sanctus: only 0 of 5 staves in time with it: left out
+Jos0903e-Missa_Di_dadi-Agnus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0903e-Missa_Di_dadi-Agnus: only 0 of 5 staves in time with it: left out
+Jos0904c-Missa_Rosina-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos0904c-Missa_Rosina-Credo: only 0 of 5 staves in time with it: left out
+Jos1001b-Missa_Mater_patris-Gloria: 2 staves: too few to trust, left out
+Jos1001c-Missa_Mater_patris-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos1001c-Missa_Mater_patris-Credo: only 0 of 4 staves in time with it: left out
+Jos1001d-Missa_Mater_patris-Sanctus: 8 staves; the source's values the edition's; at the edition's pitch
+Jos1001d-Missa_Mater_patris-Sanctus: only 1 of 8 staves in time with it: left out
+Jos1002a-Missa_Missus_est_Gabriel_Angelus-Kyrie: 2 staves: too few to trust, left out
+Jos1002b-Missa_Missus_est_Gabriel_Angelus-Gloria: 9 staves; the source's values the edition's; at the edition's pitch
+Jos1002b-Missa_Missus_est_Gabriel_Angelus-Gloria: only 0 of 9 staves in time with it: left out
+Jos1002c-Missa_Missus_est_Gabriel_Angelus-Credo: 1 staves: too few to trust, left out
+Jos1002d-Missa_Missus_est_Gabriel_Angelus-Sanctus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos1002d-Missa_Missus_est_Gabriel_Angelus-Sanctus: only 0 of 5 staves in time with it: left out
+Jos1002e-Missa_Missus_est_Gabriel_Angelus-Agnus: 4 staves; the source's values the edition's; at the edition's pitch
+Jos1002e-Missa_Missus_est_Gabriel_Angelus-Agnus: only 0 of 4 staves in time with it: left out
+Jos1003a-Missa_Quem_dicunt_homines-Kyrie: 2 staves: too few to trust, left out
+Jos1003c-Missa_Quem_dicunt_homines-Credo: 9 staves; the source's values the edition's; at the edition's pitch
+Jos1003c-Missa_Quem_dicunt_homines-Credo: only 0 of 9 staves in time with it: left out
+Jos1003d-Missa_Quem_dicunt_homines-Sanctus: 4 staves; the source's values the edition's; at the edition's pitch
+Jos1003d-Missa_Quem_dicunt_homines-Sanctus: only 0 of 4 staves in time with it: left out
+Jos1003e-Missa_Quem_dicunt_homines-Agnus: 5 staves; the source's values the edition's; at the edition's pitch
+Jos1003e-Missa_Quem_dicunt_homines-Agnus: only 0 of 5 staves in time with it: left out
+Jos1101a-Missa_Hercules_dux_Ferrarie-Kyrie: 27 staves; the source's values the edition's; at the edition's pitch
+Jos1101b-Missa_Hercules_dux_Ferrarie-Gloria: 45 staves; the source's values the edition's; at the edition's pitch
+Jos1101c-Missa_Hercules_dux_Ferrarie-Credo: 86 staves; the source's values the edition's; at the edition's pitch
+Jos1101d-Missa_Hercules_dux_Ferrarie-Sanctus: 39 staves; the source's values the edition's; at the edition's pitch
+Jos1101e-Missa_Hercules_dux_Ferrarie-Agnus: 52 staves; the source's values the edition's; at the edition's pitch
+Jos1102a-Missa_La_sol_fa_re_mi-Kyrie: 3 staves; the source's values the edition's; at the edition's pitch
+Jos1102a-Missa_La_sol_fa_re_mi-Kyrie: only 0 of 3 staves in time with it: left out
+Jos1102b-Missa_La_sol_fa_re_mi-Gloria: 3 staves; the source's values the edition's; at the edition's pitch
+Jos1102b-Missa_La_sol_fa_re_mi-Gloria: only 0 of 3 staves in time with it: left out
+Jos1102c-Missa_La_sol_fa_re_mi-Credo: 10 staves; the source's values the edition's; at the edition's pitch
+Jos1102c-Missa_La_sol_fa_re_mi-Credo: only 0 of 10 staves in time with it: left out
+Jos1102d-Missa_La_sol_fa_re_mi-Sanctus: 2 staves: too few to trust, left out
+Jos1102e-Missa_La_sol_fa_re_mi-Agnus: 1 staves: too few to trust, left out
+Jos1201a-Missa_Ad_fugam-Kyrie: 1 staves: too few to trust, left out
+Jos1201b-Missa_Ad_fugam-Gloria: 1 staves: too few to trust, left out
+Jos1201c-Missa_Ad_fugam-Credo: 5 staves; the source's values the edition's; at the edition's pitch
+Jos1201c-Missa_Ad_fugam-Credo: only 1 of 4 staves in time with it: left out
+Jos1201d.a-Missa_Ad_fugam-Sanctus-version_I: 2 staves: too few to trust, left out
+Jos1201d.b-Missa_Ad_fugam-Sanctus-version_II: 6 staves; the source's values the edition's; at the edition's pitch
+Jos1201d.b-Missa_Ad_fugam-Sanctus-version_II: only 0 of 3 staves in time with it: left out
+Jos1202a-Missa_Sine_nomine-Kyrie: 1 staves: too few to trust, left out
+Jos1202c-Missa_Sine_nomine-Credo: 4 staves; the source's values the edition's; at the edition's pitch
+Jos1202c-Missa_Sine_nomine-Credo: only 0 of 4 staves in time with it: left out
+Jos1202d-Missa_Sine_nomine-Sanctus: 2 staves: too few to trust, left out
+Jos1202e-Missa_Sine_nomine-Agnus: 2 staves: too few to trust, left out
+Jos9901b-Missa_Mi_mi-Gloria: 2 staves: too few to trust, left out
+Jos9901c-Missa_Mi_mi-Credo: 6 staves; the source's values the edition's; at the edition's pitch
+Jos9901c-Missa_Mi_mi-Credo: only 0 of 6 staves in time with it: left out
+Jos9901d-Missa_Mi_mi-Sanctus: 2 staves: too few to trust, left out
+Jos9901e-Missa_Mi_mi-Agnus: 3 staves; the source's values the edition's; at the edition's pitch
+Jos9901e-Missa_Mi_mi-Agnus: only 0 of 3 staves in time with it: left out
+656 staves labelled, of 1770 found in the editions, on 700 pages -> training/data/petrucci3
+
+$ edition.py pair --editions training/data/jrpscores/*/*.krn --scans training/data/scans/petrucci --skip josquin|miss --model training/data/m0086/best.pt --print --at-pitch --out training/data/petrucci3odh
+1276 editions, 5013 voices, 1120034 notes
+p0001.png: 0 staves, 0 found in the editions (0 so far)
+p0002.png: 0 staves, 0 found in the editions (0 so far)
+p0003.png: 0 staves, 0 found in the editions (0 so far)
+p0004.png: 0 staves, 0 found in the editions (0 so far)
+p0005.png: 0 staves, 0 found in the editions (0 so far)
+p0006.png: 0 staves, 0 found in the editions (0 so far)
+p0007.png: 0 staves, 0 found in the editions (0 so far)
+p0008.png: 1 staves, 0 found in the editions (0 so far)
+p0009.png: 0 staves, 0 found in the editions (0 so far)
+p0010.png: 0 staves, 0 found in the editions (0 so far)
+p0011.png: 6 staves, 6 found in the editions (6 so far)
+p0012.png: 5 staves, 5 found in the editions (11 so far)
+p0013.png: 6 staves, 5 found in the editions (16 so far)
+p0014.png: 5 staves, 5 found in the editions (21 so far)
+p0015.png: 5 staves, 5 found in the editions (26 so far)
+p0016.png: 4 staves, 4 found in the editions (30 so far)
+p0017.png: 6 staves, 6 found in the editions (36 so far)
+p0018.png: 5 staves, 4 found in the editions (40 so far)
+p0019.png: 7 staves, 7 found in the editions (47 so far)
+p0020.png: 4 staves, 4 found in the editions (51 so far)
+p0021.png: 4 staves, 4 found in the editions (55 so far)
+p0022.png: 2 staves, 2 found in the editions (57 so far)
+p0023.png: 4 staves, 4 found in the editions (61 so far)
+p0024.png: 4 staves, 4 found in the editions (65 so far)
+p0025.png: 5 staves, 3 found in the editions (68 so far)
+p0026.png: 4 staves, 4 found in the editions (72 so far)
+p0027.png: 4 staves, 4 found in the editions (76 so far)
+p0028.png: 4 staves, 4 found in the editions (80 so far)
+p0029.png: 4 staves, 4 found in the editions (84 so far)
+p0030.png: 3 staves, 2 found in the editions (86 so far)
+p0031.png: 4 staves, 4 found in the editions (90 so far)
+p0032.png: 0 staves, 0 found in the editions (90 so far)
+p0033.png: 7 staves, 7 found in the editions (97 so far)
+p0034.png: 5 staves, 5 found in the editions (102 so far)
+p0035.png: 4 staves, 4 found in the editions (106 so far)
+p0036.png: 4 staves, 3 found in the editions (109 so far)
+p0037.png: 4 staves, 4 found in the editions (113 so far)
+p0038.png: 4 staves, 3 found in the editions (116 so far)
+p0039.png: 5 staves, 5 found in the editions (121 so far)
+p0040.png: 4 staves, 4 found in the editions (125 so far)
+p0041.png: 4 staves, 4 found in the editions (129 so far)
+p0042.png: 3 staves, 2 found in the editions (131 so far)
+p0043.png: 6 staves, 6 found in the editions (137 so far)
+p0044.png: 5 staves, 5 found in the editions (142 so far)
+p0045.png: 6 staves, 6 found in the editions (148 so far)
+p0046.png: 6 staves, 5 found in the editions (153 so far)
+p0047.png: 4 staves, 4 found in the editions (157 so far)
+p0048.png: 3 staves, 2 found in the editions (159 so far)
+p0049.png: 5 staves, 5 found in the editions (164 so far)
+p0050.png: 4 staves, 3 found in the editions (167 so far)
+p0051.png: 4 staves, 4 found in the editions (171 so far)
+p0052.png: 3 staves, 3 found in the editions (174 so far)
+p0053.png: 5 staves, 5 found in the editions (179 so far)
+p0054.png: 3 staves, 3 found in the editions (182 so far)
+p0055.png: 4 staves, 4 found in the editions (186 so far)
+p0056.png: 3 staves, 3 found in the editions (189 so far)
+p0057.png: 4 staves, 4 found in the editions (193 so far)
+p0058.png: 3 staves, 3 found in the editions (196 so far)
+p0059.png: 6 staves, 6 found in the editions (202 so far)
+p0060.png: 4 staves, 4 found in the editions (206 so far)
+p0061.png: 5 staves, 5 found in the editions (211 so far)
+p0062.png: 4 staves, 4 found in the editions (215 so far)
+p0063.png: 5 staves, 5 found in the editions (220 so far)
+p0064.png: 4 staves, 4 found in the editions (224 so far)
+p0065.png: 5 staves, 5 found in the editions (229 so far)
+p0066.png: 4 staves, 4 found in the editions (233 so far)
+p0067.png: 5 staves, 4 found in the editions (237 so far)
+p0068.png: 4 staves, 4 found in the editions (241 so far)
+p0069.png: 5 staves, 5 found in the editions (246 so far)
+p0070.png: 4 staves, 3 found in the editions (249 so far)
+p0071.png: 5 staves, 5 found in the editions (254 so far)
+p0072.png: 4 staves, 4 found in the editions (258 so far)
+p0073.png: 6 staves, 6 found in the editions (264 so far)
+p0074.png: 5 staves, 5 found in the editions (269 so far)
+p0075.png: 4 staves, 4 found in the editions (273 so far)
+p0076.png: 3 staves, 3 found in the editions (276 so far)
+p0077.png: 4 staves, 4 found in the editions (280 so far)
+p0078.png: 2 staves, 2 found in the editions (282 so far)
+p0079.png: 4 staves, 4 found in the editions (286 so far)
+p0080.png: 4 staves, 4 found in the editions (290 so far)
+p0081.png: 4 staves, 4 found in the editions (294 so far)
+p0082.png: 2 staves, 2 found in the editions (296 so far)
+p0083.png: 3 staves, 3 found in the editions (299 so far)
+p0084.png: 2 staves, 2 found in the editions (301 so far)
+p0085.png: 4 staves, 4 found in the editions (305 so far)
+p0086.png: 4 staves, 4 found in the editions (309 so far)
+p0087.png: 5 staves, 5 found in the editions (314 so far)
+p0088.png: 3 staves, 3 found in the editions (317 so far)
+p0089.png: 5 staves, 5 found in the editions (322 so far)
+p0090.png: 4 staves, 3 found in the editions (325 so far)
+p0091.png: 5 staves, 5 found in the editions (330 so far)
+p0092.png: 5 staves, 5 found in the editions (335 so far)
+p0093.png: 6 staves, 6 found in the editions (341 so far)
+p0094.png: 6 staves, 5 found in the editions (346 so far)
+p0095.png: 5 staves, 5 found in the editions (351 so far)
+p0096.png: 4 staves, 4 found in the editions (355 so far)
+p0097.png: 7 staves, 6 found in the editions (361 so far)
+p0098.png: 4 staves, 4 found in the editions (365 so far)
+p0099.png: 4 staves, 4 found in the editions (369 so far)
+p0100.png: 4 staves, 4 found in the editions (373 so far)
+p0101.png: 5 staves, 5 found in the editions (378 so far)
+p0102.png: 4 staves, 3 found in the editions (381 so far)
+p0103.png: 4 staves, 3 found in the editions (384 so far)
+p0104.png: 2 staves, 2 found in the editions (386 so far)
+p0105.png: 4 staves, 3 found in the editions (389 so far)
+p0106.png: 2 staves, 2 found in the editions (391 so far)
+p0107.png: 4 staves, 4 found in the editions (395 so far)
+p0108.png: 4 staves, 4 found in the editions (399 so far)
+p0109.png: 4 staves, 4 found in the editions (403 so far)
+p0110.png: 4 staves, 4 found in the editions (407 so far)
+p0111.png: 4 staves, 4 found in the editions (411 so far)
+p0112.png: 3 staves, 3 found in the editions (414 so far)
+p0113.png: 4 staves, 4 found in the editions (418 so far)
+p0114.png: 4 staves, 4 found in the editions (422 so far)
+p0115.png: 5 staves, 5 found in the editions (427 so far)
+p0116.png: 4 staves, 4 found in the editions (431 so far)
+p0117.png: 6 staves, 6 found in the editions (437 so far)
+p0118.png: 4 staves, 4 found in the editions (441 so far)
+p0119.png: 5 staves, 5 found in the editions (446 so far)
+p0120.png: 3 staves, 3 found in the editions (449 so far)
+p0121.png: 3 staves, 3 found in the editions (452 so far)
+p0122.png: 3 staves, 3 found in the editions (455 so far)
+p0123.png: 6 staves, 5 found in the editions (460 so far)
+p0124.png: 4 staves, 4 found in the editions (464 so far)
+p0125.png: 6 staves, 6 found in the editions (470 so far)
+p0126.png: 5 staves, 5 found in the editions (475 so far)
+p0127.png: 5 staves, 5 found in the editions (480 so far)
+p0128.png: 4 staves, 4 found in the editions (484 so far)
+p0129.png: 4 staves, 4 found in the editions (488 so far)
+p0130.png: 4 staves, 3 found in the editions (491 so far)
+p0131.png: 5 staves, 4 found in the editions (495 so far)
+p0132.png: 3 staves, 3 found in the editions (498 so far)
+p0133.png: 5 staves, 3 found in the editions (501 so far)
+p0134.png: 4 staves, 4 found in the editions (505 so far)
+p0135.png: 5 staves, 5 found in the editions (510 so far)
+p0136.png: 4 staves, 4 found in the editions (514 so far)
+p0137.png: 6 staves, 6 found in the editions (520 so far)
+p0138.png: 5 staves, 5 found in the editions (525 so far)
+p0139.png: 4 staves, 4 found in the editions (529 so far)
+p0140.png: 3 staves, 3 found in the editions (532 so far)
+p0141.png: 4 staves, 4 found in the editions (536 so far)
+p0142.png: 3 staves, 3 found in the editions (539 so far)
+p0143.png: 4 staves, 4 found in the editions (543 so far)
+p0144.png: 2 staves, 2 found in the editions (545 so far)
+p0145.png: 4 staves, 4 found in the editions (549 so far)
+p0146.png: 3 staves, 3 found in the editions (552 so far)
+p0147.png: 4 staves, 4 found in the editions (556 so far)
+p0148.png: 2 staves, 2 found in the editions (558 so far)
+p0149.png: 4 staves, 4 found in the editions (562 so far)
+p0150.png: 2 staves, 2 found in the editions (564 so far)
+p0151.png: 4 staves, 4 found in the editions (568 so far)
+p0152.png: 3 staves, 3 found in the editions (571 so far)
+p0153.png: 4 staves, 4 found in the editions (575 so far)
+p0154.png: 3 staves, 3 found in the editions (578 so far)
+p0155.png: 5 staves, 5 found in the editions (583 so far)
+p0156.png: 4 staves, 4 found in the editions (587 so far)
+p0157.png: 5 staves, 4 found in the editions (591 so far)
+p0158.png: 4 staves, 4 found in the editions (595 so far)
+p0159.png: 3 staves, 2 found in the editions (597 so far)
+p0160.png: 2 staves, 2 found in the editions (599 so far)
+p0161.png: 3 staves, 3 found in the editions (602 so far)
+p0162.png: 2 staves, 2 found in the editions (604 so far)
+p0163.png: 5 staves, 5 found in the editions (609 so far)
+p0164.png: 3 staves, 3 found in the editions (612 so far)
+p0165.png: 6 staves, 6 found in the editions (618 so far)
+p0166.png: 4 staves, 4 found in the editions (622 so far)
+p0167.png: 5 staves, 5 found in the editions (627 so far)
+p0168.png: 3 staves, 3 found in the editions (630 so far)
+p0169.png: 4 staves, 4 found in the editions (634 so far)
+p0170.png: 4 staves, 4 found in the editions (638 so far)
+p0171.png: 6 staves, 5 found in the editions (643 so far)
+p0172.png: 4 staves, 4 found in the editions (647 so far)
+p0173.png: 6 staves, 5 found in the editions (652 so far)
+p0174.png: 4 staves, 4 found in the editions (656 so far)
+p0175.png: 6 staves, 6 found in the editions (662 so far)
+p0176.png: 6 staves, 6 found in the editions (668 so far)
+p0177.png: 6 staves, 6 found in the editions (674 so far)
+p0178.png: 4 staves, 4 found in the editions (678 so far)
+p0179.png: 6 staves, 6 found in the editions (684 so far)
+p0180.png: 5 staves, 5 found in the editions (689 so far)
+p0181.png: 3 staves, 3 found in the editions (692 so far)
+p0182.png: 3 staves, 3 found in the editions (695 so far)
+p0183.png: 6 staves, 6 found in the editions (701 so far)
+p0184.png: 4 staves, 4 found in the editions (705 so far)
+p0185.png: 2 staves, 2 found in the editions (707 so far)
