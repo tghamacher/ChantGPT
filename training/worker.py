@@ -32,7 +32,7 @@ SELF = open(os.path.abspath(__file__), encoding='utf-8').read()   # (this worker
 REPO = os.path.dirname(HERE)
 ALLOWED = {'recognizer.py': {'train', 'test', 'export', 'clean', 'rebreak'}, 'cantus.py': {'lines', 'collect', 'tidy'},
            'cmme.py': {'fetch', 'staves', 'pair'}, 'idemstyle.py': {'measure', 'staves'}, 'selftrain.py': {'read'},
-           'edition.py': {'pair'}}
+           'edition.py': {'pages', 'pair'}}
 
 
 def git(where, *args, check=True, quiet=False):
@@ -55,7 +55,7 @@ def checked(step, out, data=None):
         raise ValueError(f'not allowed: {script} {what}')
     args = []
     for k, s in enumerate(step[2:]):
-        if script == 'cantus.py' and k and step[2:][k - 1] == '--downloads':
+        if script in ('cantus.py', 'edition.py') and k and step[2:][k - 1] == '--downloads':
             if not os.path.isdir(s): raise ValueError(f'no folder {s}')
             args.append(s); continue
         if script == 'cantus.py' and k and step[2:][k - 1] == '--manifest':   # (a manifest's address, only matched)

@@ -20,6 +20,8 @@ Use editions you may use for training: the JRP's (CC BY-NC 4.0), your own, ones 
     python -I training/edition.py pair --editions training/data/jrp-jos/Jos2*.krn --scans training/data/scans/petrucci-jos1 \\
         --model training/data/m0086/best.pt --print [--out training/data/petrucci] [--worth 0.3]
     python -I training/edition.py selftest --editions /path/to/jrp/Jos/Jos0302a-*.krn     # (no pages, no reader needed)
+    python -I training/edition.py pages --downloads "C:\\Users\\…\\EMS Tools" --out training/data/scans/petrucci
+        # (IMSLP's PDFs, downloaded by the user: a folder of page images each, facing pages cut in two)
 
 pair writes <out>/<page>-<k>.png (straightened as fivestaves.py cuts five-line staves) and <out>/labels.jsonl ({file,
 text, tokens, fixed (how many signs the edition put right), fit, from}); and says the transposition and reduction it
@@ -43,6 +45,7 @@ CLEF_AT = {'c': 28, 'f': 24, 'g': 32}                       # (the pitch each cl
 CLEFS = ['c1', 'c2', 'c3', 'c4', 'c5', 'f3', 'f4', 'f5', 'g1', 'g2']
 REDUCTIONS = [Fr(1), Fr(2), Fr(4), Fr(1, 2)]                # (the source's values the edition's times this)
 SHIFT = 'shift'
+COMMON = 30000                                               # (an interval trigram in more places than this: not used to find a staff)
 
 
 def clef_base(tok):
@@ -203,32 +206,58 @@ def rest_options(ds):
 
 # ---- the search: the edition's notes indexed by their intervals, three at a time
 
+def rhythm(a, b):
+    """From one note's length to the next's: longer (1), shorter (-1), or about the same (0: within half again, so
+    that a perfect breve and an imperfect one, a dotted note and its plain neighbour, read the same)."""
+    if a is None or b is None or not a or not b: return 0
+    import math
+    r = math.log2(b / a)
+    return 0 if abs(r) < 0.7 else (1 if r > 0 else -1)
+
+
+def read_length(e):
+    """A note read: its length as its sign says it (dotted half again, black two thirds), perfection aside."""
+    return BASE[e['v']] * (Fr(3, 2) if e['dot'] else 1) * (Fr(2, 3) if e['black'] else 1)
+
+
 class Index:
     def __init__(self, eds):
         self.voices = []                                     # (edition, voice name, events, the notes' event indices)
-        self.grams = defaultdict(list)
+        self.grams = defaultdict(list)                       # (three intervals)
+        self.rgrams = defaultdict(list)                      # (three intervals and the rhythm between the four notes)
         for ed, vs in eds.items():
             for vn, evs in vs:
                 notes = [k for k, e in enumerate(evs) if e[0] == 'n']
                 vid = len(self.voices)
                 self.voices.append((ed, vn, evs, notes))
                 steps = [evs[k][1] for k in notes]
+                ds = [evs[k][2] for k in notes]
                 for i in range(len(steps) - 3):
-                    self.grams[(steps[i + 1] - steps[i], steps[i + 2] - steps[i + 1], steps[i + 3] - steps[i + 2])].append((vid, i))
+                    g = (steps[i + 1] - steps[i], steps[i + 2] - steps[i + 1], steps[i + 3] - steps[i + 2])
+                    self.grams[g].append((vid, i))
+                    self.rgrams[g + tuple(rhythm(ds[i + k], ds[i + k + 1]) for k in range(3))].append((vid, i))
 
-    def candidates(self, ps, top=6):
-        """Where in the edition a run of places on the staff (ps: its notes' places, in order) may be: [(votes, voice,
-        the edition's note index the staff's first note would be, shift: place minus step)]."""
+    def candidates(self, ps, ds=None, top=8):
+        """Where in the edition a run of places on the staff (ps: its notes' places, in order; ds: their lengths as
+        read) may be: [(votes, voice, the edition's note index the staff's first note would be, shift: place minus
+        step)]. A run of intervals with its rhythm counts twice; a run of intervals so common it is everywhere, not
+        at all."""
         votes = Counter(); shifts = defaultdict(Counter)
+        def vote(hits, j, w):
+            for vid, i in hits:
+                key = (vid, (i - j) // 3)
+                votes[key] += w
+                shifts[key][(ps[j] - self.voices[vid][2][self.voices[vid][3][i]][1], i - j)] += 1
         for j in range(len(ps) - 3):
             g = (ps[j + 1] - ps[j], ps[j + 2] - ps[j + 1], ps[j + 3] - ps[j + 2])
-            for vid, i in self.grams.get(g, ()):
-                key = (vid, (i - j) // 3)
-                votes[key] += 1
-                shifts[key][(ps[j] - self.voices[vid][2][self.voices[vid][3][i]][1], i - j)] += 1
+            hits = self.grams.get(g, ())
+            if len(hits) <= COMMON: vote(hits, j, 1)
+            if ds:
+                rh = self.rgrams.get(g + tuple(rhythm(ds[j + k], ds[j + k + 1]) for k in range(3)), ())
+                if len(rh) <= COMMON: vote(rh, j, 2)
         out = []
         for key, n in votes.most_common(top):
-            if n < 2: break
+            if n < 3: break
             (shift, start), _ = shifts[key].most_common(1)[0]
             out.append((n, key[0], start, shift))
         return out
@@ -277,13 +306,20 @@ def align(staff, ed, shift, red, custos=None, perf=None, fixed_start=False):
     return D[n][j1], ops[::-1], j0, j1
 
 
-def match(index, tokens, worth):
-    """The stretch of the edition a reading is of: (cost share, voice id, j0, j1, shift, ops, events) or None."""
+def match(index, tokens, worth, hint=None):
+    """The stretch of the edition a reading is of: (cost share, voice id, j0, j1, shift, ops, events) or None. hint:
+    (voice id, event index, shift) where the staff before it ended (the next staff on a page, or the page after, most
+    often goes on with the same voice), tried as well."""
     evs, clef = events_of(tokens)
-    ps = [e['p'] for e in evs if e['kind'] == 'n']
+    notes_read = [e for e in evs if e['kind'] == 'n']
+    ps = [e['p'] for e in notes_read]
     if len(ps) < 6 or clef is None: return None
+    cands = index.candidates(ps, [read_length(e) for e in notes_read])
+    if hint:
+        vid, j, shift = hint
+        cands.append((0, vid, sum(1 for e in index.voices[vid][2][:j] if e[0] == 'n'), shift))
     best = None
-    for votes, vid, start, shift in index.candidates(ps):
+    for votes, vid, start, shift in cands:
         ed, vn, eevs, notes = index.voices[vid]
         first = notes[max(0, min(len(notes) - 1, start))] if start >= 0 else 0
         lo = max(0, first - 15); hi = min(len(eevs), first + 2 * len(evs) + 15)
@@ -410,6 +446,56 @@ def label(tokens, index, m, red, start=None, carried=()):
 
 # ---- pages
 
+def gutter(gray):
+    """Where a scan of two facing pages divides: the column, in its middle fifth, that varies least down its length
+    (the fold's shadow, or the gap between two pages scanned side by side: no staff crosses it)."""
+    import numpy as np
+    W = gray.shape[1]
+    a, b = int(0.4 * W), int(0.6 * W)
+    sd = gray[:, a:b].std(0)
+    sd = np.convolve(sd, np.ones(9) / 9, 'same')
+    return a + int(np.argmin(sd[4:-4])) + 4
+
+
+def pages(o):
+    """The PDFs downloaded from IMSLP (their names begin IMSLP or hold PMLP), each a folder of page images: a page's
+    image as the PDF holds it (or drawn at 300 dpi, if it holds it otherwise), gray, its longer side at most --size;
+    a scan of two facing pages (wider than tall) cut in two at its fold."""
+    import numpy as np
+    from PIL import Image
+    try: import pymupdf as fitz
+    except ImportError: import fitz
+    pdfs = sorted(p for p in glob.glob(os.path.join(o.downloads, '*.pdf')) if re.search(r'IMSLP|PMLP', os.path.basename(p), re.I))
+    if not pdfs: raise SystemExit(f'no IMSLP PDFs in {o.downloads}')
+    for p in pdfs:
+        name = re.sub(r'\W+', '_', re.sub(r'^IMSLP\d+-PMLP\d+-', '', os.path.splitext(os.path.basename(p))[0])).strip('_')[:60]
+        out = os.path.join(o.out, name)
+        if os.path.isdir(out) and os.listdir(out): print(f'{name}: done before'); continue
+        os.makedirs(out, exist_ok=True)
+        doc = fitz.open(p)
+        n = 0
+        for k, page in enumerate(doc):
+            ims = page.get_images(full=True)
+            im = None
+            if len(ims) == 1:
+                try: im = Image.open(io.BytesIO(doc.extract_image(ims[0][0])['image']))
+                except Exception: im = None
+            if im is None:
+                pix = page.get_pixmap(dpi=300)
+                im = Image.frombytes('RGB' if pix.n >= 3 else 'L', (pix.width, pix.height), pix.samples if pix.n in (1, 3) else pix.samples)
+            im = im.convert('L')
+            halves = [im]
+            if im.width > 1.15 * im.height:                    # (two facing pages)
+                c = gutter(np.asarray(im).astype(np.float32))
+                halves = [im.crop((0, 0, c, im.height)), im.crop((c, 0, im.width, im.height))]
+            for h in halves:
+                f = o.size / max(h.size)
+                if f < 1: h = h.resize((int(h.width * f), int(h.height * f)), Image.LANCZOS)
+                n += 1
+                h.save(os.path.join(out, f'p{n:04d}.png'))
+        print(f'{name}: {len(doc)} pages in the PDF -> {n} page images in {out}', flush=True)
+
+
 def pair(o):
     import numpy as np, torch, recognizer, selftrain
     from PIL import Image
@@ -429,9 +515,13 @@ def pair(o):
         F.N, F.DARK, F.NEAR, F.EVEN = 5, True, 0.3, 0.4
         staves_on = F.page
     os.makedirs(o.out, exist_ok=True)
-    dirs = o.scans.split(',')
+    dirs = []
+    for d in o.scans.split(','):                              # (a folder of folders: each of them, a book or partbook)
+        subs = sorted(os.path.join(d, x) for x in os.listdir(d) if os.path.isdir(os.path.join(d, x)))
+        dirs += subs if subs and not any(re.search(r'\.(jpe?g|png|tiff?)$', f, re.I) for f in os.listdir(d)) else [d]
     pages = [(d, f) for d in dirs for f in sorted(os.listdir(d)) if re.search(r'\.(jpe?g|png|tiff?)$', f, re.I)]
     found = []                                               # (file, tokens, match)
+    prev = None                                              # (where the last staff found ended)
     for d, pg in pages:
         name = re.sub(r'\W', '', (os.path.basename(os.path.normpath(d)) + '_' if len(dirs) > 1 else '') + os.path.splitext(pg)[0])
         try: gray, st = staves_on(os.path.join(d, pg))
@@ -441,8 +531,9 @@ def pair(o):
             a = F.straighten5(gray, lines).astype(np.uint8)
             x, ln = recognizer.collate([recognizer.ink(a)])
             with torch.no_grad(): read = recognizer.greedy(mdl(x), ln, s['vocab'])[0][0]
-            mt = match(index, read, o.worth * 2)
+            mt = match(index, read, o.worth * 2, prev)
             if not mt: continue
+            prev = (mt[1], mt[3], mt[4])
             file = f'{name}-{k + 1}.png'
             Image.fromarray(a).save(os.path.join(o.out, file))
             found.append((file, read, mt)); n += 1
@@ -570,10 +661,11 @@ def selftest(o):
         f = os.path.join(tmp, name + '.musicxml'); open(f, 'w').write(x)
         eds.update(load([f]))
     index = Index(eds)
+    prev = None
     for f, toks in truth.items():
         read = misread(toks, rng, o.rate)
-        m = match(index, read, o.worth * 2)
-        if m: found.append((f, read, m))
+        m = match(index, read, o.worth * 2, prev)
+        if m: found.append((f, read, m)); prev = (m[1], m[3], m[4])
     labels = settle(index, found, o.worth, selftrain.keeps_rules)
     import recognizer
     sg = lambda ts: [t for t in ts if t not in ('[', ']', ']*', '~')]
@@ -590,8 +682,10 @@ def selftest(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['pair', 'selftest'])
-    a.add_argument('--editions', nargs='+', required=True, help='the editions\' files (globs): .krn, .musicxml, .xml, .mxl')
+    a.add_argument('what', choices=['pages', 'pair', 'selftest'])
+    a.add_argument('--downloads', help='pages: the folder the PDFs were downloaded to (only read)')
+    a.add_argument('--size', type=int, default=2400, help='pages: a page\'s longer side, in pixels, at most')
+    a.add_argument('--editions', nargs='+', help='the editions\' files (globs): .krn, .musicxml, .xml, .mxl')
     a.add_argument('--scans', help='pair: the pages, a folder or several, comma between')
     a.add_argument('--model', help='pair: the mensural reader\'s checkpoint')
     a.add_argument('--print', action='store_true', help='pair: a printed book (its staves found as printstaves.py finds them)')
@@ -604,4 +698,4 @@ if __name__ == '__main__':
     a.add_argument('--reduce', type=int, default=2, help='selftest: the edition\'s values the source\'s divided by this')
     a.add_argument('--tmp', default=os.environ.get('TMPDIR', '/tmp'))
     o = a.parse_args()
-    {'pair': pair, 'selftest': selftest}[o.what](o)
+    {'pages': pages, 'pair': pair, 'selftest': selftest}[o.what](o)
