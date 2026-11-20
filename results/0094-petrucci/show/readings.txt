@@ -1,0 +1,106 @@
+== josquin_missarum_livro2_altus-p0022: 624x1070, 5 staves
+1 (space 14.5px): c3 Sm7 M5 Sm6 Sm7 Sm5 Sm6 Sm7 M8 Sm7 Sm8 Sm6 Sm7 F8 Sm0 M9 Sm8 M9 Sm7 Sb6 +5
+2 (space 14.8px): c4 b5 Sm4 F3 F2 M4 M1 M2 M2 rSm2 rSm2 M2 M3 Sm4 Sm5 Sm6 Sb7 M5 M6 Sb4 +7
+3 (space 15.0px): g2 M9 .9 Sm8 F7 F6 Sb5 rM4 M7 M7 M7 Sm5 Sm4 Sm3 Sm2 Sm1 M2 rSb2 M7 M5 M6 +4
+4 (space 14.8px): f4 B2 Sb2 rM2 .3 Sb6 M4 M5 M6 Sb2 .3 M4 M2 Sm3 M4 M0 #4 M4 M3 M5 L4 +4
+5 (space 15.0px): c4 b5 M8 Sm9 .9 Sm8 Sm7 L6 | | Sb9
+== josquin_missarum_livro2_altus-p0065: 832x1070, 6 staves
+1 (space 14.8px): c4 Sb3 #3 Sm4 M5 #3 Sm2 M1 Sb2 rSb2 M5 Sm4 M5 M6 M4 Sm5 M6 M4 M5 Sb8 Sm7 Sm6 Sb5 Sb1 M2 M5 M4 Sb7 M6 #5 B4 rM4 M5 M7 .7 Sm6 Sm5 Sm4 M3 M6 M4 +3
+2 (space 15.0px): c4 Sm1 rM0 Sm0 Sm-1 Sm1 M1 B2 L1^ | | rL6 Sb5 Sb5 Sb5 Sb5 Sb5 M2 M4 Sm4 B5 rSb6 Sb5 rSm4 M5 Sb5 Sb5 M5 Sb7 M6 M7 M5 Sm4 Sm3 Sm2 M2 Sm2 M1 M8 M7 M5 +5 +5
+3 (space 14.8px): c4 #5 M3 M5 rSb8 M6 M5 M8 rM4 Sm4 Sm3 Sb5 M4 M2 Sb3 Sb2 #5 M5 M5 M6 M4 #5 rM4 M4 M2 #5 M3 Sb6 M5 M6 Sb7 M6 M7 Sb4 M3 M4 Sb4 Sb4 Sb2 +3
+4 (space 15.0px): c4 C| M4 Sb2 #5 M4 #5 M4 Sm5 M4 Sm3 M2 M1 M2 Sb2 #0 rM0 Sb2 rSm2 .3 M2 M1 Sb2 Sb5 Sm4 Sm3 Sm2 M3 F2 Sm1 Sm1 M3 F2 Sm1 M0 Sb1 Sb2 rSb2 rSb2 #3 rSb4 Sm3 M4
+5 (space 14.5px): c3 M7 .7 Sm6 M7 M3 Sb5 M4 Sb2 rM2 Sb5 Sm4 Sm3 M2 M5 M3 #4 M3 M4 M6 Sm5 Sm4 Sm3 #2 .3 rSb2 Sm2 Sm3 Sm4 Sm5 Sb6 M7 rM4 rSb6 M4 M2 M5 #3 Sb4 M5 M7 M5 M6
+6 (space 14.8px): c3 rB5 Sb5 3 L3 .3 Sb4 M5 Sb6 B7 Sb7 Sb9 B8 Sb5 B7 Sb6 B7 Sb5 Sb4 rSb4 Sb7 Sb5 Sb4 Sm5 M3 M4 M5 Sb2 Sb3 #5 L5 | |
+== josquin_missarum_livro2_bassus2-p0022: 679x869, 5 staves
+1 (space 12.2px): c4 M5 rM4 Sb6 M5 M3 M1 M3 Sm4 M5 Sb6 b7 M4 .7 M6 Sb9 Sb8 M6 Sm7 Sb1 .3 Sb8 M6 M7 M8 Sb1 Sb8 M6 Sm7 M8 M4 Sb8 M6
+2 (space 12.0px): g2 M1 M3 Sm4 M5 Sb6 .7 rM6 M4 Sb6 Sm7 M8 M1 M3 Sm4 Sb5 rM4 Sm1 M3 Sm4 M5 Sb6 Sb7 rM6 M4 M6 Sm7 M8 M1 M3 Sm4 M5 Sm6 +7 +3
+3 (space 12.0px): c3 b3 .3 M4 M2 Sb2 rSb4 M1 Sb1 Sb2 M0 Sb0 rM0 rSb2 M0 M-1 Sb0 M2 M0 Sb0 .1 C M2 Sb2 .3 M1 Sb1 rM2 Sb2 M0 Sb0 L4 | |
+4 (space 12.0px): g2 M2 M2 M1 M-1 rM0 Sm1 Sm2 Sm3 M4 rSb2 Sb8 M9 Sb8 M8 M6 M7 M8 M6 Sm4 b5 M4 rM4 M4 Sm3 M4 Sm5 M6 b5 M4 rL4 rB5 C Sb5 M6 M4 +3
+5 (space 12.2px): c4 Sm7 M8 M9 .9 Sm8 Sb8 M7 M8 M9 Sb9 Sb8 M7 M8 M6 Sm4 M5 M6 M4 Sm2 M3 Sm4 M5 Sm6 Sm7 Sm5 Sm4 M8 F9 F8 rL6 F9 Sm9 M9
+== josquin_missarum_livro2_bassus2-p0064: 718x866, 4 staves
+1 (space 12.0px): c3 Sm2 Sm1 Sb1 M0 Sb1 Sb1 Sb0 Sb7 M8 M9 Sb10 M9 M7 M9 Sm8 Sm7 Sb6 M7 M3 b8 Sb9 Sm8 Sm7 3 Sb9 Sm8 Sm7 Sb8 Sb8 Sb7 Sb7 Sb3 M2 M3 M4 M5 M6 +2
+2 (space 12.2px): c4 Sb1 M6 M5 Sb6 M7 Sb3 Sm4 #3 M2 Sm3 Sm4 M5 Sb6 Sm5 Sm4 #3 M2 M6 M7 M8 M4 M5 M6 Sm7 Sm8 M9 Sm2 M3 M4 | |
+3 (space 12.0px): g2 M2 Sb6 Sb5 M4 M4 M4 M4 Sb0 .-1 M0 M0 M2 M3 Sb4 B2 Sb6 M2 M0 M2 M3 B4 rL4 rSb4 Sb0 M4 M2 Sb1 M0 M0 M0 M0 B4 B1
+4 (space 12.0px): c4 C Sb6 B2 rB2 M6 .7 Sm6 M6 M4 M2 M4 Sb3 B2 rSb2 Sb-1 M2 Sm3 Sm4 Sm5 M6 Sb7 Sb4 B0 B0 M6 M7 b9 M8 M9 M10 B8 rSb8 Sb7 Sb7 Sb4 +8
+== josquin_missarum_livro2_superius-p0020: 600x1063, 5 staves
+1 (space 14.8px): g2 b3 rB6 rB6 M5 Sm6 M7 Sm1 Sm2 Sm3 M4 Sm3 Sb3 M2 L3 | | +3 +2
+2 (space 14.8px): c4 b3 Sm4 M5 M6 M7 Sm6 M4 Sb9 Sm8 b7 Sb6 #7 M6 rB6 M5 Sm6 Sm7 Sm8 +8
+3 (space 14.8px): c4 Sm1 M1 M1 rM0 M0 rM4 Sm4 Sm3 #4 M4 M5 M3 Sm2 Sm1 M0 Sb1 B0
+4 (space 14.8px): g2 rB6 b8 Sb7 M5 M6 M5 Sm3 M4 M3 rM2 M3 M2 M3 Sm4 Sm5 Sm3
+5 (space 14.8px): g2 Sm8 Sm7 .7 M6 M7 M9 Sb8 Sb7 rM6 M6 M7 M5 Sm3 Sm4 M5 M3 M1 |
+== josquin_missarum_livro2_superius-p0058: 772x1060, 6 staves
+1 (space 14.8px): g2 rB4 Sb3 3 M4 B3 B6 Sb5 Sb4 Sb5 Sb4 Sb6 Sb5 M4 M3 M4 M5 Sb6 M5 Sb6 Sm5 Sm4 M3 #4 M3 B4 B7 M6 M6 Sb5 Sb4 Sb5 B6 b5 M5 Sb6 Sb5 M6 Sm5
+2 (space 14.5px): g2 M2 Sb2 #4 M4 M4 Sb5 Sb4 Sb2 M2 M2 Sb2 Sb2 Sb1 rSb2 Sb1 M1 M3 M2 M1 Sm0 Sb1 Sb0 Sb7 M6 M7 M6 M7 M8 Sb7 Sb6 M4 .7 b6 Sm5 #4 Sb3 M4 +5
+3 (space 14.8px): f4 b2 M7 Sb7 Sb7 Sb6 #5 M4 Sb5 Sm4 M3 M2 M5 .5 M4 #3 M2 Sb3 rL4 rL4 rL6 rB3 Sb3 Sb2 .3 M3 M4 Sb5 M4 M5 M7 .7 Sm6 Sm5 Sm4 Sm3 #4 M3 Sb4 M2 M3 +4
+4 (space 15.0px): c3 b2 Sm3 Sm4 Sb5 Sb6 M4 M3 M2 M1 Sb2 rSb2 Sb2 Sb2 rSb2 Sb2 Sb3 Sb4 Sb2 rM2 #5 M4 Sb5 #3 M4 M4 M2 M2 Sb3 Sb1 rSb2 Sb4 Sb4 M4 Sb4 Sb5 M6 M3 Sb4 +4
+5 (space 14.8px): f4 C| F1 Sb2 Sb1 Sb8 Sm7 Sm6 M7 M5 M6 M7 Sb6 rM6 Sb4 M3 Sb2 Sb1 rM0 M4 b5 Sb6 Sm5 Sm4 M3 M6 M7 Sb8 Sb7 M6 Sb7 .7 Sb3 M2 .3 Sm2 Sm1 M3 M2 Sm2 +3
+6 (space 14.9px): c4 Sm3 Sm4 M5 Sb6 Sm5 Sm4 M6 Sb5 ~ Sb3 M3 L4 +3
+== josquin_missarum_livro2_superius2-p0022: 541x871, 5 staves
+1 (space 12.2px): c4 Sm4 M4 M0 #7 M5 rM6 Sm7 M3 rM4 M7 M5 Sb6 M7 M1 Sm2 Sm3 b3 Sm4 Sm3 #3 Sm2 #3 +3 +3
+2 (space 12.2px): g2 rM2 .3 M2 M6 M5 M3 Sm4 M5 Sb6 M7 .7 Sm6 M4 Sb9 Sm8 Sm7 Sb6 #7 M6 Sm7 M5 Sm6 Sm7 M8
+3 (space 12.2px): c4 b5 Sm3 M2 M1 M2 Sm2 Sm1 M4 Sm3 M2 M1 M0 rM0 M0 rM4 Sm4 Sm3 #4 Sm4 M5 M3 Sm2 M1 M0 Sb1
+4 (space 12.0px): c4 M5 Sm4 Sm3 M3 Sb2 Sb8 Sb7 M5 M6 M7 M5 Sm3 M4 M3 rM4 M3 F2 M3 .3 Sm4 Sm5 F3 M4 M3
+5 (space 12.0px): f4 Sm3 M5 b5 F7 M8 .9 Sm7 Sb7 M6 M7 Sb8 Sb7 .7 M6 M7 M5 Sm3 Sm4 M5 #3 M2 rSm4
+== josquin_missarum_livro2_superius2-p0064: 574x872, 6 staves
+1 (space 12.0px): c4 C| rL4 rL4 rL6 rL6 rL4 rL4 rSb6 L6 Sb4 Sb6 M5 M4 #5 M4 Sb6 M5 M4 M3 Sb6 M5 Sb4 Sb3 M2 Sb3 rSb4 C M4 #5 Sb6 +5
+2 (space 12.0px): c4 Sm3 C rL4 rL4 Sb7 Sb6 M5 Sb6 M5 M4 M6 Sb5 M4 M3 M6 Sb5 M4 M3 M2 M6 #5 M4 M3 M2 M1 Sm2 M3 M4 M5 Sb6 M7 +0
+3 (space 12.2px): f4 Sm3 Sm1 M1 Sm4 M3 M1 M8 M7 M6 Sb7 Sb6 M5 B6 rSb6 Sb6 M5 M4 Sm2 Sm1 M2 Sm3 Sb4 Sb5 M6 M4 Sm3 M2 Sm4 Sm3 Sm2 Sm1 +0
+4 (space 12.2px): c3 Sm3 Sm4 M5 M6 M4 Sb5 M6 M6 Sm5 Sm4 M3 Sb6 M5 L6 C| Sb3 Sb4 B5 Sb5 #4 #3 M4 Sm3 M4 rB4 #4 M3 +4
+5 (space 12.0px): f4 b5 M1 Sm1 Sb0 Sb3 M2 Sb3 Sb4 .3 M4 Sb5 B6 B6 B6 Sb6 Sm6 M5 M4 Sb6 Sb5 M4 #4 #3 M1 Sb4 rSb4 +5
+6 (space 12.5px): c4 b5 F7 Sm7 rM6 Sb5 3 M3 L4 | | rB5 rSb6 Sb3 | |
+== josquin_missarum_livro2_tenor-p0015: 672x1061, 6 staves
+1 (space 14.5px): c4 F3 Sb2 Sb4 Sb1 M3 M2 #4 3 M4 Sb5 M1 M2 M3 M4 M0 M1 M2 M3 Sb1 B0 .1 M2 Sb3
+2 (space 15.0px): g2 .9 Sb1 rL2 B1 B5 Sb4 Sb5 M6 Sb8 Sb7 M8 M5 M6 M7 M8 Sm7 Sm6 Sm5 +3
+3 (space 14.8px): c4 C B5 B7 B6 Mx8 B7 .7 M6 B5 B2 B4 Sb3 B1 B3 ~ Mx2 B1 Sb2
+4 (space 15.0px): c4 M3 Sb2 rL2 rL6 rSb2 rSm4 M4 Sb5 Sb6 rM4 M4 M5 Sb6 Sb7 .7 M5 Sb6 M7 Sb8 M7 M6 +5
+5 (space 15.2px): c4 Sm3 M4 M2 M3 M4 M5 .5 Sm4 M5 M3 #2 L1^ | F3 #3 M2 Sm2 rL2 Sb8
+6 (space 14.8px): c4 b3 C Sm5 M4 M3 Sb2 rSb2 rSb2 M1 M2 Sm3 Sm2 Sb1 Sb0 M3 Sm4 M5 Sm4 M2 Sm3 M1 M3 M4 Sb2
+== josquin_missarum_livro2_tenor-p0044: 624x1061, 4 staves
+1 (space 14.8px): g2 rB4 #3 Sm2 #3 .3 F2 Sm2 Sm1 M2 M0 M-1 B3 Sb0 Sb2 B1 B0 B5 Sb6 Sb6 B7 B8 B9* #5 Sb4 Sb9 Sb8 M9 +7
+2 (space 14.8px): c3 B3 3 B2 Sb1 B0 Sb6 Sb6 Sb7 Sb7 B9 3 rB4 rL6 Sb9 Sb8 M9 B7 Sb8 Sb5 B6 M4 rB3 M2 +3
+3 (space 14.9px): f4 b2 Sm1 Sm0 Sb5 Sb4 Sb5 Sb3 M2 M2 M1 Sm2 Sb3 Sb3 M2 #3 M1 M2 M0 M-1 B3 Sb0 Sb2 B1 B0 B5 B7 Mx8 +7
+4 (space 14.8px): c4 | |
+== josquin_missarum_livro2_tenor2-p0016: 667x879, 6 staves
+1 (space 12.0px): f4 b2 M2 M3 M1 M2 rM2 M2 M3 Sm2 M3 Sb4 M1 M3 M4 Sb2 L1^ | |
+2 (space 12.0px): c4 Sm5 M5 Sb5 Sb1 B2 B4 Sb3 Sb2 B3 B2 M0 Sm1 Sm2 Sm0 M3 M2 rM2 M0 Sm1 M2 M0 M3 #2 L1^ L1^ B5 L6 rB4 C
+3 (space 11.8px): f4 C b0 rSb4 M1 Sb1 Sb0 M2 Sm3 M4 M5 .5 Sm4 M2 M3 M4 #2 M1 M2 M3 M4 B2 | | C rSb6 C F3 |
+4 (space 12.2px): f4 C Sb5 M1 Sm2 M4 #3 M1 M2 Sb0 M1 Sb2 rSb2 Sb1 rSb2 Sb4 M2 M3 Sb4 #5 M3 M4 Sb5 M1 M4 Sm3 M2 Sb1 .1 M3 M4 M2 M3 M2 Sm3 M4 M2 M3
+5 (space 12.0px): c4 b5 b5 M5 .7 M6 Sm5 C M6 Sb7 .7 M5 Sb8 M7 M5 M7 M8 Sb6 Sb5 rB4 Sb5 3 Sb5 Sb1 M2 Sb3 M4 M5 M6 Sb5 Sm4 M3 rSb2 Sb1 rSb2 3 Sb4 M3 +4
+6 (space 12.0px): c3 b3 C rSb4 M2 M3 M4 Sm3 Sm2 Sm1 Sm0 Sm1 Sm0 M0 Sb1 | |
+== josquin_missarum_livro2_tenor2-p0046: 709x862, 5 staves
+1 (space 12.2px): g2 Sb3 Sm2 #3 .3 Sm2 F1 M2 M0 Sb-1 B3 M0 Sb2 L1 B0 rL6 rSb8 Sb7 b8 Sb7 Sb9 Sb5 C Sb9 Sb8 M9 Sb7 Sb8 Sb9 Sb5 rM6 rSm4 M4 Sb3 M2 B3 B0
+2 (space 12.0px): g2 rM2 M3 .3 Sm4 M4 B7 Sm9 Sm6 M6 M8 Sb6 Sb5 M6 B4 Sb3 Sb3 B7 B6 Sb5 B7 Sb3 Sb4 B5 Sb6 L6 +7
+3 (space 12.0px): g2 b2 rL4 rB5 rSb6 rM6 M7 M7 M7 M7 M7 Sb7 Sb3 Sb4 rSb4 M9 Sm6 Sf4 F3 Sb5 Sb5 Sb5 Sb6 .7 M5 Sb4 Sb3 Sb3 Sb2 B3 rSb4 +9
+4 (space 12.2px): g2 rSb8 Sm9 M9 Sm10 .11 Sm9 L3 | |
+5 (space 12.0px): c3 b8 Sb3 B-1 Sb3 M2 M2 M1 M2 M0 Sb-1 B3 Sb0 Sb2 B1 L4 B5 Sb6 Sb6 B7 #8 Sb7 B9 Sb5 Sb9 Sb8 Sb9 B7 Sb8 Sb9 Sb5 +7
+== odhecaton_1501-p0087: 1277x1716, 5 staves
+1 (space 27.5px): c3 b8 B6 Sb6 .7 Sm5 Sm4 Sb3 B6 rB5 Sb6 Sb6 Sb6 Sb7 M8 Sm7 M6 Sb5 Sb6 #5 M6 M5 B3 | +2
+2 (space 27.9px): c2 b8 M3 #3 Sb2 Sb3 M5 M6 .7 F6 Sm5 Sm4 B3 Sb6 M5 Sm5 M4 Sm5 Sb6 Sm5 Sm4 #3 Sm2 Sb5 Sb4 #3 Sb2 rSm2 .3 F2 Sm1 |
+3 (space 29.0px): c3 M9 M8 M7 M6 Sb6 M5 Sm5 Sm4 Sm5 L6 | |
+4 (space 27.5px): f4 L3 L4^ b8 Sb3 Sb6 #7 Sb8 Sb7 #5 Sb6 Sb5 B7 Sb6 Sb7 Mx3 L3 rSb4 Sb3 M2 Sb2 Sb5 #5 Sb4 .7 Sm6 M5 +3
+5 (space 28.5px): c4 Sb2 rSb4 Sb3 Sb0 M2 B0 .1 Sm0 B2 Sb3 Sb3 M4 Sb5 B7 rSb8 Sb7 Sb7 Sb6 .7 M5 | |
+== odhecaton_1501-p0259: 1406x1716, 4 staves
+1 (space 27.5px): c3 b8 M6 M7 Sm6 M4 Sb5 M6 M2 #5 Sm4 Sm3 Sb4 Sb5 rM4 M5 Sm8 M9 Sb7 Sm6 Sm5 M4 Sm7 Sm6 M8 M7 Sm8 +7 |
+2 (space 28.2px): c3 b3 .3 F4 F5 M6 M6 Sm5 Sm4 Sm3 M2 Sm3 M4 M5 M6 Sb4 Sb3 Sm2 M2 Sb2 Sb3 rSb4 Sb7 b8 M7 M9 Sm8 M7 M6 M2 #5 Sm4 Sm3 Sm4
+3 (space 29.0px): c3 b8 b1 F3 F4 Sm5 M4 #5 Sm4 F5 Sm6 M7 M6 rB6 M5 F6 Sm7 M8 M7 Sb8 rM8 rM6 Sm6 Sm5 M4 #5 Sm4 Sm3 Sm2 M3 Sm2 M0 M1 Sm2
+4 (space 27.5px): c4 rL4 C Sb3 Sb2 ] Sb2 B4 B7 rSb8 Sb5 B4 B6 Mx7 B4 B1 B3 rB3 B4 .3 Sb1 Sb0 B0 rL4 rL4 rSm0
+== petrucci_josquin_missas_1502-p0031: 2186x1784, 0 staves
+== petrucci_josquin_missas_1502-p0091: 2400x1778, 5 staves
+1 (space 24.0px): g2 c3 B-1 Sb1 B0 B1 Sb1 B3 ~ B1 B0 Sm4 B5 b3 Sb5 #3 #3 Sb4 Sb3 Sb2 Sb0 | Sb6 rL6 rB7 rSb8 Sb7 .7 Sb5 B6 Sb8 M8 M6 Sb6 .7 B8 Sb7 Sb7 M6 M5 Sb7 rSb8 Sb7 M6 Sb5 M4 Sm2 #3 b7 rSb6 C B4 +7
+2 (space 24.2px): f4 C Sb7 B4 Sb6 M5 M4 M3 M5 Sb3 Sb2 B2 M2 b3 Sb5 M4 #3 M2 L0 | |
+3 (space 24.5px): c4 M3 rL2 rL4 Sb1 B1 Sb4 B5 B3 Sb5 Sb3 #3 Sb3 M2 Sb0 B0 | B7 .7 B6 M8 M7 M6 Sb6 Sb7 B8 Sb7 Sb7 M6 M5 Sb7 rSb8 Sb7 .7 M6 Sb5 M4 [ Sb2 B3 ~ B1 Sb4 B4 Sb6 B4
+4 (space 24.2px): f4 b3 C rSb4 Sb6 M5 M4 M3 Sb5 Sb3 Mx2 Mx2 Sb2 Sb5 rSb6 M4 Sb3 M2 B0 rSb2 M1 M2 rL4 rL4 rL2 rL6 B0 Sb1 B2 Sb1 B0 Sb4 B5 Sb5 Sb3 #3 M3 B0 B7 rSb8 Sb5 B6 M7 M6 Sb6 .7 Sb8 Sb7 Sb7 M6 M5 Sb7 rSb8 Sb7
+5 (space 24.8px): f4 b5 M3 Sm4 M3 Mx2 B1 Sb1 Sb5 rSb6 M4 Sb3 Sb2 B0 |
+== petrucci_josquin_missas_1514-p0034: 1916x1450, 0 staves
+== petrucci_josquin_missas_1514-p0100: 1686x1450, 0 staves
+== petrucci_odhecaton_b_1501e-p0061: 574x892, 6 staves
+1 (space 11.2px): c4 rL4 rL6 rL6 rB7 rSb8 M6 M5 Sb6 Sm7 Sb5 rM4 rM4 Sm4 Sm3 Sm4 M3 F2 F1 M0 M1 Sm2 Sm3 M4 Sm5 M6 Sb4 Sb7 M3 M5 .5 rM6 M7 M4 | +5
+2 (space 11.1px): c4 Sm7 Sm6 Sm4 #5 Sb4 M5 M6 M7 M8 M7 b5 b5 Sb4 Sb7 Sb6 M5 Sm4 Sb5 #4 M4 Sb6 M5 M4 Sm3 Sm2 M3 Sm4 Sb5 rM4 M2 M3 Sm4
+3 (space 11.2px): c4 b5 Sm6 Sm7 Sm8 M6 M7 .7 Sm6 Sm5 M6 M7 M5 Sm4 Sm3 Sm2 M2 M5 M4 b5 Sb6 M7 M5 M6 Sb4 M5 M6 M4 Sm2 M3 Sm4 Sb2 M3 L4
+4 (space 11.2px): g2 b5 Sb8 M8 Sb6 M5 Sm4 Sb5 Sb4 Sm3 M2 M1 M4 M3 M2 2 Sb2 Sb4 Sb1 M2 M0 M7 .7 Sm6 Sm5 Sm4 Sm5 Sb4 Sm1 M2 Sb3
+5 (space 11.2px): f4 b8 b1 .3 Sm2 Sm3 Sm4 Sb5 3 Sb4 Sb4 C Sm2 M1 Sb2 B1 M0 M1 rL4 M6 Sb8 M7 Sm6 M5 Sm4 Sm3 Sm2 Sb4 M5 +3
+6 (space 11.2px): c4 rM2 Sm2 Sm3 Sm4 M2 M1 M4 Sb1 L4 | |
+== petrucci_odhecaton_b_1501e-p0181: 664x892, 3 staves
+1 (space 11.4px): c4 b7 Sm4 Sm3 M2 F2 Sm2 Sm3 b3 Sm4 M2 M1 Sm1 Sm0 Sb0 M0 M6 Sm7 M8 M4 b8 Sm7 M9 Sm8 Sm7 M6 #7 M6 M-1 Sm1 Sm1 Sm2 M3 #4 Sm3 Sm2 M2 Sb2 |
+2 (space 11.2px): c4 b8 b7 b0 M9 .9 Sm7 M8 M5 M7 Sb6 M5 Sm6 Sm7 M8 Sb9 M5 M6 M7 M8 Sm7 M8 Sb5 M3 Sb2 Sb1 rSb2 rM4 M8 Sm6 M7 M4 M6 rM4 M4 .5 F3 F2 M2 M2 Sm3 F3
+3 (space 11.5px): c3 b7 rM6 M4 Sm3 Sb2 M1 M1 M7 M6 M7 M8 M4 b5 Sb6 rB6 Sm6 Sm5 Sm4 M3 M2 Sb4 rSb2 M8 M7 Sb8 Sm7 Sm6 M5 Sb8 M1 M2 Sm2 Sm3 Sm4 Sm5 M5 M1
