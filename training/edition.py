@@ -45,6 +45,7 @@ CLEF_AT = {'c': 28, 'f': 24, 'g': 32}                       # (the pitch each cl
 CLEFS = ['c1', 'c2', 'c3', 'c4', 'c5', 'f3', 'f4', 'f5', 'g1', 'g2']
 REDUCTIONS = [Fr(1), Fr(2), Fr(4), Fr(1, 2)]                # (the source's values the edition's times this)
 SHIFT = 'shift'
+OFFBEAT = 0.15                                               # (a staff more of whose notes than this don't last as the edition's: not kept)
 COMMON = 30000                                               # (an interval trigram in more places than this: not used to find a staff)
 
 
@@ -377,18 +378,20 @@ def label(tokens, index, m, red, start=None, carried=()):
         if not vs: return None
         return [f'r{v}{rest_place(v, near)}' for v in vs]
     last_tok = 0
+    paired = offbeat = 0
     for op, i, j in ops:
         if op == 'm':
             s, e = evs[i], stretch[j]
             if s['kind'] == 'n' and e[0] == 'n':
                 p = e[1] + shift
+                paired += 1
                 if not note_fits(s, None if e[2] is None else e[2] * red, perf):
                     if s['lig']: return None
                     r = render(e, s['p'])
                     if r is None: return None
                     out_at[s['at'][0]] = r
                     for k in s['at'][1:]: out_at[k] = []
-                    fixed += 1
+                    fixed += 1; offbeat += 1
                 elif p != s['p']:
                     t = tokens[s['at'][0]]
                     out_at[s['at'][0]] = [re.sub(r'(-?\d+)', str(p), t, count=1)]
@@ -396,7 +399,9 @@ def label(tokens, index, m, red, start=None, carried=()):
                         for k in s['at'][1:]: out_at[k] = [f'.{p if p % 2 else p + 1}']
                     fixed += 1
             elif s['kind'] == 'r' and e[0] == 'r':
+                paired += 1
                 if e[1] * red not in rest_options(s['ds']):
+                    offbeat += 1
                     r = render(e, s['p'])
                     if r is None: return None
                     out_at[s['at'][0]] = r
@@ -441,7 +446,7 @@ def label(tokens, index, m, red, start=None, carried=()):
             if re.fullmatch(r'\+-?\d+', t):
                 q = f'+{after[1] + shift}'
                 if t != q: out[k] = q; fixed += 1
-    return out, fixed, perf, j0 + b
+    return out, fixed, perf, j0 + b, offbeat / max(1, paired)
 
 
 # ---- pages
@@ -543,11 +548,11 @@ def pair(o):
             Image.fromarray(a).save(os.path.join(o.out, file))
             found.append((file, read, mt)); n += 1
         print(f'{pg}: {len(st)} staves, {n} found in the editions ({len(found)} so far)', flush=True)
-    kept = settle(index, found, o.worth, selftrain.keeps_rules, o.out, min_staves=o.min_staves)
+    kept = settle(index, found, o.worth, selftrain.keeps_rules, o.out, min_staves=o.min_staves, at_pitch=o.at_pitch)
     print(f'{kept} staves labelled, of {len(found)} found in the editions, on {len(pages)} pages -> {o.out}')
 
 
-def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3):
+def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3, at_pitch=False):
     """Each edition's transposition and reduction (those most of its staves agree on), then each staff's label; the
     labels written (out_dir) or returned."""
     by_ed = defaultdict(list)
@@ -565,13 +570,15 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3):
                 if op == 'm' and m[6][i]['kind'] == 'n' and stretch[j][0] == 'n' and stretch[j][2] is not None:
                     for r in REDUCTIONS:
                         if note_fits(m[6][i], stretch[j][2] * r): fits[r] += 1
-        red = fits.most_common(1)[0][0] if fits else Fr(1)
+        red = Fr(1) if at_pitch else (fits.most_common(1)[0][0] if fits else Fr(1))
         # the transposition: steps from the edition's pitch to the source's (each staff's shift less its clef's base)
         trans = Counter(m[4] - clef_base(events_of(read)[1]) for f, read, m in items)
-        t = trans.most_common(1)[0][0]
+        t = 0 if at_pitch else trans.most_common(1)[0][0]
         if not quiet:
             print(f'{ed}: {len(items)} staves; the source\'s values {"the edition's" if red == 1 else f"the edition\'s times {red}"}; '
                   f'{"at the edition\'s pitch" if t == 0 else f"{abs(t)} steps {"above" if t > 0 else "below"} the edition"}')
+        mine = []                                            # (this edition's labels: kept if most of its staves fit it)
+        tried = 0
         last, perfs = {}, {}                                            # (a voice: where in it its last staff labelled ended)
         for f, read, m in items:
             # (a staff that begins just after the last one of its voice ended begins there: a note the reader missed at
@@ -579,7 +586,9 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3):
             prev = last.get(m[1])
             got = label(read, index, m, red, prev if prev is not None and prev <= m[2] <= prev + 6 else None, perfs.get(m[1], ()))
             if not got: continue
-            toks, fixed, perf, end = got
+            toks, fixed, perf, end, offbeat = got
+            tried += 1
+            if offbeat > OFFBEAT: continue                     # (its rhythm isn't the edition's: not this music, or misread)
             last[m[1]] = end; perfs[m[1]] = perf
             base = m[4] - t                                    # (the clef that says these pitches)
             want = next((c for c in CLEFS if clef_base(c) == base), None)
@@ -589,8 +598,12 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3):
             if fixed > worth * len(toks) or not rules(toks): continue
             ed_, vn, _, _ = index.voices[m[1]]
             text = re.sub(r' ?~ ?', '~', ' '.join(toks)).replace('[ ', '[').replace(' ]', ']')
-            labels.append({'file': f, 'text': text, 'tokens': toks, 'fixed': fixed, 'fit': round(m[0], 3), 'from': f'{ed_} {vn}'})
-            kept += 1
+            mine.append({'file': f, 'text': text, 'tokens': toks, 'fixed': fixed, 'fit': round(m[0], 3), 'from': f'{ed_} {vn}'})
+        # (an edition most of whose staves don't keep its rhythm, or that so few do: not the music on these pages)
+        if len(mine) < min_staves or len(mine) < 0.5 * tried:
+            if not quiet: print(f'{ed}: only {len(mine)} of {tried} staves fit it: left out')
+            continue
+        labels += mine; kept += len(mine)
     if out_dir:
         with open(os.path.join(out_dir, 'labels.jsonl'), 'w', encoding='utf-8') as fh:
             for r in labels: fh.write(json.dumps(r) + '\n')
@@ -691,6 +704,7 @@ def selftest(o):
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     a.add_argument('what', choices=['pages', 'pair', 'selftest'])
+    a.add_argument('--at-pitch', action='store_true', help='pair: the editions keep the sources\' pitch and values (as JRP\'s): neither is looked for')
     a.add_argument('--only', help='pair: only the folders of pages whose names match this')
     a.add_argument('--skip', help='pair: not the folders of pages whose names match this')
     a.add_argument('--min-staves', type=int, default=3, help='pair: an edition fewer staves were found of is left out')
