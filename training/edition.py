@@ -501,6 +501,39 @@ def pages(o):
         print(f'{name}: {len(doc)} pages in the PDF -> {n} page images in {out}', flush=True)
 
 
+def show(o):
+    """A few pages of each folder (--per pages, evenly through it), the staves found drawn on them and each staff's
+    reading written beside: <out>/<folder>-<page>.jpg (half size) and <out>/readings.txt, to see how the reader and
+    the staff finder take a book."""
+    import numpy as np, torch, recognizer
+    from PIL import Image, ImageDraw
+    import fivestaves as F, printstaves as P
+    mdl, s = recognizer.restore(o.model)
+    os.makedirs(o.out, exist_ok=True)
+    dirs = [os.path.join(o.scans, x) for x in sorted(os.listdir(o.scans)) if os.path.isdir(os.path.join(o.scans, x))] or [o.scans]
+    with open(os.path.join(o.out, 'readings.txt'), 'w', encoding='utf-8') as fh:
+        for d in dirs:
+            pages = sorted(f for f in os.listdir(d) if re.search(r'\.(jpe?g|png|tiff?)$', f, re.I))
+            for pg in pages[len(pages) // (2 * o.per)::max(1, len(pages) // o.per)][:o.per]:
+                im = Image.open(os.path.join(d, pg)).convert('L')
+                gray = np.asarray(im).astype(np.float32)
+                if np.median(gray) < 100: gray = 255 - gray
+                st = P.find(gray) if o.print else F.page(os.path.join(d, pg))[1]
+                rgb = im.convert('RGB'); dr = ImageDraw.Draw(rgb)
+                name = f'{os.path.basename(d)}-{os.path.splitext(pg)[0]}'
+                fh.write(f'== {name}: {im.size[0]}x{im.size[1]}, {len(st)} staves\n')
+                for k, (lines, g) in enumerate(st):
+                    for l in lines: dr.line(list(zip(l[0::2], l[1::2])), fill=(0, 120, 255), width=2)
+                    dr.text((max(0, lines[0][0] - 30), lines[0][1]), str(k + 1), fill=(220, 0, 0))
+                    a = F.straighten5(gray, lines).astype(np.uint8)
+                    x, n = recognizer.collate([recognizer.ink(a)])
+                    with torch.no_grad(): read = recognizer.greedy(mdl(x), n, s['vocab'])[0][0]
+                    fh.write(f'{k + 1} (space {g:.1f}px): {" ".join(read)}\n')
+                    if k < 3: Image.fromarray(a).save(os.path.join(o.out, f'{name}-staff{k + 1}.png'))
+                rgb.resize((rgb.width // 2, rgb.height // 2)).save(os.path.join(o.out, name + '.jpg'), quality=80)
+    print(f'{len(dirs)} folders shown -> {o.out}')
+
+
 def pair(o):
     import numpy as np, torch, recognizer, selftrain
     from PIL import Image
@@ -605,8 +638,10 @@ def settle(index, found, worth, rules, out_dir=None, quiet=False, min_staves=3, 
             continue
         labels += mine; kept += len(mine)
     if out_dir:
-        with open(os.path.join(out_dir, 'labels.jsonl'), 'w', encoding='utf-8') as fh:
-            for r in labels: fh.write(json.dumps(r) + '\n')
+        # (and a copy named for the folder, to keep beside another's)
+        for fn in ('labels.jsonl', os.path.basename(os.path.normpath(out_dir)) + '.labels.jsonl'):
+            with open(os.path.join(out_dir, fn), 'w', encoding='utf-8') as fh:
+                for r in labels: fh.write(json.dumps(r) + '\n')
         keep = {r['file'] for r in labels}
         for f, _, _ in found:
             if f not in keep:
@@ -703,8 +738,9 @@ def selftest(o):
 
 if __name__ == '__main__':
     a = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    a.add_argument('what', choices=['pages', 'pair', 'selftest'])
+    a.add_argument('what', choices=['pages', 'show', 'pair', 'selftest'])
     a.add_argument('--at-pitch', action='store_true', help='pair: the editions keep the sources\' pitch and values (as JRP\'s): neither is looked for')
+    a.add_argument('--per', type=int, default=3, help='show: pages of each folder')
     a.add_argument('--only', help='pair: only the folders of pages whose names match this')
     a.add_argument('--skip', help='pair: not the folders of pages whose names match this')
     a.add_argument('--min-staves', type=int, default=3, help='pair: an edition fewer staves were found of is left out')
@@ -723,4 +759,4 @@ if __name__ == '__main__':
     a.add_argument('--reduce', type=int, default=2, help='selftest: the edition\'s values the source\'s divided by this')
     a.add_argument('--tmp', default=os.environ.get('TMPDIR', '/tmp'))
     o = a.parse_args()
-    {'pages': pages, 'pair': pair, 'selftest': selftest}[o.what](o)
+    {'pages': pages, 'show': show, 'pair': pair, 'selftest': selftest}[o.what](o)
