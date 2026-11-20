@@ -1,0 +1,73 @@
+{
+ "id": "0093-petrucci-look",
+ "about": "Petrucci's prints again (no training): a few pages of each book shown, with the staves found drawn on them and the app's reader's (0086) reading of each (to see how it takes Petrucci's type); then the pages paired with JRP's editions again, now at the editions' pitch and values (JRP keeps the sources': none looked for, the clef taken from the edition's pitches) and a staff kept only if its rhythm is the edition's (an edition most of whose staves don't fit it left out). The labels kept, to look at.",
+ "data": [
+  "mens-1.zip",
+  "mens-2.zip",
+  "mens-3.zip",
+  "mens-4.zip",
+  "capitan-1.zip",
+  "seils2-1.zip",
+  "mensjrp-1.zip",
+  "mensjrp-2.zip",
+  "mensjrp-3.zip",
+  "mensjrp-4.zip",
+  "mens5-1.zip",
+  "mens5-2.zip",
+  "jrpscores-1.zip"
+ ],
+ "steps": [
+  [
+   "edition.py",
+   "show",
+   "--scans",
+   "training/data/scans/petrucci",
+   "--model",
+   "training/data/m0086/best.pt",
+   "--print",
+   "--per",
+   "3",
+   "--out",
+   "OUT/show"
+  ],
+  [
+   "edition.py",
+   "pair",
+   "--editions",
+   "training/data/jrpscores/Jos/*Missa*.krn",
+   "--scans",
+   "training/data/scans/petrucci",
+   "--only",
+   "josquin|miss",
+   "--model",
+   "training/data/m0086/best.pt",
+   "--print",
+   "--at-pitch",
+   "--out",
+   "training/data/petrucci2"
+  ],
+  [
+   "edition.py",
+   "pair",
+   "--editions",
+   "training/data/jrpscores/*/*.krn",
+   "--scans",
+   "training/data/scans/petrucci",
+   "--skip",
+   "josquin|miss",
+   "--model",
+   "training/data/m0086/best.pt",
+   "--print",
+   "--at-pitch",
+   "--out",
+   "training/data/petrucci2odh"
+  ]
+ ],
+ "keep": [
+  "training/data/petrucci2/petrucci2.labels.jsonl",
+  "training/data/petrucci2odh/petrucci2odh.labels.jsonl"
+ ],
+ "remove": [
+  "training/data/petrucci"
+ ]
+}
